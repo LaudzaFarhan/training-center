@@ -1,0 +1,21 @@
+{
+  "name": "thelab-training-center",
+  "version": "1.0.0",
+  "description": "Training Instructor Operational Dashboard for The Lab Indonesia",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "thelab",
+    "training-center",
+    "instructor-dashboard",
+    "lms"
+  ],
+  "author": "The Lab Indonesia",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}
