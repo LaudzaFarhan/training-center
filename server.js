@@ -157,8 +157,15 @@ const server = http.createServer((req, res) => {
         return;
     }
 
-    // Static Files Serving
-    let filePath = path.join(PUBLIC_DIR, url.pathname === '/' ? 'index.html' : url.pathname);
+    // Static Files & Page Routing
+    let targetPath = url.pathname;
+    if (targetPath === '/' || targetPath === '') {
+        targetPath = 'index.html';
+    } else if (targetPath === '/dashboard' || targetPath === '/dashboard/' || targetPath === '/instructor') {
+        targetPath = 'dashboard.html';
+    }
+
+    let filePath = path.join(PUBLIC_DIR, targetPath);
 
     // Normalize path to prevent directory traversal
     if (!filePath.startsWith(PUBLIC_DIR)) {

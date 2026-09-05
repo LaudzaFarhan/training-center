@@ -3,416 +3,511 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Instructor Portal | The Lab Indonesia Training Center</title>
-    <meta name="description" content="Operational and Instructor Management Dashboard for The Lab Indonesia Training Center">
+    <title>THE LAB | Learning Without Boundaries - Technology Training Center</title>
+    <meta name="description" content="The Lab Indonesia - Immersive hands-on technology training center, bare-metal cloud workstations, and industry-grade engineering bootcamps.">
+    <link rel="icon" type="image/svg+xml" href="assets/logo.svg">
+    
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="css/landing.css">
 </head>
 <body>
-    <div class="app-container">
-        <!-- Sidebar Navigation -->
-        <aside class="sidebar">
-            <div class="brand-box">
-                <div class="brand-logo">
-                    <div class="logo-hex">
-                        <span>TL</span>
-                    </div>
-                    <div class="brand-text">
-                        <h2>THE LAB</h2>
-                        <span class="sub-badge">INSTRUCTOR CENTER</span>
-                    </div>
-                </div>
-            </div>
 
-            <nav class="nav-menu">
-                <div class="nav-section-title">TRAINING OPS</div>
-                <button class="nav-item active" data-tab="overview">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-                    <span>Overview & Stats</span>
-                </button>
-                <button class="nav-item" data-tab="sessions">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                    <span>Live Class Session</span>
-                    <span class="pill-indicator live">LIVE</span>
-                </button>
-                <button class="nav-item" data-tab="students">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-                    <span>Trainee Roster</span>
-                </button>
-                <button class="nav-item" data-tab="modules">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
-                    <span>Curriculum & Labs</span>
-                </button>
+    <!-- 1. Top Announcement Bar -->
+    <div class="announcement-bar">
+        <span>🚀 <strong>Academic Year 2026 Enrollment Open</strong>: AI Systems, DevOps Engineering & Applied Data Intelligence</span>
+        <a href="#programs">View Bootcamps &amp; Schedules →</a>
+    </div>
 
-                <div class="nav-section-title">DEPLOYMENT</div>
-                <button class="nav-item" data-tab="vps">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
-                    <span>Domain & VPS</span>
-                    <span class="pill-indicator ready">READY</span>
-                </button>
+    <!-- 2. Main Navigation -->
+    <header class="navbar">
+        <div class="container nav-container">
+            <a href="/" class="nav-brand">
+                <!-- Exact Brand Logo Component -->
+                <svg class="brand-icon-svg" viewBox="0 0 500 380" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Yellow Capsule -->
+                    <rect x="90" y="60" width="60" height="135" rx="30" fill="#F6C551" />
+                    <!-- Navy Triangle -->
+                    <path d="M 175 192 C 160 192, 154 180, 163 170 L 265 68 C 274 58, 282 62, 282 74 L 282 182 C 282 190, 276 192, 268 192 Z" fill="#0E1B4D" />
+                    <!-- Vibrant Teal B Shape -->
+                    <path d="M 302 60 H 342 C 372 60, 396 76, 396 102 C 396 117, 386 128, 372 134 C 392 140, 410 155, 410 178 C 410 206, 384 225, 348 225 H 302 C 298 225, 296 222, 296 218 L 296 67 C 296 63, 298 60, 302 60 Z" fill="#45B7CD" />
+                    <!-- Typography -->
+                    <text x="250" y="296" text-anchor="middle" font-family="'Plus Jakarta Sans', 'Outfit', sans-serif" font-weight="800" font-size="44" letter-spacing="12" fill="#0E1B4D">THE LAB</text>
+                    <text x="250" y="328" text-anchor="middle" font-family="'Plus Jakarta Sans', 'Outfit', sans-serif" font-weight="700" font-size="14" letter-spacing="4.2" fill="#132B66">LEARNING WITHOUT BOUNDARIES</text>
+                </svg>
+            </a>
+
+            <nav>
+                <ul class="nav-links">
+                    <li><a href="#programs">Training Programs</a></li>
+                    <li><a href="#methodology">Our Methodology</a></li>
+                    <li><a href="#facilities">Lab Workstations</a></li>
+                    <li><a href="#identity">Brand Values</a></li>
+                    <li><a href="#portal">Instructor Center</a></li>
+                </ul>
             </nav>
 
-            <div class="sidebar-footer">
-                <div class="system-status-card">
-                    <div class="status-dot-pulse"></div>
-                    <div class="status-info">
-                        <span class="status-host">training.thelabindonesia.my.id</span>
-                        <span class="status-ping">Connected • Reverse Proxy OK</span>
+            <div class="nav-actions">
+                <!-- Subdomain / Operational Instructor Portal link -->
+                <a href="/dashboard" class="btn btn-instructor-portal" title="Go to Instructor Portal">
+                    <span class="live-dot"></span>
+                    <span>Instructor Portal</span>
+                </a>
+                <a href="#inquiry" class="btn btn-primary open-inquiry-modal">
+                    <span>Inquire Now</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- 3. Hero Section -->
+    <section class="hero">
+        <div class="container hero-grid">
+            <div class="hero-content">
+                <div class="hero-badge">
+                    <span class="badge-symbols">
+                        <span class="b-dot yellow"></span>
+                        <span class="b-dot navy"></span>
+                        <span class="b-dot teal"></span>
+                    </span>
+                    <span>The Lab Indonesia • Training Center</span>
+                </div>
+
+                <h1 class="hero-title">
+                    Learning Without <span class="highlight-teal">Boundaries</span>.
+                </h1>
+
+                <p class="hero-subtitle">
+                    Immersive, production-grade technology training. Master real-world AI agentic workflows, cloud infrastructure, and DevOps architecture on bare-metal lab workstations.
+                </p>
+
+                <div class="hero-buttons">
+                    <a href="#programs" class="btn btn-primary btn-lg">
+                        <span>Explore 2026 Bootcamps</span>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </a>
+                    <a href="/dashboard" class="btn btn-outline btn-lg">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                        <span>Instructor Portal</span>
+                    </a>
+                </div>
+
+                <div class="hero-stats-ribbon">
+                    <div class="stat-col">
+                        <h4><span class="stat-count" data-target="94.2" data-suffix="%">94.2%</span></h4>
+                        <p>Course Completion</p>
+                    </div>
+                    <div class="stat-col">
+                        <h4><span class="stat-count" data-target="4" data-suffix=" Labs">4</span></h4>
+                        <p>Specialized Workstations</p>
+                    </div>
+                    <div class="stat-col">
+                        <h4><span class="stat-count" data-target="1" data-suffix=":8">1:8</span></h4>
+                        <p>Instructor Ratio</p>
+                    </div>
+                    <div class="stat-col">
+                        <h4><span class="stat-count" data-target="100" data-suffix="%">100%</span></h4>
+                        <p>Hands-on Capstones</p>
                     </div>
                 </div>
             </div>
-        </aside>
 
-        <!-- Main Workspace -->
-        <main class="main-content">
-            <!-- Top App Bar -->
-            <header class="topbar">
-                <div class="topbar-left">
-                    <div class="cohort-selector-box">
-                        <label for="cohortSelect">Cohort View:</label>
-                        <select id="cohortSelect" class="cohort-dropdown">
-                            <!-- Populated by JS -->
-                        </select>
+            <!-- Hero Right Visual Card -->
+            <div class="hero-visual">
+                <!-- Floating Badge 1 -->
+                <div class="floating-badge badge-one">
+                    <div class="fb-icon teal">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    </div>
+                    <div class="fb-text">
+                        <strong>VPS & Cloud Verified</strong>
+                        <small>Subdomain Online (HTTPS)</small>
                     </div>
                 </div>
 
-                <div class="topbar-right">
-                    <div class="time-clock" id="serverClock">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                        <span id="currentTime">14:35:00 WIB</span>
-                    </div>
-
-                    <button class="btn btn-primary" id="btnQuickSession">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 14 14"></polyline></svg>
-                        <span>Start Session</span>
-                    </button>
-
-                    <div class="user-profile">
-                        <div class="avatar-ring">
-                            <span class="avatar-initials">FL</span>
-                        </div>
-                        <div class="user-info">
-                            <span class="user-name">Farhan Laudza</span>
-                            <span class="user-role">Lead Instructor</span>
-                        </div>
-                    </div>
-                </div>
-            </header>
-
-            <!-- Tab 1: Overview & KPI -->
-            <section id="tab-overview" class="tab-pane active">
-                <div class="section-hero">
-                    <div class="hero-text">
-                        <h1>Operational Training Overview</h1>
-                        <p>Real-time telemetry, cohort engagement, and workstation readiness for <strong>The Lab Indonesia</strong>.</p>
-                    </div>
-                    <div class="hero-tags">
-                        <span class="badge badge-accent">Academic Year 2026</span>
-                        <span class="badge badge-subtle">Subdomain Online</span>
+                <!-- Floating Badge 2 -->
+                <div class="floating-badge badge-two">
+                    <div class="fb-icon yellow">⚡</div>
+                    <div class="fb-text">
+                        <strong>Active Cohort #1</strong>
+                        <small>Advanced AI &amp; Agents</small>
                     </div>
                 </div>
 
-                <!-- KPI Metric Cards Grid -->
-                <div class="kpi-grid">
-                    <div class="kpi-card">
-                        <div class="kpi-icon-wrap icon-cyan">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                <div class="visual-card-main">
+                    <div class="card-top">
+                        <span class="status-tag">Live Session Telemetry</span>
+                        <span style="font-family: var(--font-mono); font-size: 12px; color: var(--text-muted);">Lab Alpha</span>
+                    </div>
+
+                    <h3 class="cohort-spot-title">Cohort #1: Advanced AI &amp; Agentic Workflows</h3>
+                    <p class="cohort-spot-desc">Hands-on autonomous coding, VPS server automation, and multi-agent systems.</p>
+
+                    <div class="workstation-telemetry">
+                        <div class="telemetry-row">
+                            <span>Lead Instructor</span>
+                            <span>Farhan Laudza</span>
                         </div>
-                        <div class="kpi-meta">
-                            <span class="kpi-label">Active Trainees</span>
-                            <h3 class="kpi-value" id="kpiTrainees">48</h3>
-                            <span class="kpi-subtext positive">↑ 100% capacity in Lab Alpha</span>
+                        <div class="telemetry-row">
+                            <span>Subdomain Host</span>
+                            <span style="color: var(--brand-teal);">training.thelabindonesia.my.id</span>
+                        </div>
+                        <div class="telemetry-row">
+                            <span>Workstations Active</span>
+                            <span>14 / 14 Terminals</span>
                         </div>
                     </div>
 
-                    <div class="kpi-card">
-                        <div class="kpi-icon-wrap icon-emerald">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-                        </div>
-                        <div class="kpi-meta">
-                            <span class="kpi-label">Average Attendance</span>
-                            <h3 class="kpi-value" id="kpiAttendance">94.2%</h3>
-                            <span class="kpi-subtext positive">+2.4% vs previous cohort</span>
-                        </div>
+                    <div style="margin-bottom: 8px; display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; color: var(--brand-navy);">
+                        <span>Syllabus Progression</span>
+                        <span>68% Complete</span>
                     </div>
-
-                    <div class="kpi-card">
-                        <div class="kpi-icon-wrap icon-purple">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
-                        </div>
-                        <div class="kpi-meta">
-                            <span class="kpi-label">Sessions Delivered</span>
-                            <h3 class="kpi-value" id="kpiSessions">32</h3>
-                            <span class="kpi-subtext">8 remaining in this syllabus</span>
-                        </div>
-                    </div>
-
-                    <div class="kpi-card">
-                        <div class="kpi-icon-wrap icon-amber">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                        </div>
-                        <div class="kpi-meta">
-                            <span class="kpi-label">Active Cohorts</span>
-                            <h3 class="kpi-value" id="kpiCohorts">3</h3>
-                            <span class="kpi-subtext">1 upcoming batch enrolled</span>
-                        </div>
+                    <div class="progress-track">
+                        <div class="progress-fill-gradient" style="width: 68%;"></div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </section>
 
-                <!-- Active Cohort Focus Card -->
-                <div class="panel-card cohort-spotlight">
-                    <div class="panel-header">
-                        <div>
-                            <span class="panel-tag">CURRENTLY SELECTED</span>
-                            <h2 id="spotlightTitle">Cohort #1 - Advanced AI & Agentic Workflows</h2>
-                        </div>
-                        <div class="spotlight-badge" id="spotlightBadge">In Progress</div>
+    <!-- 4. Brand Tri-Color Identity Pillars -->
+    <section class="brand-identity-section" id="identity">
+        <div class="container">
+            <div class="identity-grid">
+                <!-- Yellow Capsule -->
+                <div class="identity-card card-yellow">
+                    <div class="identity-symbol">
+                        <svg width="32" height="42" viewBox="0 0 32 42" fill="none">
+                            <rect x="4" y="2" width="24" height="38" rx="12" fill="#F6C551" />
+                        </svg>
                     </div>
-                    <div class="spotlight-body">
-                        <div class="spotlight-stat-item">
-                            <span class="stat-title">Instructor</span>
-                            <strong id="spotlightInstructor">Farhan Laudza</strong>
-                        </div>
-                        <div class="spotlight-stat-item">
-                            <span class="stat-title">Location / Facility</span>
-                            <strong id="spotlightRoom">Lab Alpha (Workstation Room 101)</strong>
-                        </div>
-                        <div class="spotlight-stat-item">
-                            <span class="stat-title">Regular Schedule</span>
-                            <strong id="spotlightSchedule">Mon, Wed, Fri (19:00 - 21:30 WIB)</strong>
-                        </div>
-                        <div class="spotlight-stat-item">
-                            <span class="stat-title">Curriculum Progress</span>
-                            <div class="progress-wrap">
-                                <div class="progress-bar" id="spotlightProgress" style="width: 68%;"></div>
-                                <span class="progress-num" id="spotlightProgressText">68%</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Tab 2: Live Class Session -->
-            <section id="tab-sessions" class="tab-pane">
-                <div class="section-hero">
-                    <div class="hero-text">
-                        <h1>Live Class & Workshop Conductor</h1>
-                        <p>Control live workstation sessions, run timers, and log instructor notes on the fly.</p>
-                    </div>
+                    <h3>Agility &amp; Innovation</h3>
+                    <p>The golden capsule represents dynamic adaptability. We prepare engineers for real tech breakthroughs, not yesterday’s textbook theory.</p>
                 </div>
 
-                <div class="grid-2-col">
-                    <div class="panel-card session-timer-card">
-                        <div class="panel-header">
-                            <h3>Session Timer & Status</h3>
-                            <span class="badge badge-accent" id="sessionStatusBadge">Ready To Start</span>
-                        </div>
-                        <div class="timer-display-box">
-                            <div class="timer-digits" id="sessionTimerDisplay">00:00:00</div>
-                            <p class="timer-hint">Topic: Agentic AI Engineering & Hands-on Deployment</p>
-                        </div>
-                        <div class="timer-controls">
-                            <button class="btn btn-emerald" id="btnStartTimer">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-                                <span>Start Class</span>
-                            </button>
-                            <button class="btn btn-warning" id="btnPauseTimer" disabled>
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
-                                <span>Pause</span>
-                            </button>
-                            <button class="btn btn-subtle" id="btnResetTimer">Reset</button>
-                        </div>
+                <!-- Deep Navy Peak -->
+                <div class="identity-card card-navy">
+                    <div class="identity-symbol">
+                        <svg width="42" height="42" viewBox="0 0 42 42" fill="none">
+                            <path d="M 6 36 C 3 36, 1 33, 4 30 L 36 4 C 39 1, 42 3, 42 7 L 42 34 C 42 36, 40 36, 38 36 Z" fill="#0E1B4D" />
+                        </svg>
                     </div>
+                    <h3>Foundational Depth</h3>
+                    <p>The navy peak signifies solid architectural rigor, enterprise engineering standards, and robust Linux cloud environments.</p>
+                </div>
 
-                    <div class="panel-card session-checklist-card">
-                        <div class="panel-header">
-                            <h3>Pre-Class Workstation Checklist</h3>
-                            <span class="checklist-count" id="checklistCount">3/4 Done</span>
+                <!-- Vibrant Teal Curve -->
+                <div class="identity-card card-teal">
+                    <div class="identity-symbol">
+                        <svg width="36" height="42" viewBox="0 0 36 42" fill="none">
+                            <path d="M 4 4 H 16 C 24 4, 30 9, 30 17 C 30 22, 27 25, 23 27 C 28 29, 34 33, 34 38 C 34 42, 28 42, 20 42 H 4 Z" fill="#45B7CD" />
+                        </svg>
+                    </div>
+                    <h3>Infinite Expansion</h3>
+                    <p>The vibrant cyan curvature reflects <em>"Learning Without Boundaries"</em> — unlocking borderless career opportunities and tech leadership.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 5. Flagship Programs Section -->
+    <section class="section-programs" id="programs">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-tag">2026 TRAINING TRACKS</span>
+                <h2 class="section-title">Engineered For Real Impact</h2>
+                <p class="section-desc">Each syllabus is designed directly with industry leads, conducted inside our dedicated physical and cloud labs.</p>
+            </div>
+
+            <div class="programs-grid">
+                <!-- Program 1 -->
+                <div class="program-card">
+                    <div>
+                        <div class="program-top-meta">
+                            <span class="program-code">TRACK-AI-01</span>
+                            <span class="status-tag">Enrollment Open</span>
                         </div>
-                        <ul class="lab-checklist">
+                        <h3 class="program-title">Advanced AI &amp; Agentic Systems</h3>
+                        <p class="program-desc">Build autonomous agents, multi-agent frameworks, tool integrations, and production-grade LLM pipelines.</p>
+                        <ul class="program-features">
                             <li>
-                                <label class="check-container">
-                                    <input type="checkbox" checked>
-                                    <span class="checkmark"></span>
-                                    <span>Workstation Terminals & Dual Monitors Powered On</span>
-                                </label>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                <span>Agent tool calling &amp; MCP architectures</span>
                             </li>
                             <li>
-                                <label class="check-container">
-                                    <input type="checkbox" checked>
-                                    <span class="checkmark"></span>
-                                    <span>Local VPS & Sandbox Cloud Credentials Verified</span>
-                                </label>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                <span>Vector databases, RAG &amp; reasoning loops</span>
                             </li>
                             <li>
-                                <label class="check-container">
-                                    <input type="checkbox" checked>
-                                    <span class="checkmark"></span>
-                                    <span>Instructor Slide Deck & Code Repos Pushed</span>
-                                </label>
-                            </li>
-                            <li>
-                                <label class="check-container">
-                                    <input type="checkbox">
-                                    <span class="checkmark"></span>
-                                    <span>Student Attendance Verification Completed</span>
-                                </label>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                <span>Autonomous testing &amp; deployment</span>
                             </li>
                         </ul>
                     </div>
-                </div>
-            </section>
-
-            <!-- Tab 3: Trainee Roster -->
-            <section id="tab-students" class="tab-pane">
-                <div class="section-hero flex-between">
-                    <div class="hero-text">
-                        <h1>Trainee Roster & Grading</h1>
-                        <p>Track student performance, lab submission marks, and quick-toggle attendance status.</p>
-                    </div>
-                    <div class="filter-actions">
-                        <input type="text" id="searchTrainee" class="search-input" placeholder="Search by name or email...">
-                        <button class="btn btn-secondary" id="btnMarkAllPresent">Mark All Present</button>
+                    <div class="program-footer">
+                        <span class="program-duration">⏱ 8 Weeks • 48 Hours</span>
+                        <button class="btn btn-teal btn-sm open-inquiry-modal">Apply Now</button>
                     </div>
                 </div>
 
-                <div class="table-container">
-                    <table class="data-table" id="traineeTable">
-                        <thead>
-                            <tr>
-                                <th>Trainee ID</th>
-                                <th>Full Name</th>
-                                <th>Email</th>
-                                <th>Attendance Rate</th>
-                                <th>Lab Score</th>
-                                <th>Practical Status</th>
-                                <th>Quick Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="traineeTableBody">
-                            <!-- Populated by JS -->
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-
-            <!-- Tab 4: Curriculum & Modules -->
-            <section id="tab-modules" class="tab-pane">
-                <div class="section-hero">
-                    <div class="hero-text">
-                        <h1>Curriculum & Practical Lab Modules</h1>
-                        <p>Structured syllabus breakdown and progress tracking across all workshops.</p>
-                    </div>
-                </div>
-
-                <div class="modules-grid" id="modulesGrid">
-                    <!-- Populated by JS -->
-                </div>
-            </section>
-
-            <!-- Tab 5: Domain & VPS Info -->
-            <section id="tab-vps" class="tab-pane">
-                <div class="section-hero">
-                    <div class="hero-text">
-                        <h1>Domain, Subdomain & VPS Deployment</h1>
-                        <p>DNS configuration details and operational checklist for <strong>training.thelabindonesia.my.id</strong>.</p>
-                    </div>
-                </div>
-
-                <div class="vps-cards-grid">
-                    <div class="panel-card">
-                        <div class="panel-header">
-                            <h3>Domain & Subdomain Architecture</h3>
-                            <span class="badge badge-emerald">DNS Verified</span>
+                <!-- Program 2 -->
+                <div class="program-card">
+                    <div>
+                        <div class="program-top-meta">
+                            <span class="program-code">TRACK-OPS-02</span>
+                            <span class="status-tag">Enrollment Open</span>
                         </div>
-                        <div class="dns-config-box">
-                            <div class="dns-row">
-                                <span class="dns-key">Main Domain</span>
-                                <span class="dns-val">thelabindonesia.my.id</span>
-                            </div>
-                            <div class="dns-row highlight">
-                                <span class="dns-key">Instructor Subdomain</span>
-                                <span class="dns-val">training.thelabindonesia.my.id</span>
-                            </div>
-                            <div class="dns-row">
-                                <span class="dns-key">DNS Record Type</span>
-                                <span class="dns-val">A Record</span>
-                            </div>
-                            <div class="dns-row">
-                                <span class="dns-key">Host / Prefix</span>
-                                <span class="dns-val">training</span>
-                            </div>
-                            <div class="dns-row">
-                                <span class="dns-key">Application Port</span>
-                                <span class="dns-val">3000 (proxied via Nginx 80/443)</span>
-                            </div>
-                            <div class="dns-row">
-                                <span class="dns-key">SSL Provider</span>
-                                <span class="dns-val">Let's Encrypt (Certbot Automated)</span>
-                            </div>
-                        </div>
+                        <h3 class="program-title">Fullstack Cloud &amp; DevOps Engineering</h3>
+                        <p class="program-desc">From bare-metal VPS servers to scalable Nginx reverse proxies, Docker container orchestration, and CI/CD pipelines.</p>
+                        <ul class="program-features">
+                            <li>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                <span>Linux administration &amp; Nginx SSL certbot</span>
+                            </li>
+                            <li>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                <span>Docker containerization &amp; automated scaling</span>
+                            </li>
+                            <li>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                <span>GitHub Actions CI/CD to live servers</span>
+                            </li>
+                        </ul>
                     </div>
-
-                    <div class="panel-card">
-                        <div class="panel-header">
-                            <h3>Quick VPS Deployment Commands</h3>
-                            <span class="badge badge-subtle">Copy & Paste</span>
-                        </div>
-                        <div class="terminal-card">
-                            <div class="terminal-bar">
-                                <span class="t-dot red"></span>
-                                <span class="t-dot yellow"></span>
-                                <span class="t-dot green"></span>
-                                <span class="t-title">bash - root@vps</span>
-                            </div>
-                            <pre class="terminal-content"><code><span class="comment"># 1. Clone your private repo on your VPS:</span>
-git clone https://github.com/LaudzaFarhan/training-center.git
-cd training-center
-
-<span class="comment"># 2. Run app in background with PM2:</span>
-pm2 start server.js --name "thelab-training"
-pm2 save
-
-<span class="comment"># 3. Setup SSL Certificate for Subdomain:</span>
-sudo certbot --nginx -d training.thelabindonesia.my.id</code></pre>
-                        </div>
+                    <div class="program-footer">
+                        <span class="program-duration">⏱ 10 Weeks • 60 Hours</span>
+                        <button class="btn btn-teal btn-sm open-inquiry-modal">Apply Now</button>
                     </div>
                 </div>
-            </section>
-        </main>
-    </div>
 
-    <!-- Edit Score Modal -->
-    <div class="modal-overlay" id="scoreModal">
-        <div class="modal-box">
-            <div class="modal-header">
-                <h3 id="modalStudentName">Update Evaluation</h3>
-                <button class="btn-close" id="btnCloseModal">&times;</button>
+                <!-- Program 3 -->
+                <div class="program-card">
+                    <div>
+                        <div class="program-top-meta">
+                            <span class="program-code">TRACK-DATA-03</span>
+                            <span class="status-tag">Starting Soon</span>
+                        </div>
+                        <h3 class="program-title">Data Intelligence &amp; Machine Learning</h3>
+                        <p class="program-desc">Transform raw data streams into high-throughput predictive engines and automated operational dashboards.</p>
+                        <ul class="program-features">
+                            <li>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                <span>Real-time ETL data pipelines &amp; SQL/NoSQL</span>
+                            </li>
+                            <li>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                <span>Predictive models &amp; deep feature engineering</span>
+                            </li>
+                            <li>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                <span>Executive data reporting &amp; BI integrations</span>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="program-footer">
+                        <span class="program-duration">⏱ 8 Weeks • 48 Hours</span>
+                        <button class="btn btn-teal btn-sm open-inquiry-modal">Apply Now</button>
+                    </div>
+                </div>
             </div>
-            <div class="modal-body">
-                <input type="hidden" id="modalStudentId">
+        </div>
+    </section>
+
+    <!-- 6. Instructor Portal Spotlight Section -->
+    <section class="section-portal-spotlight" id="portal">
+        <div class="container">
+            <div class="portal-box">
+                <div class="portal-text">
+                    <span class="section-tag" style="background: rgba(246, 197, 81, 0.2); color: var(--brand-yellow);">INSTRUCTOR PORTAL &amp; TELEMETRY</span>
+                    <h2>Managed Operationally at training.thelabindonesia.my.id</h2>
+                    <p>The Lab Indonesia provides dedicated instructors with high-velocity tools to track session timers, manage trainee rosters, mark practical evaluations, and review lab workstation health in real-time.</p>
+                    
+                    <div class="portal-meta-features">
+                        <div class="pm-item">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            <span>Live Class Conductor Timer</span>
+                        </div>
+                        <div class="pm-item">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            <span>Trainee Grading &amp; Attendance</span>
+                        </div>
+                        <div class="pm-item">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            <span>Subdomain Isolation (Nginx Reverse Proxy)</span>
+                        </div>
+                        <div class="pm-item">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            <span>SSL Encrypted Telemetry</span>
+                        </div>
+                    </div>
+
+                    <a href="/dashboard" class="btn btn-yellow btn-lg">
+                        <span>Launch Instructor Workspace →</span>
+                    </a>
+                </div>
+
+                <div class="portal-preview-card">
+                    <div class="ppc-header">
+                        <span class="ppc-host">training.thelabindonesia.my.id</span>
+                        <span class="status-tag" style="background: rgba(16, 185, 129, 0.2); color: #10B981;">HTTPS Online</span>
+                    </div>
+                    <ul class="ppc-list">
+                        <li>
+                            <span>Target Node Server:</span>
+                            <strong>Port 3050 (PM2 Active)</strong>
+                        </li>
+                        <li>
+                            <span>Reverse Proxy:</span>
+                            <strong>Nginx 1.24 (Let's Encrypt)</strong>
+                        </li>
+                        <li>
+                            <span>Active Instructors:</span>
+                            <strong>Farhan Laudza (Lead)</strong>
+                        </li>
+                        <li>
+                            <span>Workstation Hub:</span>
+                            <strong>Lab Alpha &amp; Beta</strong>
+                        </li>
+                        <li>
+                            <span>Sync Latency:</span>
+                            <strong>&lt; 15ms Localhost</strong>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 7. The Lab Methodology Pillars -->
+    <section class="methodology-section" id="methodology">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-tag">WHY THE LAB</span>
+                <h2 class="section-title">The "Without Boundaries" Standard</h2>
+                <p class="section-desc">We eliminate artificial barriers between academic concept and real software ship date.</p>
+            </div>
+
+            <div class="methodology-grid">
+                <div class="method-card">
+                    <div class="method-icon yellow">01</div>
+                    <h3>80% Hands-On Bare Metal</h3>
+                    <p>Zero passive lecturing. Every trainee operates on real workstations and cloud instances from day one.</p>
+                </div>
+                <div class="method-card">
+                    <div class="method-icon navy">02</div>
+                    <h3>Senior Practitioner Mentorship</h3>
+                    <p>Learn directly from engineering leads who architect systems for high-throughput enterprise scale.</p>
+                </div>
+                <div class="method-card">
+                    <div class="method-icon teal">03</div>
+                    <h3>Live Production Evaluation</h3>
+                    <p>Your capstone must be deployed to live HTTPS subdomains with real security rules, databases, and monitoring.</p>
+                </div>
+                <div class="method-card">
+                    <div class="method-icon yellow">04</div>
+                    <h3>Corporate Acceleration</h3>
+                    <p>Curriculums tailored to upskill internal enterprise engineering teams to immediate modern standards.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 8. Footer -->
+    <footer class="footer" id="facilities">
+        <div class="container">
+            <div class="footer-top">
+                <div class="footer-brand">
+                    <svg class="brand-icon-svg" viewBox="0 0 500 380" fill="none" xmlns="http://www.w3.org/2000/svg" style="height: 44px; margin-bottom: 8px;">
+                        <rect x="90" y="60" width="60" height="135" rx="30" fill="#F6C551" />
+                        <path d="M 175 192 C 160 192, 154 180, 163 170 L 265 68 C 274 58, 282 62, 282 74 L 282 182 C 282 190, 276 192, 268 192 Z" fill="#0E1B4D" />
+                        <path d="M 302 60 H 342 C 372 60, 396 76, 396 102 C 396 117, 386 128, 372 134 C 392 140, 410 155, 410 178 C 410 206, 384 225, 348 225 H 302 C 298 225, 296 222, 296 218 L 296 67 C 296 63, 298 60, 302 60 Z" fill="#45B7CD" />
+                        <text x="250" y="296" text-anchor="middle" font-family="'Plus Jakarta Sans', sans-serif" font-weight="800" font-size="44" letter-spacing="12" fill="#0E1B4D">THE LAB</text>
+                        <text x="250" y="328" text-anchor="middle" font-family="'Plus Jakarta Sans', sans-serif" font-weight="700" font-size="14" letter-spacing="4.2" fill="#132B66">LEARNING WITHOUT BOUNDARIES</text>
+                    </svg>
+                    <p>The premier technology operational center and engineering academy in Indonesia.</p>
+                </div>
+
+                <div class="footer-col">
+                    <h4>Programs</h4>
+                    <ul>
+                        <li><a href="#programs">AI &amp; Autonomous Agents</a></li>
+                        <li><a href="#programs">Cloud &amp; DevOps Engineering</a></li>
+                        <li><a href="#programs">Data Intelligence &amp; ML</a></li>
+                        <li><a href="#programs">Enterprise Workshops</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-col">
+                    <h4>Operational Hub</h4>
+                    <ul>
+                        <li><a href="/dashboard">Instructor Portal</a></li>
+                        <li><a href="#portal">Live Telemetry</a></li>
+                        <li><a href="https://training.thelabindonesia.my.id">training.thelabindonesia.my.id</a></li>
+                        <li><a href="#identity">Brand Identity</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-col">
+                    <h4>Contact &amp; Location</h4>
+                    <ul>
+                        <li><span style="font-size: 13px; color: var(--text-muted);">The Lab Indonesia HQ</span></li>
+                        <li><span style="font-size: 13px; color: var(--text-muted);">Jakarta, Indonesia</span></li>
+                        <li><a href="mailto:admission@thelabindonesia.my.id">admission@thelabindonesia.my.id</a></li>
+                        <li><a href="https://thelabindonesia.my.id">thelabindonesia.my.id</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <span>© 2026 The Lab Indonesia. All rights reserved. Learning Without Boundaries.</span>
+                <span>Subdomain Gateway: <strong>training.thelabindonesia.my.id</strong></span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- 9. Registration / Consultation Modal -->
+    <div class="modal-overlay" id="inquiryModal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>Enroll / Inquire for 2026</h3>
+                <button class="close-btn" id="closeModalBtn">&times;</button>
+            </div>
+            <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 20px;">
+                Leave your details to receive the complete syllabus breakdown, workstation schedule, and admission procedure.
+            </p>
+            <form id="inquiryForm">
                 <div class="form-group">
-                    <label for="inputScore">Lab Assessment Score (0-100):</label>
-                    <input type="number" id="inputScore" min="0" max="100" class="input-field">
+                    <label for="inqName">Full Name</label>
+                    <input type="text" id="inqName" class="form-control" placeholder="e.g. Budi Santoso" required>
                 </div>
                 <div class="form-group">
-                    <label for="selectLabStatus">Practical Evaluation Status:</label>
-                    <select id="selectLabStatus" class="input-field">
-                        <option value="Verified">Verified / Approved</option>
-                        <option value="Pending Review">Pending Review</option>
-                        <option value="Needs Revision">Needs Revision</option>
+                    <label for="inqEmail">Work or Personal Email</label>
+                    <input type="email" id="inqEmail" class="form-control" placeholder="budi@example.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="inqPhone">WhatsApp Phone Number</label>
+                    <input type="tel" id="inqPhone" class="form-control" placeholder="+62 812-xxxx-xxxx" required>
+                </div>
+                <div class="form-group">
+                    <label for="inqTrack">Target Training Track</label>
+                    <select id="inqTrack" class="form-control">
+                        <option value="AI">Advanced AI &amp; Agentic Systems</option>
+                        <option value="DevOps">Fullstack Cloud &amp; DevOps Engineering</option>
+                        <option value="Data">Data Intelligence &amp; Machine Learning</option>
+                        <option value="Corporate">Custom Corporate Workshop</option>
                     </select>
                 </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-subtle" id="btnCancelModal">Cancel</button>
-                <button class="btn btn-primary" id="btnSaveScore">Save Evaluation</button>
-            </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px; padding: 12px;">
+                    Submit Application / Inquiry
+                </button>
+            </form>
         </div>
     </div>
 
-    <script src="js/app.js"></script>
+    <!-- Scripts -->
+    <script src="js/landing.js"></script>
 </body>
 </html>

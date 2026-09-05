@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 380" width="100%" height="100%">
+  <defs>
+    <!-- Subtle drop-shadow for premium feel -->
+    <filter id="softGlow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#0E1B4D" flood-opacity="0.08"/>
+    </filter>
+  </defs>
+
+  <g filter="url(#softGlow)">
+    <!-- Yellow Capsule (Left Shape) -->
+    <rect x="90" y="60" width="60" height="135" rx="30" fill="#F6C551" />
+
+    <!-- Deep Navy Triangle (Center Shape) with rounded corners -->
+    <path d="M 175 192 
+             C 160 192, 154 180, 163 170 
+             L 265 68 
+             C 274 58, 282 62, 282 74 
+             L 282 182 
+             C 282 190, 276 192, 268 192 
+             Z" 
+          fill="#0E1B4D" />
+
+    <!-- Vibrant Teal / Sky Blue B-Shape (Right Shape) with signature rounded organic flow -->
+    <path d="M 302 60 
+             H 342 
+             C 372 60, 396 76, 396 102 
+             C 396 117, 386 128, 372 134 
+             C 392 140, 410 155, 410 178 
+             C 410 206, 384 225, 348 225 
+             H 302 
+             C 298 225, 296 222, 296 218 
+             L 296 67 
+             C 296 63, 298 60, 302 60 
+             Z" 
+          fill="#45B7CD" />
+  </g>
+
+  <!-- Typography -->
+  <!-- "THE LAB" -->
+  <text x="250" y="296" 
+        text-anchor="middle" 
+        font-family="'Plus Jakarta Sans', 'Outfit', system-ui, sans-serif" 
+        font-weight="800" 
+        font-size="44" 
+        letter-spacing="12" 
+        fill="#090F26">THE LAB</text>
+
+  <!-- "LEARNING WITHOUT BOUNDARIES" -->
+  <text x="250" y="328" 
+        text-anchor="middle" 
+        font-family="'Plus Jakarta Sans', 'Outfit', system-ui, sans-serif" 
+        font-weight="700" 
+        font-size="14" 
+        letter-spacing="4.2" 
+        fill="#132B66">LEARNING WITHOUT BOUNDARIES</text>
+</svg>
