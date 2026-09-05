@@ -162,8 +162,9 @@ async function initDatabase() {
         return;
     }
 
+    let client = null;
     try {
-        const client = await pgPool.connect();
+        client = await pgPool.connect();
         isPostgresConnected = true;
         console.log('🐘 Connected to PostgreSQL successfully.');
 
@@ -255,13 +256,43 @@ async function initDatabase() {
                 );
             }
         }
-
-        client.release();
     } catch (err) {
         console.warn('⚠️ [Postgres Note]: Could not connect to PostgreSQL server:', err.message);
         console.log('ℹ️ Server will operate using internal store until PostgreSQL connection is active.');
         isPostgresConnected = false;
+    } finally {
+        if (client) {
+            try { client.release(); } catch (e) {}
+        }
     }
+}
+
+// Data Access API
+async function getStats() {
+    if (isPostgresConnected && pgPool) {
+        try {
+            const cohortsRes = await pgPool.query('SELECT COUNT(*) FROM cohorts');
+            const studentsRes = await pgPool.query('SELECT COUNT(*), AVG(attendance) as avg_att FROM students');
+            const instructorsRes = await pgPool.query('SELECT COUNT(*) FROM users');
+
+            const activeCohorts = parseInt(cohortsRes.rows[0].count, 10) || 0;
+            const totalTrainees = parseInt(studentsRes.rows[0].count, 10) || 0;
+            const avgAttendanceNum = studentsRes.rows[0].avg_att ? parseFloat(studentsRes.rows[0].avg_att) : 94.2;
+            const activeInstructors = parseInt(instructorsRes.rows[0].count, 10) || 0;
+
+            return {
+                activeCohorts,
+                totalTrainees,
+                averageAttendance: `${avgAttendanceNum.toFixed(1)}%`,
+                completedSessions: memoryStore.stats.completedSessions,
+                upcomingSessions: memoryStore.stats.upcomingSessions,
+                activeInstructors: activeInstructors > 0 ? activeInstructors : memoryStore.stats.activeInstructors
+            };
+        } catch (e) {
+            console.warn('Postgres getStats error:', e.message);
+        }
+    }
+    return memoryStore.stats;
 }
 
 // Data Access API

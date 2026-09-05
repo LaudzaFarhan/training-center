@@ -343,14 +343,30 @@ const server = http.createServer(async (req, res) => {
     });
 });
 
-// Initialize database then start server
-db.initDatabase().then(() => {
-    server.listen(PORT, () => {
-        console.log(`=======================================================`);
-        console.log(`🚀 The Lab Indonesia - Training Center Operational Core`);
-        console.log(`🌐 Server running at: http://localhost:${PORT}`);
-        console.log(`🔐 Admin Account: ${process.env.ADMIN_EMAIL || 'admin@thelabindonesia.my.id'}`);
-        console.log(`🎯 Target URL: https://training.thelabindonesia.my.id`);
-        console.log(`=======================================================`);
-    });
+// Error handling on HTTP server
+server.on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+        console.error(`❌ Port ${PORT} is already in use by another process.`);
+        console.error(`👉 Run 'lsof -i :${PORT}' or set a different PORT in .env.`);
+    } else {
+        console.error('❌ Server HTTP error:', err.message);
+    }
+    process.exit(1);
 });
+
+// Initialize database then start server
+db.initDatabase()
+    .catch((err) => {
+        console.warn('⚠️ [Database Notice]: Initial sync skipped or in memory mode:', err.message);
+    })
+    .finally(() => {
+        server.listen(PORT, '0.0.0.0', () => {
+            console.log(`=======================================================`);
+            console.log(`🚀 The Lab Indonesia - Training Center Operational Core`);
+            console.log(`🌐 Server running at: http://0.0.0.0:${PORT}`);
+            console.log(`🔐 Admin Account: ${process.env.ADMIN_EMAIL || 'admin@thelabindonesia.my.id'}`);
+            console.log(`🎯 Target URL: https://training.thelabindonesia.my.id`);
+            console.log(`=======================================================`);
+        });
+    });
+
