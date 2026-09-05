@@ -142,10 +142,12 @@ body {
     text-decoration: none;
 }
 
-.brand-icon-svg {
-    height: 48px;
+.brand-icon-svg,
+.brand-logo-img {
+    height: 54px;
     width: auto;
     display: block;
+    object-fit: contain;
 }
 
 .nav-links {

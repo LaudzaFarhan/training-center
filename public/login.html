@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Instructor Login | The Lab Indonesia</title>
     <meta name="description" content="Sign in to The Lab Indonesia Instructor Operational Center">
-    <link rel="icon" type="image/svg+xml" href="assets/logo.svg">
+    <link rel="icon" type="image/png" href="assets/logo.png">
     
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -179,46 +179,6 @@
             cursor: not-allowed;
         }
 
-        /* Quick Admin Auto-fill Box */
-        .admin-helper-box {
-            margin-top: 24px;
-            padding: 14px 16px;
-            background: var(--brand-yellow-light);
-            border: 1px dashed rgba(246, 197, 81, 0.8);
-            border-radius: var(--radius-md);
-            font-size: 12px;
-        }
-
-        .helper-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-weight: 700;
-            color: #8C5E00;
-            margin-bottom: 6px;
-        }
-
-        .btn-fill-admin {
-            background: #FFFFFF;
-            border: 1px solid rgba(246, 197, 81, 0.6);
-            color: #8C5E00;
-            padding: 2px 8px;
-            border-radius: var(--radius-pill);
-            font-size: 11px;
-            font-weight: 700;
-            cursor: pointer;
-        }
-
-        .btn-fill-admin:hover {
-            background: var(--brand-yellow);
-            color: var(--brand-navy);
-        }
-
-        .helper-creds {
-            font-family: var(--font-mono);
-            color: #5C4003;
-            line-height: 1.5;
-        }
 
         .back-home {
             text-align: center;
@@ -243,13 +203,7 @@
     <div class="login-wrapper">
         <div class="brand-header">
             <a href="/">
-                <svg class="logo-img" viewBox="0 0 500 380" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect x="90" y="60" width="60" height="135" rx="30" fill="#F6C551" />
-                    <path d="M 175 192 C 160 192, 154 180, 163 170 L 265 68 C 274 58, 282 62, 282 74 L 282 182 C 282 190, 276 192, 268 192 Z" fill="#0E1B4D" />
-                    <path d="M 302 60 H 342 C 372 60, 396 76, 396 102 C 396 117, 386 128, 372 134 C 392 140, 410 155, 410 178 C 410 206, 384 225, 348 225 H 302 C 298 225, 296 222, 296 218 L 296 67 C 296 63, 298 60, 302 60 Z" fill="#45B7CD" />
-                    <text x="250" y="296" text-anchor="middle" font-family="'Plus Jakarta Sans', sans-serif" font-weight="800" font-size="44" letter-spacing="12" fill="#0E1B4D">THE LAB</text>
-                    <text x="250" y="328" text-anchor="middle" font-family="'Plus Jakarta Sans', sans-serif" font-weight="700" font-size="14" letter-spacing="4.2" fill="#132B66">LEARNING WITHOUT BOUNDARIES</text>
-                </svg>
+                <img src="assets/logo.png" alt="THE LAB - Learning Without Boundaries" class="logo-img" style="height: 68px; width: auto; display: inline-block;">
             </a>
         </div>
 
@@ -279,16 +233,6 @@
                 </button>
             </form>
 
-            <div class="admin-helper-box">
-                <div class="helper-header">
-                    <span>🔑 Default Administrator</span>
-                    <button type="button" class="btn-fill-admin" id="btnAutoFill">Auto-Fill</button>
-                </div>
-                <div class="helper-creds">
-                    <div>Email: <strong>admin@thelabindonesia.my.id</strong></div>
-                    <div>Pass: <strong>TheLab2026!Admin</strong></div>
-                </div>
-            </div>
         </div>
 
         <div class="back-home">
@@ -303,14 +247,6 @@
         const errorAlert = document.getElementById('loginError');
         const errorMessage = document.getElementById('errorMessage');
         const btnLogin = document.getElementById('btnLogin');
-        const btnAutoFill = document.getElementById('btnAutoFill');
-
-        // Auto-fill admin credentials
-        btnAutoFill.addEventListener('click', () => {
-            emailInput.value = 'admin@thelabindonesia.my.id';
-            passwordInput.value = 'TheLab2026!Admin';
-            errorAlert.classList.remove('active');
-        });
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
