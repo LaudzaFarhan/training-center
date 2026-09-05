@@ -16,15 +16,13 @@
         <aside class="sidebar">
             <div class="brand-box">
                 <a href="/" style="text-decoration: none; color: inherit;">
-                    <div class="brand-logo">
-                        <div class="logo-hex">
-                            <span>TL</span>
-                        </div>
-                        <div class="brand-text">
-                            <h2>THE LAB</h2>
-                            <span class="sub-badge">INSTRUCTOR CENTER</span>
-                        </div>
-                    </div>
+                    <svg style="height: 44px; width: auto; display: block;" viewBox="0 0 500 380" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="90" y="60" width="60" height="135" rx="30" fill="#F6C551" />
+                        <path d="M 175 192 C 160 192, 154 180, 163 170 L 265 68 C 274 58, 282 62, 282 74 L 282 182 C 282 190, 276 192, 268 192 Z" fill="#0E1B4D" />
+                        <path d="M 302 60 H 342 C 372 60, 396 76, 396 102 C 396 117, 386 128, 372 134 C 392 140, 410 155, 410 178 C 410 206, 384 225, 348 225 H 302 C 298 225, 296 222, 296 218 L 296 67 C 296 63, 298 60, 302 60 Z" fill="#45B7CD" />
+                        <text x="250" y="296" text-anchor="middle" font-family="'Plus Jakarta Sans', 'Outfit', sans-serif" font-weight="800" font-size="44" letter-spacing="12" fill="#0E1B4D">THE LAB</text>
+                        <text x="250" y="328" text-anchor="middle" font-family="'Plus Jakarta Sans', 'Outfit', sans-serif" font-weight="700" font-size="14" letter-spacing="4.2" fill="#132B66">LEARNING WITHOUT BOUNDARIES</text>
+                    </svg>
                 </a>
             </div>
 
@@ -97,13 +95,18 @@
 
                     <div class="user-profile">
                         <div class="avatar-ring">
-                            <span class="avatar-initials">FL</span>
+                            <span class="avatar-initials" id="userInitials">FL</span>
                         </div>
                         <div class="user-info">
-                            <span class="user-name">Farhan Laudza</span>
-                            <span class="user-role">Lead Instructor</span>
+                            <span class="user-name" id="userName">Farhan Laudza</span>
+                            <span class="user-role" id="userRole">Lead Instructor</span>
                         </div>
                     </div>
+
+                    <button class="btn-logout" id="btnLogout" title="Sign Out">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                        <span>Logout</span>
+                    </button>
                 </div>
             </header>
 

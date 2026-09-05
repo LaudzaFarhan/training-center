@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instructor Login | The Lab Indonesia</title>
+    <meta name="description" content="Sign in to The Lab Indonesia Instructor Operational Center">
+    <link rel="icon" type="image/svg+xml" href="assets/logo.svg">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --brand-yellow: #F6C551;
+            --brand-yellow-light: #FEF8E7;
+            --brand-navy: #0E1B4D;
+            --brand-navy-light: #182C75;
+            --brand-teal: #45B7CD;
+            --brand-teal-light: #EDF9FB;
+
+            --bg-page: #FAFCFF;
+            --bg-card: #FFFFFF;
+            --text-heading: #0E1B4D;
+            --text-body: #334155;
+            --text-muted: #64748B;
+            --border-subtle: rgba(14, 27, 77, 0.1);
+            --border-focus: #45B7CD;
+
+            --shadow-card: 0 20px 45px rgba(14, 27, 77, 0.08), 0 4px 16px rgba(14, 27, 77, 0.04);
+            --radius-md: 12px;
+            --radius-lg: 20px;
+            --radius-pill: 9999px;
+            --font-main: 'Plus Jakarta Sans', system-ui, sans-serif;
+            --font-heading: 'Outfit', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-page);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(69, 183, 205, 0.12) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(246, 197, 81, 0.14) 0px, transparent 50%),
+                radial-gradient(at 50% 100%, rgba(14, 27, 77, 0.05) 0px, transparent 50%);
+            background-attachment: fixed;
+            font-family: var(--font-main);
+            color: var(--text-body);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        .login-wrapper {
+            width: 100%;
+            max-width: 440px;
+        }
+
+        .brand-header {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+
+        .logo-img {
+            height: 52px;
+            margin-bottom: 12px;
+        }
+
+        .login-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-card);
+            padding: 36px 32px;
+        }
+
+        .login-title {
+            font-family: var(--font-heading);
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--brand-navy);
+            margin-bottom: 6px;
+        }
+
+        .login-subtitle {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-bottom: 24px;
+        }
+
+        .alert-error {
+            display: none;
+            background: #FEF2F2;
+            border: 1px solid #F87171;
+            color: #991B1B;
+            padding: 12px 14px;
+            border-radius: var(--radius-md);
+            font-size: 13px;
+            margin-bottom: 20px;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .alert-error.active {
+            display: flex;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group label {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--brand-navy);
+        }
+
+        .input-box {
+            position: relative;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: var(--radius-md);
+            border: 1.5px solid rgba(14, 27, 77, 0.15);
+            font-size: 14px;
+            font-family: var(--font-main);
+            color: var(--text-heading);
+            background: #FFFFFF;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .form-control:focus {
+            border-color: var(--border-focus);
+            box-shadow: 0 0 0 3px var(--brand-teal-light);
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 13px;
+            background: var(--brand-navy);
+            color: #FFFFFF;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 14px rgba(14, 27, 77, 0.2);
+            margin-top: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-submit:hover {
+            background: var(--brand-navy-light);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(14, 27, 77, 0.28);
+        }
+
+        .btn-submit:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* Quick Admin Auto-fill Box */
+        .admin-helper-box {
+            margin-top: 24px;
+            padding: 14px 16px;
+            background: var(--brand-yellow-light);
+            border: 1px dashed rgba(246, 197, 81, 0.8);
+            border-radius: var(--radius-md);
+            font-size: 12px;
+        }
+
+        .helper-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 700;
+            color: #8C5E00;
+            margin-bottom: 6px;
+        }
+
+        .btn-fill-admin {
+            background: #FFFFFF;
+            border: 1px solid rgba(246, 197, 81, 0.6);
+            color: #8C5E00;
+            padding: 2px 8px;
+            border-radius: var(--radius-pill);
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .btn-fill-admin:hover {
+            background: var(--brand-yellow);
+            color: var(--brand-navy);
+        }
+
+        .helper-creds {
+            font-family: var(--font-mono);
+            color: #5C4003;
+            line-height: 1.5;
+        }
+
+        .back-home {
+            text-align: center;
+            margin-top: 24px;
+        }
+
+        .back-home a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 600;
+            transition: color 0.2s ease;
+        }
+
+        .back-home a:hover {
+            color: var(--brand-teal);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-wrapper">
+        <div class="brand-header">
+            <a href="/">
+                <svg class="logo-img" viewBox="0 0 500 380" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="90" y="60" width="60" height="135" rx="30" fill="#F6C551" />
+                    <path d="M 175 192 C 160 192, 154 180, 163 170 L 265 68 C 274 58, 282 62, 282 74 L 282 182 C 282 190, 276 192, 268 192 Z" fill="#0E1B4D" />
+                    <path d="M 302 60 H 342 C 372 60, 396 76, 396 102 C 396 117, 386 128, 372 134 C 392 140, 410 155, 410 178 C 410 206, 384 225, 348 225 H 302 C 298 225, 296 222, 296 218 L 296 67 C 296 63, 298 60, 302 60 Z" fill="#45B7CD" />
+                    <text x="250" y="296" text-anchor="middle" font-family="'Plus Jakarta Sans', sans-serif" font-weight="800" font-size="44" letter-spacing="12" fill="#0E1B4D">THE LAB</text>
+                    <text x="250" y="328" text-anchor="middle" font-family="'Plus Jakarta Sans', sans-serif" font-weight="700" font-size="14" letter-spacing="4.2" fill="#132B66">LEARNING WITHOUT BOUNDARIES</text>
+                </svg>
+            </a>
+        </div>
+
+        <div class="login-card">
+            <h1 class="login-title">Instructor Sign In</h1>
+            <p class="login-subtitle">Enter your credentials to access the Operational Training Center.</p>
+
+            <div class="alert-error" id="loginError">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                <span id="errorMessage">Invalid email or password</span>
+            </div>
+
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="email">Instructor Email</label>
+                    <input type="email" id="email" class="form-control" placeholder="name@thelabindonesia.my.id" required autofocus>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" class="form-control" placeholder="••••••••••••" required>
+                </div>
+
+                <button type="submit" class="btn-submit" id="btnLogin">
+                    <span>Sign In to Dashboard</span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                </button>
+            </form>
+
+            <div class="admin-helper-box">
+                <div class="helper-header">
+                    <span>🔑 Default Administrator</span>
+                    <button type="button" class="btn-fill-admin" id="btnAutoFill">Auto-Fill</button>
+                </div>
+                <div class="helper-creds">
+                    <div>Email: <strong>admin@thelabindonesia.my.id</strong></div>
+                    <div>Pass: <strong>TheLab2026!Admin</strong></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="back-home">
+            <a href="/">← Back to The Lab Public Website</a>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('loginForm');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const errorAlert = document.getElementById('loginError');
+        const errorMessage = document.getElementById('errorMessage');
+        const btnLogin = document.getElementById('btnLogin');
+        const btnAutoFill = document.getElementById('btnAutoFill');
+
+        // Auto-fill admin credentials
+        btnAutoFill.addEventListener('click', () => {
+            emailInput.value = 'admin@thelabindonesia.my.id';
+            passwordInput.value = 'TheLab2026!Admin';
+            errorAlert.classList.remove('active');
+        });
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            errorAlert.classList.remove('active');
+            btnLogin.disabled = true;
+            btnLogin.innerHTML = '<span>Verifying...</span>';
+
+            try {
+                const res = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: emailInput.value.trim(),
+                        password: passwordInput.value
+                    })
+                });
+
+                const data = await res.json();
+
+                if (!res.ok || !data.success) {
+                    throw new Error(data.error || 'Authentication failed');
+                }
+
+                // Check for redirect param or go straight to /dashboard
+                const params = new URLSearchParams(window.location.search);
+                const target = params.get('redirect') || '/dashboard';
+                window.location.href = target;
+            } catch (err) {
+                errorMessage.textContent = err.message;
+                errorAlert.classList.add('active');
+                btnLogin.disabled = false;
+                btnLogin.innerHTML = '<span>Sign In to Dashboard</span>';
+            }
+        });
+    </script>
+</body>
+</html>

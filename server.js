@@ -1,78 +1,22 @@
 /**
  * The Lab Indonesia - Training Center Server
- * Serves the Instructor Dashboard & Operational REST APIs.
- * Supports zero-dependency fallback (native Node.js http) or Express.
+ * Serves Public Landing Page, Instructor Dashboard, REST APIs, and Authentication.
+ * Integrated with PostgreSQL & Environment Configurations.
  */
+
+try {
+    require('dotenv').config();
+} catch (e) {
+    // optional dotenv
+}
 
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const db = require('./db');
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3050;
 const PUBLIC_DIR = path.join(__dirname, 'public');
-
-// In-Memory Data Store (Can be easily hooked to SQLite, Postgres, or MongoDB)
-const db = {
-    stats: {
-        activeCohorts: 4,
-        totalTrainees: 48,
-        averageAttendance: '94.2%',
-        completedSessions: 32,
-        upcomingSessions: 8,
-        activeInstructors: 6
-    },
-    cohorts: [
-        {
-            id: 'TL-2026-B1',
-            name: 'Cohort #1 - Advanced AI & Agentic Workflows',
-            leadInstructor: 'Farhan Laudza',
-            room: 'Lab Alpha (Workstation Room 101)',
-            startDate: '2026-02-01',
-            status: 'In Progress',
-            progress: 68,
-            schedule: 'Mon, Wed, Fri (19:00 - 21:30 WIB)',
-            totalStudents: 14
-        },
-        {
-            id: 'TL-2026-B2',
-            name: 'Cohort #2 - Fullstack Cloud & DevOps Engineering',
-            leadInstructor: 'Senior Lab Mentor',
-            room: 'Lab Beta (Cloud Terminal)',
-            startDate: '2026-02-15',
-            status: 'In Progress',
-            progress: 45,
-            schedule: 'Tue, Thu, Sat (09:00 - 12:00 WIB)',
-            totalStudents: 16
-        },
-        {
-            id: 'TL-2026-B3',
-            name: 'Cohort #3 - Data Intelligence & Machine Learning',
-            leadInstructor: 'AI Research Lead',
-            room: 'Lab Gamma (GPU Cluster)',
-            startDate: '2026-03-01',
-            status: 'Upcoming',
-            progress: 0,
-            schedule: 'Sat & Sun (13:00 - 17:00 WIB)',
-            totalStudents: 18
-        }
-    ],
-    students: [
-        { id: 'STU-01', cohortId: 'TL-2026-B1', name: 'Rian Pratama', email: 'rian@thelab.id', attendance: 95, score: 88, status: 'Active', labStatus: 'Verified' },
-        { id: 'STU-02', cohortId: 'TL-2026-B1', name: 'Siti Nurhaliza', email: 'siti@thelab.id', attendance: 100, score: 94, status: 'Active', labStatus: 'Verified' },
-        { id: 'STU-03', cohortId: 'TL-2026-B1', name: 'Budi Santoso', email: 'budi@thelab.id', attendance: 88, score: 79, status: 'Active', labStatus: 'Pending Review' },
-        { id: 'STU-04', cohortId: 'TL-2026-B1', name: 'Nadia Safitri', email: 'nadia@thelab.id', attendance: 92, score: 91, status: 'Active', labStatus: 'Verified' },
-        { id: 'STU-05', cohortId: 'TL-2026-B1', name: 'Dimas Wicaksono', email: 'dimas@thelab.id', attendance: 85, score: 82, status: 'Active', labStatus: 'Verified' },
-        { id: 'STU-06', cohortId: 'TL-2026-B1', name: 'Aisyah Putri', email: 'aisyah@thelab.id', attendance: 100, score: 96, status: 'Active', labStatus: 'Verified' },
-        { id: 'STU-07', cohortId: 'TL-2026-B2', name: 'Kevin Jonathan', email: 'kevin@thelab.id', attendance: 90, score: 85, status: 'Active', labStatus: 'Verified' },
-        { id: 'STU-08', cohortId: 'TL-2026-B2', name: 'Maya Anggraini', email: 'maya@thelab.id', attendance: 95, score: 89, status: 'Active', labStatus: 'Verified' }
-    ],
-    modules: [
-        { id: 'MOD-01', title: 'Module 1: Foundations & Architecture Setup', hours: 8, status: 'Completed', completionRate: '100%' },
-        { id: 'MOD-02', title: 'Module 2: Agent Tooling, Multi-Agent & Orchestration', hours: 12, status: 'In Progress', completionRate: '75%' },
-        { id: 'MOD-03', title: 'Module 3: Cloud Deployment, VPS & Production Pipeline', hours: 10, status: 'Next Up', completionRate: '0%' },
-        { id: 'MOD-04', title: 'Module 4: Capstone Project & Industry Lab Evaluation', hours: 16, status: 'Scheduled', completionRate: '0%' }
-    ]
-};
 
 // MIME types dictionary
 const MIME_TYPES = {
@@ -87,11 +31,38 @@ const MIME_TYPES = {
     '.woff2': 'font/woff2'
 };
 
-const server = http.createServer((req, res) => {
-    // CORS headers for development flexibility
+// Helper to parse cookies
+function parseCookies(cookieHeader) {
+    const cookies = {};
+    if (!cookieHeader) return cookies;
+    cookieHeader.split(';').forEach(pair => {
+        const [k, v] = pair.trim().split('=');
+        if (k && v) cookies[k] = decodeURIComponent(v);
+    });
+    return cookies;
+}
+
+// Helper to parse JSON request bodies
+function readJsonBody(req) {
+    return new Promise((resolve, reject) => {
+        let body = '';
+        req.on('data', chunk => { body += chunk; });
+        req.on('end', () => {
+            try {
+                resolve(body ? JSON.parse(body) : {});
+            } catch (err) {
+                reject(err);
+            }
+        });
+        req.on('error', reject);
+    });
+}
+
+const server = http.createServer(async (req, res) => {
+    // CORS headers
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
     if (req.method === 'OPTIONS') {
         res.writeHead(204);
@@ -99,56 +70,132 @@ const server = http.createServer((req, res) => {
         return;
     }
 
-    const url = new URL(req.url, `http://${req.headers.host}`);
+    const host = req.headers.host || `localhost:${PORT}`;
+    const url = new URL(req.url, `http://${host}`);
+    const cookies = parseCookies(req.headers.cookie);
+    const authHeader = req.headers.authorization;
 
+    // Check token from Authorization header (Bearer ...) or session_token cookie
+    let token = null;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+        token = authHeader.substring(7);
+    } else if (cookies.session_token) {
+        token = cookies.session_token;
+    }
+
+    const sessionUser = db.validateSession(token);
+
+    // ==========================================
+    // Authentication Endpoints (/api/auth/*)
+    // ==========================================
+    if (url.pathname.startsWith('/api/auth/')) {
+        res.setHeader('Content-Type', 'application/json');
+
+        if (url.pathname === '/api/auth/login' && req.method === 'POST') {
+            try {
+                const body = await readJsonBody(req);
+                const { email, password } = body;
+
+                if (!email || !password) {
+                    res.writeHead(400);
+                    res.end(JSON.stringify({ error: 'Email and password are required' }));
+                    return;
+                }
+
+                const user = await db.findUserByEmail(email);
+                if (!user || !db.verifyPassword(password, user.password_hash)) {
+                    res.writeHead(401);
+                    res.end(JSON.stringify({ error: 'Invalid email or password' }));
+                    return;
+                }
+
+                const sessionToken = db.generateSessionToken(user);
+
+                // Set HttpOnly cookie for web security
+                res.setHeader('Set-Cookie', `session_token=${sessionToken}; Path=/; HttpOnly; SameSite=Lax; Max-Age=86400`);
+                res.writeHead(200);
+                res.end(JSON.stringify({
+                    success: true,
+                    token: sessionToken,
+                    user: {
+                        id: user.id,
+                        name: user.name,
+                        email: user.email,
+                        role: user.role
+                    }
+                }));
+            } catch (err) {
+                res.writeHead(500);
+                res.end(JSON.stringify({ error: 'Login error: ' + err.message }));
+            }
+            return;
+        }
+
+        if (url.pathname === '/api/auth/logout' && req.method === 'POST') {
+            if (token) db.revokeSession(token);
+            res.setHeader('Set-Cookie', 'session_token=; Path=/; HttpOnly; Max-Age=0');
+            res.writeHead(200);
+            res.end(JSON.stringify({ success: true, message: 'Logged out successfully' }));
+            return;
+        }
+
+        if (url.pathname === '/api/auth/me' && req.method === 'GET') {
+            if (!sessionUser) {
+                res.writeHead(401);
+                res.end(JSON.stringify({ authenticated: false, user: null }));
+                return;
+            }
+            res.writeHead(200);
+            res.end(JSON.stringify({ authenticated: true, user: sessionUser }));
+            return;
+        }
+    }
+
+    // ==========================================
     // REST API Routes
+    // ==========================================
     if (url.pathname.startsWith('/api/')) {
         res.setHeader('Content-Type', 'application/json');
 
         if (url.pathname === '/api/stats') {
+            const stats = await db.getStats();
             res.writeHead(200);
-            res.end(JSON.stringify(db.stats));
+            res.end(JSON.stringify(stats));
             return;
         }
 
         if (url.pathname === '/api/cohorts') {
+            const cohorts = await db.getCohorts();
             res.writeHead(200);
-            res.end(JSON.stringify(db.cohorts));
+            res.end(JSON.stringify(cohorts));
             return;
         }
 
         if (url.pathname === '/api/students') {
             const cohortId = url.searchParams.get('cohortId');
-            const data = cohortId ? db.students.filter(s => s.cohortId === cohortId) : db.students;
+            const data = await db.getStudents(cohortId);
             res.writeHead(200);
             res.end(JSON.stringify(data));
             return;
         }
 
         if (url.pathname === '/api/modules') {
+            const modules = await db.getModules();
             res.writeHead(200);
-            res.end(JSON.stringify(db.modules));
+            res.end(JSON.stringify(modules));
             return;
         }
 
         if (url.pathname === '/api/attendance' && req.method === 'POST') {
-            let body = '';
-            req.on('data', chunk => { body += chunk; });
-            req.on('end', () => {
-                try {
-                    const parsed = JSON.parse(body);
-                    const student = db.students.find(s => s.id === parsed.studentId);
-                    if (student) {
-                        student.attendance = parsed.attendance ?? student.attendance;
-                        student.status = parsed.status ?? student.status;
-                    }
-                    res.writeHead(200);
-                    res.end(JSON.stringify({ success: true, student }));
-                } catch (err) {
-                    res.writeHead(400);
-                    res.end(JSON.stringify({ error: 'Invalid JSON payload' }));
-                }
-            });
+            try {
+                const body = await readJsonBody(req);
+                const updated = await db.updateStudent(body.studentId, body);
+                res.writeHead(200);
+                res.end(JSON.stringify({ success: true, student: updated }));
+            } catch (err) {
+                res.writeHead(400);
+                res.end(JSON.stringify({ error: 'Invalid payload' }));
+            }
             return;
         }
 
@@ -157,17 +204,39 @@ const server = http.createServer((req, res) => {
         return;
     }
 
+    // ==========================================
     // Static Files & Page Routing
+    // ==========================================
     let targetPath = url.pathname;
+
+    // Route: Root (Landing Page)
     if (targetPath === '/' || targetPath === '') {
         targetPath = 'index.html';
-    } else if (targetPath === '/dashboard' || targetPath === '/dashboard/' || targetPath === '/instructor') {
+    }
+    // Route: Login Page
+    else if (targetPath === '/login' || targetPath === '/login/') {
+        // If already logged in, redirect to dashboard
+        if (sessionUser) {
+            res.writeHead(302, { 'Location': '/dashboard' });
+            res.end();
+            return;
+        }
+        targetPath = 'login.html';
+    }
+    // Route: Protected Dashboard
+    else if (targetPath === '/dashboard' || targetPath === '/dashboard/' || targetPath === '/dashboard.html' || targetPath === '/instructor') {
+        // Enforce Authentication: redirect unauthenticated users to /login
+        if (!sessionUser) {
+            res.writeHead(302, { 'Location': '/login?redirect=/dashboard' });
+            res.end();
+            return;
+        }
         targetPath = 'dashboard.html';
     }
 
     let filePath = path.join(PUBLIC_DIR, targetPath);
 
-    // Normalize path to prevent directory traversal
+    // Prevent directory traversal
     if (!filePath.startsWith(PUBLIC_DIR)) {
         res.writeHead(403);
         res.end('Access Denied');
@@ -176,7 +245,6 @@ const server = http.createServer((req, res) => {
 
     fs.stat(filePath, (err, stats) => {
         if (err || !stats.isFile()) {
-            // Fallback to index.html for SPA routing
             filePath = path.join(PUBLIC_DIR, 'index.html');
         }
 
@@ -195,10 +263,14 @@ const server = http.createServer((req, res) => {
     });
 });
 
-server.listen(PORT, () => {
-    console.log(`=======================================================`);
-    console.log(`🚀 The Lab Indonesia - Training Center Instructor Portal`);
-    console.log(`🌐 Server running at: http://localhost:${PORT}`);
-    console.log(`🎯 Subdomain target: https://training.thelabindonesia.my.id`);
-    console.log(`=======================================================`);
+// Initialize database then start server
+db.initDatabase().then(() => {
+    server.listen(PORT, () => {
+        console.log(`=======================================================`);
+        console.log(`🚀 The Lab Indonesia - Training Center Operational Core`);
+        console.log(`🌐 Server running at: http://localhost:${PORT}`);
+        console.log(`🔐 Admin Account: ${process.env.ADMIN_EMAIL || 'admin@thelabindonesia.my.id'}`);
+        console.log(`🎯 Target URL: https://training.thelabindonesia.my.id`);
+        console.log(`=======================================================`);
+    });
 });

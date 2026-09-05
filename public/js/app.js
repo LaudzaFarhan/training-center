@@ -41,7 +41,46 @@ document.addEventListener('DOMContentLoaded', () => {
     const inputScore = document.getElementById('inputScore');
     const selectLabStatus = document.getElementById('selectLabStatus');
 
-    // 1. Live Server Clock
+    // 1. Session Verification & Auth
+    async function checkAuth() {
+        try {
+            const res = await fetch('/api/auth/me');
+            if (res.status === 401) {
+                window.location.href = '/login?redirect=/dashboard';
+                return;
+            }
+            const data = await res.json();
+            if (data.user) {
+                const nameEl = document.getElementById('userName');
+                const roleEl = document.getElementById('userRole');
+                const initialsEl = document.getElementById('userInitials');
+                if (nameEl) nameEl.textContent = data.user.name;
+                if (roleEl) roleEl.textContent = data.user.role || 'Instructor';
+                if (initialsEl) {
+                    const initials = data.user.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+                    initialsEl.textContent = initials;
+                }
+            }
+        } catch (e) {
+            console.warn('Auth check notice:', e);
+        }
+    }
+    checkAuth();
+
+    // Logout Handler
+    const btnLogout = document.getElementById('btnLogout');
+    if (btnLogout) {
+        btnLogout.addEventListener('click', async () => {
+            if (confirm('Log out from The Lab Instructor Center?')) {
+                try {
+                    await fetch('/api/auth/logout', { method: 'POST' });
+                } catch (e) {}
+                window.location.href = '/login';
+            }
+        });
+    }
+
+    // 2. Live Server Clock
     function updateClock() {
         const now = new Date();
         const timeStr = now.toLocaleTimeString('en-US', {
