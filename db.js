@@ -386,8 +386,106 @@ async function getModules() {
     }));
 }
 
-async function getStats() {
-    return memoryStore.stats;
+async function getAllUsers() {
+    if (isPostgresConnected && pgPool) {
+        try {
+            const res = await pgPool.query('SELECT id, name, email, role, created_at AS "createdAt" FROM users ORDER BY id ASC');
+            return res.rows;
+        } catch (e) {
+            console.warn('Postgres getAllUsers error:', e.message);
+        }
+    }
+    return memoryStore.users.map(u => ({
+        id: u.id,
+        name: u.name,
+        email: u.email,
+        role: u.role,
+        createdAt: u.createdAt || new Date().toISOString()
+    }));
+}
+
+async function createUser({ name, email, password, role }) {
+    const existing = await findUserByEmail(email);
+    if (existing) {
+        throw new Error('User with this email already exists');
+    }
+
+    const passwordHash = hashPassword(password);
+    const userRole = role || 'Instructor';
+
+    if (isPostgresConnected && pgPool) {
+        try {
+            const res = await pgPool.query(
+                'INSERT INTO users (name, email, password_hash, role) VALUES ($1, $2, $3, $4) RETURNING id, name, email, role, created_at AS "createdAt"',
+                [name, email.toLowerCase(), passwordHash, userRole]
+            );
+            return res.rows[0];
+        } catch (e) {
+            console.warn('Postgres createUser error:', e.message);
+            throw e;
+        }
+    }
+
+    const newUser = {
+        id: memoryStore.users.length + 1,
+        name,
+        email: email.toLowerCase(),
+        password_hash: passwordHash,
+        role: userRole,
+        createdAt: new Date().toISOString()
+    };
+    memoryStore.users.push(newUser);
+    return {
+        id: newUser.id,
+        name: newUser.name,
+        email: newUser.email,
+        role: newUser.role,
+        createdAt: newUser.createdAt
+    };
+}
+
+async function deleteUser(id) {
+    if (isPostgresConnected && pgPool) {
+        try {
+            await pgPool.query('DELETE FROM users WHERE id = $1', [id]);
+            return true;
+        } catch (e) {
+            console.warn('Postgres deleteUser error:', e.message);
+            throw e;
+        }
+    }
+    const idx = memoryStore.users.findIndex(u => String(u.id) === String(id));
+    if (idx !== -1) {
+        memoryStore.users.splice(idx, 1);
+        return true;
+    }
+    return false;
+}
+
+async function updateUserRole(id, role) {
+    if (isPostgresConnected && pgPool) {
+        try {
+            const res = await pgPool.query(
+                'UPDATE users SET role = $1 WHERE id = $2 RETURNING id, name, email, role',
+                [role, id]
+            );
+            return res.rows[0];
+        } catch (e) {
+            console.warn('Postgres updateUserRole error:', e.message);
+            throw e;
+        }
+    }
+    const user = memoryStore.users.find(u => String(u.id) === String(id));
+    if (user) {
+        user.role = role;
+        return {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            role: user.role
+        };
+    }
+    return null;
 }
 
 module.exports = {
@@ -403,5 +501,9 @@ module.exports = {
     updateStudent,
     getModules,
     getStats,
+    getAllUsers,
+    createUser,
+    deleteUser,
+    updateUserRole,
     isPostgresActive: () => isPostgresConnected
 };

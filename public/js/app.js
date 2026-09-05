@@ -385,11 +385,196 @@ document.addEventListener('DOMContentLoaded', () => {
             { id: 'MOD-02', title: 'Module 2: Agent Tooling, Multi-Agent & Orchestration', hours: 12, status: 'In Progress', completionRate: '75%' },
             { id: 'MOD-03', title: 'Module 3: Cloud Deployment, VPS & Production Pipeline', hours: 10, status: 'Next Up', completionRate: '0%' },
             { id: 'MOD-04', title: 'Module 4: Capstone Project & Industry Lab Evaluation', hours: 16, status: 'Scheduled', completionRate: '0%' }
-        ]
-    };
+    // 5. User & Role Management Controller
+    const usersTableBody = document.getElementById('usersTableBody');
+    const btnOpenAddUser = document.getElementById('btnOpenAddUser');
+    const addUserModal = document.getElementById('addUserModal');
+    const btnCloseAddUserModal = document.getElementById('btnCloseAddUserModal');
+    const btnCancelAddUser = document.getElementById('btnCancelAddUser');
+    const addUserForm = document.getElementById('addUserForm');
+
+    const editRoleModal = document.getElementById('editRoleModal');
+    const btnCloseEditRoleModal = document.getElementById('btnCloseEditRoleModal');
+    const btnCancelEditRole = document.getElementById('btnCancelEditRole');
+    const editRoleForm = document.getElementById('editRoleForm');
+    const editRoleUserId = document.getElementById('editRoleUserId');
+    const editRoleUserName = document.getElementById('editRoleUserName');
+    const editRoleSelect = document.getElementById('editRoleSelect');
+
+    let currentUsers = [];
+
+    async function loadUsers() {
+        if (!usersTableBody) return;
+        try {
+            const res = await fetch('/api/users');
+            if (!res.ok) return;
+            currentUsers = await res.json();
+            renderUsers();
+        } catch (e) {
+            console.warn('Could not load users:', e);
+        }
+    }
+
+    function renderUsers() {
+        if (!usersTableBody) return;
+        if (!currentUsers || currentUsers.length === 0) {
+            usersTableBody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 24px;">No team users registered yet.</td></tr>`;
+            return;
+        }
+
+        usersTableBody.innerHTML = currentUsers.map(user => {
+            const initials = (user.name || 'User').split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+            const dateStr = user.createdAt ? new Date(user.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '2026';
+            
+            let badgeStyle = 'background: var(--brand-teal-light); color: var(--brand-teal-hover); border: 1px solid rgba(69, 183, 205, 0.3);';
+            if (user.role.includes('Admin')) {
+                badgeStyle = 'background: var(--brand-yellow-light); color: #8C5E00; border: 1px solid rgba(246, 197, 81, 0.5);';
+            } else if (user.role.includes('Assistant')) {
+                badgeStyle = 'background: var(--color-emerald-light); color: var(--color-emerald); border: 1px solid rgba(16, 185, 129, 0.3);';
+            }
+
+            return `
+                <tr>
+                    <td style="font-family: var(--font-mono); font-weight: 700; color: var(--brand-teal-hover);">${user.id}</td>
+                    <td>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div class="avatar-ring" style="width: 32px; height: 32px; font-size: 11px;">${initials}</div>
+                            <strong style="color: var(--brand-navy); font-size: 13.5px;">${user.name}</strong>
+                        </div>
+                    </td>
+                    <td style="color: var(--text-secondary); font-family: var(--font-mono); font-size: 12.5px;">${user.email}</td>
+                    <td>
+                        <span class="badge" style="${badgeStyle}">${user.role}</span>
+                    </td>
+                    <td style="color: var(--text-muted); font-size: 12.5px;">${dateStr}</td>
+                    <td>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn btn-subtle btn-sm edit-role-btn" data-id="${user.id}" data-name="${user.name}" data-role="${user.role}" style="padding: 4px 10px; font-size: 11.5px;">
+                                Role
+                            </button>
+                            <button class="btn btn-sm delete-user-btn" data-id="${user.id}" data-name="${user.name}" style="padding: 4px 10px; font-size: 11.5px; background: var(--color-rose-light); color: var(--color-rose); border: 1px solid rgba(244, 63, 94, 0.2);">
+                                Delete
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+
+        // Attach action handlers
+        document.querySelectorAll('.edit-role-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const id = btn.getAttribute('data-id');
+                const name = btn.getAttribute('data-name');
+                const role = btn.getAttribute('data-role');
+                editRoleUserId.value = id;
+                editRoleUserName.textContent = `Edit Role: ${name}`;
+                editRoleSelect.value = role;
+                editRoleModal.classList.add('active');
+            });
+        });
+
+        document.querySelectorAll('.delete-user-btn').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const id = btn.getAttribute('data-id');
+                const name = btn.getAttribute('data-name');
+                if (confirm(`Are you sure you want to remove user "${name}" from The Lab?`)) {
+                    try {
+                        const res = await fetch('/api/users/delete', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ userId: id })
+                        });
+                        const data = await res.json();
+                        if (res.ok && data.success) {
+                            loadUsers();
+                        } else {
+                            alert(data.error || 'Failed to delete user');
+                        }
+                    } catch (e) {
+                        alert('Network error while deleting user');
+                    }
+                }
+            });
+        });
+    }
+
+    if (btnOpenAddUser) {
+        btnOpenAddUser.addEventListener('click', () => {
+            addUserModal.classList.add('active');
+        });
+    }
+
+    if (btnCloseAddUserModal) {
+        btnCloseAddUserModal.addEventListener('click', () => addUserModal.classList.remove('active'));
+    }
+    if (btnCancelAddUser) {
+        btnCancelAddUser.addEventListener('click', () => addUserModal.classList.remove('active'));
+    }
+
+    if (addUserForm) {
+        addUserForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('newUserName').value.trim();
+            const email = document.getElementById('newUserEmail').value.trim();
+            const password = document.getElementById('newUserPassword').value;
+            const role = document.getElementById('newUserRole').value;
+
+            try {
+                const res = await fetch('/api/users', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email, password, role })
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    alert(`Team member "${name}" created successfully as ${role}!`);
+                    addUserForm.reset();
+                    addUserModal.classList.remove('active');
+                    loadUsers();
+                } else {
+                    alert(data.error || 'Failed to create user');
+                }
+            } catch (err) {
+                alert('Network error while creating user');
+            }
+        });
+    }
+
+    if (btnCloseEditRoleModal) {
+        btnCloseEditRoleModal.addEventListener('click', () => editRoleModal.classList.remove('active'));
+    }
+    if (btnCancelEditRole) {
+        btnCancelEditRole.addEventListener('click', () => editRoleModal.classList.remove('active'));
+    }
+
+    if (editRoleForm) {
+        editRoleForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = editRoleUserId.value;
+            const role = editRoleSelect.value;
+            try {
+                const res = await fetch('/api/users/update-role', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: id, role })
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    editRoleModal.classList.remove('active');
+                    loadUsers();
+                } else {
+                    alert(data.error || 'Failed to update role');
+                }
+            } catch (err) {
+                alert('Network error updating role');
+            }
+        });
+    }
 
     // Initialize
     loadInitialData();
+    loadUsers();
 });
 
 // Global copy snippet utility for peer onboarding tutorial

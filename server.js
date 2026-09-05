@@ -199,6 +199,86 @@ const server = http.createServer(async (req, res) => {
             return;
         }
 
+        // ==========================================
+        // User & Role Management APIs
+        // ==========================================
+        if (url.pathname === '/api/users' && req.method === 'GET') {
+            if (!sessionUser) {
+                res.writeHead(401);
+                res.end(JSON.stringify({ error: 'Unauthorized' }));
+                return;
+            }
+            const users = await db.getAllUsers();
+            res.writeHead(200);
+            res.end(JSON.stringify(users));
+            return;
+        }
+
+        if (url.pathname === '/api/users' && req.method === 'POST') {
+            if (!sessionUser) {
+                res.writeHead(401);
+                res.end(JSON.stringify({ error: 'Unauthorized' }));
+                return;
+            }
+            try {
+                const body = await readJsonBody(req);
+                const { name, email, password, role } = body;
+                if (!name || !email || !password) {
+                    res.writeHead(400);
+                    res.end(JSON.stringify({ error: 'Name, email, and password are required' }));
+                    return;
+                }
+                const newUser = await db.createUser({ name, email, password, role });
+                res.writeHead(201);
+                res.end(JSON.stringify({ success: true, user: newUser }));
+            } catch (err) {
+                res.writeHead(400);
+                res.end(JSON.stringify({ error: err.message }));
+            }
+            return;
+        }
+
+        if (url.pathname === '/api/users/delete' && req.method === 'POST') {
+            if (!sessionUser) {
+                res.writeHead(401);
+                res.end(JSON.stringify({ error: 'Unauthorized' }));
+                return;
+            }
+            try {
+                const body = await readJsonBody(req);
+                if (String(body.userId) === String(sessionUser.userId)) {
+                    res.writeHead(400);
+                    res.end(JSON.stringify({ error: 'You cannot delete your own logged-in account' }));
+                    return;
+                }
+                await db.deleteUser(body.userId);
+                res.writeHead(200);
+                res.end(JSON.stringify({ success: true, message: 'User deleted successfully' }));
+            } catch (err) {
+                res.writeHead(400);
+                res.end(JSON.stringify({ error: err.message }));
+            }
+            return;
+        }
+
+        if (url.pathname === '/api/users/update-role' && req.method === 'POST') {
+            if (!sessionUser) {
+                res.writeHead(401);
+                res.end(JSON.stringify({ error: 'Unauthorized' }));
+                return;
+            }
+            try {
+                const body = await readJsonBody(req);
+                const updated = await db.updateUserRole(body.userId, body.role);
+                res.writeHead(200);
+                res.end(JSON.stringify({ success: true, user: updated }));
+            } catch (err) {
+                res.writeHead(400);
+                res.end(JSON.stringify({ error: err.message }));
+            }
+            return;
+        }
+
         res.writeHead(404);
         res.end(JSON.stringify({ error: 'Endpoint not found' }));
         return;

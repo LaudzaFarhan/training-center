@@ -47,6 +47,10 @@
                     <span>Peer Onboarding</span>
                     <span class="pill-indicator" style="background: var(--brand-teal-light); color: var(--brand-teal-hover); font-weight: 800;">GUIDE</span>
                 </button>
+                <button class="nav-item" data-tab="users">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><polyline points="16 11 18 13 22 9"></polyline></svg>
+                    <span>User Management</span>
+                </button>
 
                 <div class="nav-section-title">SYSTEM &amp; PUBLIC</div>
                 <button class="nav-item" data-tab="vps">
@@ -557,6 +561,38 @@ pm2 restart thelab-training</code></pre>
                     </ul>
                 </div>
             </section>
+
+            <!-- Tab 7: User & Role Management -->
+            <section id="tab-users" class="tab-pane">
+                <div class="section-hero flex-between">
+                    <div class="hero-text">
+                        <h1>User &amp; Role Management</h1>
+                        <p>Manage instructor accounts, provision team access, and configure role privileges stored in PostgreSQL.</p>
+                    </div>
+                    <button class="btn btn-primary" id="btnOpenAddUser">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        <span>Add New User</span>
+                    </button>
+                </div>
+
+                <div class="table-container">
+                    <table class="data-table" id="usersTable">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Team Member</th>
+                                <th>Email</th>
+                                <th>Assigned Role</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody">
+                            <!-- Populated dynamically by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
         </main>
     </div>
 
@@ -586,6 +622,75 @@ pm2 restart thelab-training</code></pre>
                 <button class="btn btn-subtle" id="btnCancelModal">Cancel</button>
                 <button class="btn btn-primary" id="btnSaveScore">Save Evaluation</button>
             </div>
+        </div>
+    </div>
+
+    <!-- Add User Modal -->
+    <div class="modal-overlay" id="addUserModal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>Provision New Team Member</h3>
+                <button class="btn-close" id="btnCloseAddUserModal">&times;</button>
+            </div>
+            <form id="addUserForm">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="newUserName">Full Name *</label>
+                        <input type="text" id="newUserName" class="input-field" placeholder="e.g. Maya Anggraini" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="newUserEmail">Email Address *</label>
+                        <input type="email" id="newUserEmail" class="input-field" placeholder="maya@thelabindonesia.my.id" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="newUserPassword">Initial Password *</label>
+                        <input type="password" id="newUserPassword" class="input-field" placeholder="Minimum 6 characters" minlength="6" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="newUserRole">Operational Role *</label>
+                        <select id="newUserRole" class="input-field">
+                            <option value="Lead Instructor & Admin">Lead Instructor &amp; Admin</option>
+                            <option value="Instructor" selected>Instructor</option>
+                            <option value="Teaching Assistant">Teaching Assistant</option>
+                            <option value="Lab Technician">Lab Technician</option>
+                            <option value="Curriculum Reviewer">Curriculum Reviewer</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-subtle" id="btnCancelAddUser">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="btnSaveUser">Create User</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit User Role Modal -->
+    <div class="modal-overlay" id="editRoleModal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 id="editRoleUserName">Edit User Role</h3>
+                <button class="btn-close" id="btnCloseEditRoleModal">&times;</button>
+            </div>
+            <form id="editRoleForm">
+                <input type="hidden" id="editRoleUserId">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="editRoleSelect">Change Role to:</label>
+                        <select id="editRoleSelect" class="input-field">
+                            <option value="Lead Instructor & Admin">Lead Instructor &amp; Admin</option>
+                            <option value="Instructor">Instructor</option>
+                            <option value="Teaching Assistant">Teaching Assistant</option>
+                            <option value="Lab Technician">Lab Technician</option>
+                            <option value="Curriculum Reviewer">Curriculum Reviewer</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-subtle" id="btnCancelEditRole">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update Role</button>
+                </div>
+            </form>
         </div>
     </div>
 
