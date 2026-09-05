@@ -41,7 +41,14 @@
                     <span>Curriculum & Labs</span>
                 </button>
 
-                <div class="nav-section-title">SYSTEM & PUBLIC</div>
+                <div class="nav-section-title">TEAM &amp; COLLABORATION</div>
+                <button class="nav-item" data-tab="collab">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                    <span>Peer Onboarding</span>
+                    <span class="pill-indicator" style="background: var(--brand-teal-light); color: var(--brand-teal-hover); font-weight: 800;">GUIDE</span>
+                </button>
+
+                <div class="nav-section-title">SYSTEM &amp; PUBLIC</div>
                 <button class="nav-item" data-tab="vps">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
                     <span>Domain & VPS</span>
@@ -383,6 +390,171 @@
                             </div>
                         </div>
                     </div>
+                </div>
+            </section>
+
+            <!-- Tab 6: Peer Onboarding & Antigravity Tutorial -->
+            <section id="tab-collab" class="tab-pane">
+                <div class="section-hero flex-between">
+                    <div class="hero-text">
+                        <h1>Peer Onboarding &amp; Antigravity Engineering</h1>
+                        <p>Complete collaboration guide for peers: repository access, Antigravity AI pair-programming, PostgreSQL, and production releases.</p>
+                    </div>
+                    <a href="https://github.com/LaudzaFarhan/training-center/settings/access" target="_blank" rel="noopener" class="btn btn-primary">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
+                        <span>Invite Collaborator on GitHub</span>
+                    </a>
+                </div>
+
+                <div class="tutorial-steps-grid">
+                    <!-- Step 1 -->
+                    <div class="step-card">
+                        <div class="step-header">
+                            <div class="step-num yellow">01</div>
+                            <div class="step-header-text">
+                                <h3>Step 1: Accept GitHub Invite &amp; Clone Repository</h3>
+                                <span>Private repository authorization &amp; initial local environment</span>
+                            </div>
+                        </div>
+                        <p class="step-desc">
+                            Once the repository owner invites you via GitHub Collaborators, accept the invitation and clone the project to your local workspace using your GitHub account credentials or Personal Access Token (PAT):
+                        </p>
+                        <div class="code-box">
+                            <button class="copy-code-btn" onclick="copySnippet(this)">Copy</button>
+                            <pre><code><span class="comment"># Clone the repository:</span>
+git clone https://github.com/LaudzaFarhan/training-center.git
+cd training-center
+
+<span class="comment"># Install project dependencies (Express, PostgreSQL client, Dotenv):</span>
+npm install</code></pre>
+                        </div>
+                    </div>
+
+                    <!-- Step 2 -->
+                    <div class="step-card">
+                        <div class="step-header">
+                            <div class="step-num navy">02</div>
+                            <div class="step-header-text">
+                                <h3>Step 2: Launch Google Antigravity &amp; AI Pair-Programming</h3>
+                                <span>Leverage Antigravity Agent Mode, Inline Edits, and Planning</span>
+                            </div>
+                        </div>
+                        <p class="step-desc">
+                            Open the <code>training-center</code> folder in <strong>Google Antigravity IDE</strong>. Antigravity integrates directly with this codebase and follows our established brand identity and database architecture:
+                        </p>
+                        <ul class="peer-checklist" style="margin-bottom: 16px;">
+                            <li>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                <span><strong>Agent Mode (Sidebar Chat):</strong> Use for complex multi-step tasks, creating new REST APIs, database queries, and architectural refactoring.</span>
+                            </li>
+                            <li>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                <span><strong>Inline Modality (<span class="key-kbd">Ctrl</span> + <span class="key-kbd">I</span>):</strong> Highlight any function or component to instantly refactor, fix, or document without leaving the editor.</span>
+                            </li>
+                            <li>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                <span><strong>Interactive Alignment (<code>/grill-me</code>):</strong> Type <code>/grill-me</code> in chat when planning a feature to align on design decisions before code execution.</span>
+                            </li>
+                            <li>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                <span><strong>Live Share (Real-time Pair Programming):</strong> Install the Live Share extension to code simultaneously with your peers inside Antigravity with shared terminal and cursor presence.</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Step 3 -->
+                    <div class="step-card">
+                        <div class="step-header">
+                            <div class="step-num teal">03</div>
+                            <div class="step-header-text">
+                                <h3>Step 3: Environment Setup (.env) &amp; PostgreSQL</h3>
+                                <span>Configuring local environment variables and database migrations</span>
+                            </div>
+                        </div>
+                        <p class="step-desc">
+                            Copy the template environment configuration. The application will automatically run schema migrations and seed the default admin account:
+                        </p>
+                        <div class="code-box">
+                            <button class="copy-code-btn" onclick="copySnippet(this)">Copy</button>
+                            <pre><code><span class="comment"># 1. Create your local .env file from the example:</span>
+cp .env.example .env
+
+<span class="comment"># 2. (Optional) If running PostgreSQL locally, create database:</span>
+sudo -u postgres psql -c "CREATE DATABASE thelab_training;"
+
+<span class="comment"># 3. Start local server (Runs at http://localhost:3050):</span>
+npm start</code></pre>
+                        </div>
+                    </div>
+
+                    <!-- Step 4 -->
+                    <div class="step-card">
+                        <div class="step-header">
+                            <div class="step-num yellow">04</div>
+                            <div class="step-header-text">
+                                <h3>Step 4: Git Branching &amp; Pull Request Workflow</h3>
+                                <span>Safe team development protocol without breaking production</span>
+                            </div>
+                        </div>
+                        <p class="step-desc">
+                            Always create a dedicated feature branch for your work. Never push unfinished experiments directly to <code>main</code>:
+                        </p>
+                        <div class="code-box">
+                            <button class="copy-code-btn" onclick="copySnippet(this)">Copy</button>
+                            <pre><code><span class="comment"># Create and switch to your feature branch:</span>
+git checkout -b feature/trainee-reports
+
+<span class="comment"># Develop your feature with Antigravity, then commit:</span>
+git add .
+git commit -m "feat: add downloadable attendance report"
+
+<span class="comment"># Push branch to GitHub and create a Pull Request (PR):</span>
+git push -u origin feature/trainee-reports</code></pre>
+                        </div>
+                    </div>
+
+                    <!-- Step 5 -->
+                    <div class="step-card">
+                        <div class="step-header">
+                            <div class="step-num navy">05</div>
+                            <div class="step-header-text">
+                                <h3>Step 5: Production VPS Deployment Protocol</h3>
+                                <span>Shipping verified features to training.thelabindonesia.my.id</span>
+                            </div>
+                        </div>
+                        <p class="step-desc">
+                            Once your Pull Request is reviewed and merged into <code>main</code>, deploy to the production VPS in 2 commands:
+                        </p>
+                        <div class="code-box">
+                            <button class="copy-code-btn" onclick="copySnippet(this)">Copy</button>
+                            <pre><code><span class="comment"># On your production VPS (SSH):</span>
+cd /var/www/training-center
+git pull
+pm2 restart thelab-training</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Team Best Practices Card -->
+                <div class="panel-card">
+                    <div class="panel-header">
+                        <h3>The Lab Indonesia — Team Engineering Standards</h3>
+                        <span class="badge badge-accent">Standards</span>
+                    </div>
+                    <ul class="peer-checklist">
+                        <li>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            <span><strong>Strict Brand Color Compliance:</strong> Always use official brand colors: Deep Navy (<code>#0E1B4D</code>), Golden Yellow (<code>#F6C551</code>), Sky Teal (<code>#45B7CD</code>), and Crisp Light (<code>#FAFCFF</code>).</span>
+                        </li>
+                        <li>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            <span><strong>Never Commit Secrets:</strong> Ensure <code>.env</code> remains gitignored and never commit production passwords or API tokens.</span>
+                        </li>
+                        <li>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            <span><strong>Authentication Protection:</strong> Keep all instructor operational routes and administrative controls protected behind the session authenticator in <code>server.js</code>.</span>
+                        </li>
+                    </ul>
                 </div>
             </section>
         </main>

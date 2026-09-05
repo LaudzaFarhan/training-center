@@ -391,3 +391,25 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize
     loadInitialData();
 });
+
+// Global copy snippet utility for peer onboarding tutorial
+window.copySnippet = function(button) {
+    const codeBox = button.closest('.code-box');
+    if (!codeBox) return;
+    const codeEl = codeBox.querySelector('code');
+    if (!codeEl) return;
+
+    const textToCopy = codeEl.innerText.trim();
+    navigator.clipboard.writeText(textToCopy).then(() => {
+        const originalText = button.textContent;
+        button.textContent = 'Copied! ✓';
+        button.classList.add('copied');
+        setTimeout(() => {
+            button.textContent = originalText;
+            button.classList.remove('copied');
+        }, 2000);
+    }).catch(err => {
+        console.error('Failed to copy: ', err);
+    });
+};
+

@@ -1025,3 +1025,156 @@ body {
     justify-content: flex-end;
     gap: 12px;
 }
+
+/* ==========================================================================
+   Peer Onboarding & Antigravity Collaboration Styles
+   ========================================================================== */
+.tutorial-steps-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    margin-bottom: 32px;
+}
+
+.step-card {
+    background: #FFFFFF;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: 28px;
+    box-shadow: var(--shadow-soft);
+    position: relative;
+    transition: var(--transition-fast);
+}
+
+.step-card:hover {
+    border-color: var(--brand-teal);
+    box-shadow: var(--shadow-card);
+}
+
+.step-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.step-num {
+    width: 38px;
+    height: 38px;
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 15px;
+    flex-shrink: 0;
+}
+
+.step-num.yellow { background: var(--brand-yellow-light); color: #B38100; border: 1.5px solid var(--brand-yellow); }
+.step-num.navy { background: var(--brand-navy-tint); color: var(--brand-navy); border: 1.5px solid var(--brand-navy); }
+.step-num.teal { background: var(--brand-teal-light); color: var(--brand-teal-hover); border: 1.5px solid var(--brand-teal); }
+
+.step-header-text h3 {
+    font-family: var(--font-heading);
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--brand-navy);
+}
+
+.step-header-text span {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.step-desc {
+    font-size: 14px;
+    color: var(--text-body);
+    margin-bottom: 18px;
+    line-height: 1.6;
+}
+
+.code-box {
+    background: #0D1326;
+    border-radius: var(--radius-md);
+    padding: 16px 20px;
+    position: relative;
+    margin-bottom: 16px;
+    border: 1px solid rgba(14, 27, 77, 0.2);
+}
+
+.code-box pre {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: #38BDF8;
+    overflow-x: auto;
+    line-height: 1.5;
+}
+
+.code-box .comment {
+    color: #64748B;
+}
+
+.copy-code-btn {
+    position: absolute;
+    top: 12px;
+    right: 14px;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #FFFFFF;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+.copy-code-btn:hover {
+    background: var(--brand-teal);
+    color: #FFFFFF;
+    border-color: var(--brand-teal);
+}
+
+.copy-code-btn.copied {
+    background: var(--color-emerald);
+    color: #FFFFFF;
+}
+
+.key-kbd {
+    display: inline-block;
+    padding: 2px 6px;
+    font-size: 12px;
+    font-family: var(--font-mono);
+    font-weight: 700;
+    color: var(--brand-navy);
+    background: var(--bg-subtle);
+    border: 1px solid var(--border-light);
+    border-radius: 4px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+}
+
+.peer-checklist {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.peer-checklist li {
+    background: var(--bg-subtle);
+    border: 1px solid var(--border-subtle);
+    padding: 14px 18px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 13.5px;
+    color: var(--brand-navy);
+    font-weight: 600;
+}
+
+.peer-checklist li svg {
+    color: var(--color-emerald);
+    flex-shrink: 0;
+}
+
