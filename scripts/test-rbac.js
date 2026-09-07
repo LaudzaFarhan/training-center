@@ -258,6 +258,63 @@ async function runTests() {
         console.error('❌ RBAC Security failure: SPV accessed /api/users:', spvUsersCheck.statusCode);
     }
 
+    // Step 8: Test Password Reset & Role Default Passwords (role12345)
+    console.log('\n8️⃣ Testing Reset Password Feature & Role Defaults (<role>12345)...');
+    const targetTrainer = usersListRes.data.find(u => u.email === 'tommy.trainer@thelab.id');
+    
+    // Admin resets Tommy Trainer's password to role default
+    const resetRes = await request({
+        hostname: 'localhost',
+        port: PORT,
+        path: '/api/users/reset-password',
+        method: 'POST',
+        headers: { Cookie: adminCookie }
+    }, {
+        userId: targetTrainer.id
+    });
+
+    if (resetRes.statusCode === 200 && resetRes.data.success) {
+        console.log(`✅ Admin reset password for ${resetRes.data.name} (${resetRes.data.role})`);
+        console.log(`   - New Password: ${resetRes.data.password} (Default: ${resetRes.data.defaultPassword})`);
+    } else {
+        console.error('❌ Failed to reset password:', resetRes.data);
+    }
+
+    // Verify Tommy Trainer can login with trainer12345
+    const trainerNewLoginRes = await request({
+        hostname: 'localhost',
+        port: PORT,
+        path: '/api/auth/login',
+        method: 'POST'
+    }, {
+        email: 'tommy.trainer@thelab.id',
+        password: 'trainer12345'
+    });
+
+    if (trainerNewLoginRes.statusCode === 200 && trainerNewLoginRes.data.success) {
+        console.log('✅ Trainer successfully logged in with role default password "trainer12345"!');
+    } else {
+        console.error('❌ Trainer failed to login with default password:', trainerNewLoginRes.data);
+    }
+
+    // Non-admin attempting to reset password is 403 Forbidden
+    const unauthReset = await request({
+        hostname: 'localhost',
+        port: PORT,
+        path: '/api/users/reset-password',
+        method: 'POST',
+        headers: { Cookie: trainerCookie }
+    }, {
+        userId: targetTrainer.id,
+        password: 'hacked12345'
+    });
+
+    if (unauthReset.statusCode === 403) {
+        console.log('✅ RBAC Protected: Non-admin is 403 Forbidden from resetting passwords');
+    } else {
+        console.error('❌ Security breach: Non-admin could reset password');
+    }
+
     console.log('\n=======================================================');
     console.log('🎉 ALL 4 ROLES & RBAC VERIFICATIONS PASSED 100%!');
     console.log('=======================================================\n');

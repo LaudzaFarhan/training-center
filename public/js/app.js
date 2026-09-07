@@ -591,6 +591,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const editRoleUserName = document.getElementById('editRoleUserName');
     const editRoleSelect = document.getElementById('editRoleSelect');
 
+    const resetPasswordModal = document.getElementById('resetPasswordModal');
+    const btnCloseResetPwdModal = document.getElementById('btnCloseResetPwdModal');
+    const btnCancelResetPwd = document.getElementById('btnCancelResetPwd');
+    const resetPwdForm = document.getElementById('resetPwdForm');
+    const resetPwdUserId = document.getElementById('resetPwdUserId');
+    const resetPwdUserRole = document.getElementById('resetPwdUserRole');
+    const resetPwdUserName = document.getElementById('resetPwdUserName');
+    const defaultPwdDisplay = document.getElementById('defaultPwdDisplay');
+    const btnApplyDefaultPwd = document.getElementById('btnApplyDefaultPwd');
+    const inputNewPassword = document.getElementById('inputNewPassword');
+
+    const btnUseDefaultPwdAdd = document.getElementById('btnUseDefaultPwdAdd');
+    const newUserPwdHint = document.getElementById('newUserPwdHint');
+    const newUserPassword = document.getElementById('newUserPassword');
+
     let currentUsers = [];
     let selectedRoleFilter = 'all';
 
@@ -687,11 +702,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     </td>
                     <td style="color: var(--text-muted); font-size: 12.5px;">${dateStr}</td>
                     <td>
-                        <div style="display: flex; gap: 8px;">
-                            <button class="btn btn-subtle btn-sm edit-role-btn" data-id="${user.id}" data-name="${user.name}" data-role="${user.role}" style="padding: 4px 10px; font-size: 11.5px;">
+                        <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                            <button class="btn btn-subtle btn-sm edit-role-btn" data-id="${user.id}" data-name="${user.name}" data-role="${user.role}" style="padding: 4px 8px; font-size: 11.5px;">
                                 Role
                             </button>
-                            <button class="btn btn-sm delete-user-btn" data-id="${user.id}" data-name="${user.name}" style="padding: 4px 10px; font-size: 11.5px; background: var(--color-rose-light); color: var(--color-rose); border: 1px solid rgba(244, 63, 94, 0.2);">
+                            <button class="btn btn-subtle btn-sm reset-pwd-btn" data-id="${user.id}" data-name="${user.name}" data-role="${user.role}" style="padding: 4px 8px; font-size: 11.5px; color: var(--brand-navy); border-color: rgba(14, 27, 77, 0.2);">
+                                🔑 Reset
+                            </button>
+                            <button class="btn btn-sm delete-user-btn" data-id="${user.id}" data-name="${user.name}" style="padding: 4px 8px; font-size: 11.5px; background: var(--color-rose-light); color: var(--color-rose); border: 1px solid rgba(244, 63, 94, 0.2);">
                                 Delete
                             </button>
                         </div>
@@ -710,6 +728,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 editRoleUserName.textContent = `Edit Role: ${name}`;
                 editRoleSelect.value = role;
                 editRoleModal.classList.add('active');
+            });
+        });
+
+        document.querySelectorAll('.reset-pwd-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const id = btn.getAttribute('data-id');
+                const name = btn.getAttribute('data-name');
+                const role = btn.getAttribute('data-role') || 'Trainer';
+                const defaultPwd = `${role.toLowerCase()}12345`;
+
+                if (resetPwdUserId) resetPwdUserId.value = id;
+                if (resetPwdUserRole) resetPwdUserRole.value = role;
+                if (resetPwdUserName) resetPwdUserName.textContent = `Reset Password: ${name}`;
+                if (defaultPwdDisplay) defaultPwdDisplay.textContent = defaultPwd;
+                if (inputNewPassword) inputNewPassword.value = defaultPwd;
+                if (resetPasswordModal) resetPasswordModal.classList.add('active');
             });
         });
 
@@ -834,6 +868,62 @@ document.addEventListener('DOMContentLoaded', () => {
             } catch (err) {
                 alert('Network error updating role');
             }
+        });
+    }
+
+    // Reset Password Modal Handlers
+    if (btnApplyDefaultPwd) {
+        btnApplyDefaultPwd.addEventListener('click', () => {
+            const role = resetPwdUserRole ? resetPwdUserRole.value : 'Trainer';
+            if (inputNewPassword) inputNewPassword.value = `${(role || 'trainer').toLowerCase()}12345`;
+        });
+    }
+
+    if (btnCloseResetPwdModal) {
+        btnCloseResetPwdModal.addEventListener('click', () => resetPasswordModal.classList.remove('active'));
+    }
+    if (btnCancelResetPwd) {
+        btnCancelResetPwd.addEventListener('click', () => resetPasswordModal.classList.remove('active'));
+    }
+
+    if (resetPwdForm) {
+        resetPwdForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const userId = resetPwdUserId.value;
+            const newPassword = inputNewPassword.value.trim();
+            try {
+                const res = await fetch('/api/users/reset-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId, password: newPassword })
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    alert(`✅ Password for "${data.name}" (${data.role}) successfully reset to:\n\n${data.password}`);
+                    resetPasswordModal.classList.remove('active');
+                } else {
+                    alert(data.error || 'Failed to reset password');
+                }
+            } catch (err) {
+                alert('Network error while resetting password');
+            }
+        });
+    }
+
+    // Default password sync for Add User modal
+    function updateAddUserDefaultPwd() {
+        if (!newUserRole) return;
+        const def = `${newUserRole.value.toLowerCase()}12345`;
+        if (newUserPwdHint) newUserPwdHint.innerHTML = `Default password for ${newUserRole.value}: <code>${def}</code>`;
+        if (newUserPassword) newUserPassword.placeholder = def;
+    }
+
+    if (newUserRole) {
+        newUserRole.addEventListener('change', updateAddUserDefaultPwd);
+    }
+    if (btnUseDefaultPwdAdd && newUserRole && newUserPassword) {
+        btnUseDefaultPwdAdd.addEventListener('click', () => {
+            newUserPassword.value = `${newUserRole.value.toLowerCase()}12345`;
         });
     }
 

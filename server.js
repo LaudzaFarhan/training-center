@@ -383,6 +383,30 @@ const server = http.createServer(async (req, res) => {
             return;
         }
 
+        if (url.pathname === '/api/users/reset-password' && req.method === 'POST') {
+            if (!sessionUser || sessionUser.role !== 'Admin') {
+                res.writeHead(403);
+                res.end(JSON.stringify({ error: 'Permission denied: Admin privileges required' }));
+                return;
+            }
+            try {
+                const body = await readJsonBody(req);
+                const { userId, password } = body;
+                if (!userId) {
+                    res.writeHead(400);
+                    res.end(JSON.stringify({ error: 'userId is required' }));
+                    return;
+                }
+                const result = await db.resetUserPassword(userId, password);
+                res.writeHead(200);
+                res.end(JSON.stringify({ success: true, ...result }));
+            } catch (err) {
+                res.writeHead(400);
+                res.end(JSON.stringify({ error: err.message }));
+            }
+            return;
+        }
+
         res.writeHead(404);
         res.end(JSON.stringify({ error: 'Endpoint not found' }));
         return;

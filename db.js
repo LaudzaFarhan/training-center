@@ -475,14 +475,20 @@ function normalizeRole(role) {
     return 'Trainer';
 }
 
+function getDefaultPasswordForRole(role) {
+    const valid = normalizeRole(role);
+    return `${valid.toLowerCase()}12345`;
+}
+
 async function createUser({ name, email, password, role, cohortId }) {
     const existing = await findUserByEmail(email);
     if (existing) {
         throw new Error('User with this email already exists');
     }
 
-    const passwordHash = hashPassword(password);
     const userRole = normalizeRole(role);
+    const passwordToUse = (password && password.trim()) ? password.trim() : getDefaultPasswordForRole(userRole);
+    const passwordHash = hashPassword(passwordToUse);
     let created = null;
 
     if (isPostgresConnected && pgPool) {
@@ -582,6 +588,50 @@ async function updateUserRole(id, role) {
         };
     }
     return null;
+}
+
+async function resetUserPassword(id, newPassword) {
+    let user = null;
+    if (isPostgresConnected && pgPool) {
+        try {
+            const uRes = await pgPool.query('SELECT id, name, email, role FROM users WHERE id = $1', [id]);
+            user = uRes.rows[0];
+        } catch (e) {
+            console.warn('Postgres resetUserPassword lookup error:', e.message);
+            throw e;
+        }
+    } else {
+        user = memoryStore.users.find(u => String(u.id) === String(id));
+    }
+
+    if (!user) {
+        throw new Error('User not found');
+    }
+
+    const defaultPwd = getDefaultPasswordForRole(user.role);
+    const passwordToSet = (newPassword && newPassword.trim()) ? newPassword.trim() : defaultPwd;
+    const hash = hashPassword(passwordToSet);
+
+    if (isPostgresConnected && pgPool) {
+        try {
+            await pgPool.query('UPDATE users SET password_hash = $1 WHERE id = $2', [hash, id]);
+        } catch (e) {
+            console.warn('Postgres resetUserPassword update error:', e.message);
+            throw e;
+        }
+    } else {
+        user.password_hash = hash;
+    }
+
+    return {
+        userId: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        password: passwordToSet,
+        defaultPassword: defaultPwd,
+        isDefault: passwordToSet === defaultPwd
+    };
 }
 
 async function getTraineeProfile(email) {
@@ -784,6 +834,8 @@ module.exports = {
     createUser,
     deleteUser,
     updateUserRole,
+    resetUserPassword,
+    getDefaultPasswordForRole,
     getTraineeProfile,
     normalizeRole,
     VALID_ROLES,
