@@ -5,7 +5,10 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js"
+    "dev": "node server.js",
+    "test:db": "node scripts/test-db.js",
+    "test:rbac": "node scripts/test-rbac.js",
+    "db:migrate": "node -e \"require('./db').initDatabase()\""
   },
   "keywords": [
     "thelab",

@@ -15,31 +15,54 @@ try {
 
 let pgPool = null;
 let isPostgresConnected = false;
+let lastConnectionError = null;
 
-// Attempt to initialize pg client
-try {
-    const { Pool } = require('pg');
-    const connectionConfig = process.env.DATABASE_URL
-        ? { connectionString: process.env.DATABASE_URL }
-        : {
-            host: process.env.PGHOST || 'localhost',
-            port: parseInt(process.env.PGPORT, 10) || 5432,
-            user: process.env.PGUSER || 'postgres',
-            password: process.env.PGPASSWORD || 'postgres',
-            database: process.env.PGDATABASE || 'thelab_training',
-            connectionTimeoutMillis: 3000
-        };
+function initPgPool() {
+    try {
+        const { Pool } = require('pg');
+        const hasDbUrl = Boolean(process.env.DATABASE_URL);
+        let connectionConfig;
 
-    pgPool = new Pool(connectionConfig);
+        if (hasDbUrl) {
+            const isLocal = process.env.DATABASE_URL.includes('localhost') || process.env.DATABASE_URL.includes('127.0.0.1');
+            const requiresSsl = !isLocal || process.env.DATABASE_URL.includes('sslmode=require') || process.env.PGSSL === 'true';
 
-    // Suppress unhandled error crashes from pool
-    pgPool.on('error', (err) => {
-        console.warn('⚠️ [PostgreSQL Pool Notice]:', err.message);
-        isPostgresConnected = false;
-    });
-} catch (err) {
-    console.warn('ℹ️ pg driver not loaded. Using resilient memory store:', err.message);
+            connectionConfig = {
+                connectionString: process.env.DATABASE_URL,
+                ssl: requiresSsl ? { rejectUnauthorized: false } : undefined,
+                connectionTimeoutMillis: 5000
+            };
+        } else {
+            const isSsl = process.env.PGSSL === 'true' || process.env.PGSSL === 'require';
+            connectionConfig = {
+                host: process.env.PGHOST || 'localhost',
+                port: parseInt(process.env.PGPORT, 10) || 5432,
+                user: process.env.PGUSER || 'postgres',
+                password: process.env.PGPASSWORD || 'postgres',
+                database: process.env.PGDATABASE || 'thelab_training',
+                ssl: isSsl ? { rejectUnauthorized: false } : undefined,
+                connectionTimeoutMillis: 5000
+            };
+        }
+
+        pgPool = new Pool(connectionConfig);
+
+        // Suppress unhandled error crashes from pool
+        pgPool.on('error', (err) => {
+            console.warn('⚠️ [PostgreSQL Pool Notice]:', err.message);
+            isPostgresConnected = false;
+            lastConnectionError = err.message;
+        });
+
+        return pgPool;
+    } catch (err) {
+        console.warn('ℹ️ pg driver not loaded. Using resilient memory store:', err.message);
+        lastConnectionError = err.message;
+        return null;
+    }
 }
+
+initPgPool();
 
 // In-Memory Backup Store
 const memoryStore = {
@@ -153,7 +176,7 @@ async function initDatabase() {
             name: adminName,
             email: adminEmail,
             password_hash: adminHash,
-            role: 'Lead Instructor & Admin'
+            role: 'Admin'
         }
     ];
 
@@ -175,7 +198,7 @@ async function initDatabase() {
                 name VARCHAR(255) NOT NULL,
                 email VARCHAR(255) UNIQUE NOT NULL,
                 password_hash VARCHAR(255) NOT NULL,
-                role VARCHAR(100) DEFAULT 'Instructor',
+                role VARCHAR(100) DEFAULT 'Trainer',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
 
@@ -216,9 +239,11 @@ async function initDatabase() {
         if (adminCheck.rows.length === 0) {
             await client.query(
                 'INSERT INTO users (name, email, password_hash, role) VALUES ($1, $2, $3, $4)',
-                [adminName, adminEmail, adminHash, 'Lead Instructor & Admin']
+                [adminName, adminEmail, adminHash, 'Admin']
             );
             console.log(`✅ Default admin seeded in PostgreSQL: ${adminEmail}`);
+        } else if (adminCheck.rows[0].role !== 'Admin') {
+            await client.query('UPDATE users SET role = $1 WHERE email = $2', ['Admin', adminEmail]);
         }
 
         // Seed Cohorts
@@ -257,7 +282,10 @@ async function initDatabase() {
             }
         }
     } catch (err) {
-        console.warn('⚠️ [Postgres Note]: Could not connect to PostgreSQL server:', err.message);
+        lastConnectionError = (err.errors && err.errors.length)
+            ? err.errors.map(e => e.message || e.code || String(e)).join(' | ')
+            : (err.message || String(err));
+        console.warn('⚠️ [Postgres Note]: Could not connect to PostgreSQL server:', lastConnectionError);
         console.log('ℹ️ Server will operate using internal store until PostgreSQL connection is active.');
         isPostgresConnected = false;
     } finally {
@@ -435,14 +463,27 @@ async function getAllUsers() {
     }));
 }
 
-async function createUser({ name, email, password, role }) {
+const VALID_ROLES = ['Admin', 'Trainer', 'Trainee', 'SPV'];
+
+function normalizeRole(role) {
+    if (!role) return 'Trainer';
+    const r = String(role).trim().toLowerCase();
+    if (r === 'admin' || r.includes('admin') || r.includes('lead')) return 'Admin';
+    if (r === 'spv' || r.includes('supervisor')) return 'SPV';
+    if (r === 'trainee' || r.includes('student') || r.includes('learner')) return 'Trainee';
+    if (r === 'trainer' || r === 'trainner' || r.includes('instructor') || r.includes('teacher') || r.includes('mentor')) return 'Trainer';
+    return 'Trainer';
+}
+
+async function createUser({ name, email, password, role, cohortId }) {
     const existing = await findUserByEmail(email);
     if (existing) {
         throw new Error('User with this email already exists');
     }
 
     const passwordHash = hashPassword(password);
-    const userRole = role || 'Instructor';
+    const userRole = normalizeRole(role);
+    let created = null;
 
     if (isPostgresConnected && pgPool) {
         try {
@@ -450,29 +491,52 @@ async function createUser({ name, email, password, role }) {
                 'INSERT INTO users (name, email, password_hash, role) VALUES ($1, $2, $3, $4) RETURNING id, name, email, role, created_at AS "createdAt"',
                 [name, email.toLowerCase(), passwordHash, userRole]
             );
-            return res.rows[0];
+            created = res.rows[0];
         } catch (e) {
             console.warn('Postgres createUser error:', e.message);
             throw e;
         }
+    } else {
+        const newUser = {
+            id: memoryStore.users.length + 1,
+            name,
+            email: email.toLowerCase(),
+            password_hash: passwordHash,
+            role: userRole,
+            createdAt: new Date().toISOString()
+        };
+        memoryStore.users.push(newUser);
+        created = {
+            id: newUser.id,
+            name: newUser.name,
+            email: newUser.email,
+            role: newUser.role,
+            createdAt: newUser.createdAt
+        };
     }
 
-    const newUser = {
-        id: memoryStore.users.length + 1,
-        name,
-        email: email.toLowerCase(),
-        password_hash: passwordHash,
-        role: userRole,
-        createdAt: new Date().toISOString()
-    };
-    memoryStore.users.push(newUser);
-    return {
-        id: newUser.id,
-        name: newUser.name,
-        email: newUser.email,
-        role: newUser.role,
-        createdAt: newUser.createdAt
-    };
+    // If account role is Trainee, automatically link or create matching student record
+    if (userRole === 'Trainee') {
+        try {
+            const existingStudents = await getStudents();
+            const exists = existingStudents.some(s => s.email.toLowerCase() === email.toLowerCase());
+            if (!exists) {
+                await createStudent({
+                    name,
+                    email: email.toLowerCase(),
+                    cohortId: cohortId || 'TL-2026-B1',
+                    attendance: 100,
+                    score: 85,
+                    status: 'Active',
+                    labStatus: 'Verified'
+                });
+            }
+        } catch (err) {
+            console.warn('Notice: Student auto-link notice:', err.message);
+        }
+    }
+
+    return created;
 }
 
 async function deleteUser(id) {
@@ -494,11 +558,12 @@ async function deleteUser(id) {
 }
 
 async function updateUserRole(id, role) {
+    const validRole = normalizeRole(role);
     if (isPostgresConnected && pgPool) {
         try {
             const res = await pgPool.query(
                 'UPDATE users SET role = $1 WHERE id = $2 RETURNING id, name, email, role',
-                [role, id]
+                [validRole, id]
             );
             return res.rows[0];
         } catch (e) {
@@ -508,7 +573,7 @@ async function updateUserRole(id, role) {
     }
     const user = memoryStore.users.find(u => String(u.id) === String(id));
     if (user) {
-        user.role = role;
+        user.role = validRole;
         return {
             id: user.id,
             name: user.name,
@@ -517,6 +582,187 @@ async function updateUserRole(id, role) {
         };
     }
     return null;
+}
+
+async function getTraineeProfile(email) {
+    if (!email) return null;
+    let student = null;
+    let cohort = null;
+    const normEmail = email.toLowerCase();
+
+    if (isPostgresConnected && pgPool) {
+        try {
+            const stuRes = await pgPool.query(
+                'SELECT id, cohort_id AS "cohortId", name, email, attendance, score, status, lab_status AS "labStatus" FROM students WHERE LOWER(email) = LOWER($1)',
+                [normEmail]
+            );
+            student = stuRes.rows[0] || null;
+
+            if (student && student.cohortId) {
+                const cohRes = await pgPool.query(
+                    'SELECT id, name, lead_instructor AS "leadInstructor", room, start_date AS "startDate", status, progress, schedule, total_students AS "totalStudents" FROM cohorts WHERE id = $1',
+                    [student.cohortId]
+                );
+                cohort = cohRes.rows[0] || null;
+            }
+        } catch (e) {
+            console.warn('Postgres getTraineeProfile error:', e.message);
+        }
+    }
+
+    if (!student) {
+        student = memoryStore.students.find(s => s.email.toLowerCase() === normEmail) || null;
+        if (student) {
+            const cId = student.cohort_id || student.cohortId;
+            cohort = memoryStore.cohorts.find(c => c.id === cId) || null;
+        }
+    }
+
+    const modules = await getModules();
+
+    return {
+        student,
+        cohort,
+        modules
+    };
+}
+
+async function createStudent({ id, cohortId, name, email, attendance, score, status, labStatus }) {
+    const studentCohortId = cohortId || 'TL-2026-B1';
+    const studentAttendance = attendance !== undefined ? parseInt(attendance, 10) : 100;
+    const studentScore = score !== undefined ? parseInt(score, 10) : 85;
+    const studentStatus = status || 'Active';
+    const studentLabStatus = labStatus || 'Verified';
+
+    if (isPostgresConnected && pgPool) {
+        let studentId = id;
+        if (!studentId) {
+            const countRes = await pgPool.query('SELECT COUNT(*) FROM students');
+            const nextNum = parseInt(countRes.rows[0].count, 10) + 1;
+            studentId = `STU-${String(nextNum).padStart(2, '0')}`;
+        }
+
+        const query = `
+            INSERT INTO students (id, cohort_id, name, email, attendance, score, status, lab_status)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            RETURNING id, cohort_id AS "cohortId", name, email, attendance, score, status, lab_status AS "labStatus"
+        `;
+        const res = await pgPool.query(query, [
+            studentId, studentCohortId, name, email, studentAttendance, studentScore, studentStatus, studentLabStatus
+        ]);
+        return res.rows[0];
+    }
+
+    const nextNum = memoryStore.students.length + 1;
+    const studentId = id || `STU-${String(nextNum).padStart(2, '0')}`;
+    const newStudent = {
+        id: studentId,
+        cohort_id: studentCohortId,
+        cohortId: studentCohortId,
+        name,
+        email,
+        attendance: studentAttendance,
+        score: studentScore,
+        status: studentStatus,
+        lab_status: studentLabStatus,
+        labStatus: studentLabStatus
+    };
+    memoryStore.students.push(newStudent);
+    return newStudent;
+}
+
+async function deleteStudent(id) {
+    if (isPostgresConnected && pgPool) {
+        await pgPool.query('DELETE FROM students WHERE id = $1', [id]);
+        return true;
+    }
+    const idx = memoryStore.students.findIndex(s => s.id === id);
+    if (idx !== -1) {
+        memoryStore.students.splice(idx, 1);
+        return true;
+    }
+    return false;
+}
+
+async function getDatabaseStatus() {
+    let host = 'localhost:5432';
+    let dbName = process.env.PGDATABASE || 'thelab_training';
+
+    if (process.env.DATABASE_URL) {
+        try {
+            const parsedUrl = new URL(process.env.DATABASE_URL);
+            host = `${parsedUrl.hostname}${parsedUrl.port ? ':' + parsedUrl.port : ''}`;
+            dbName = parsedUrl.pathname.replace(/^\//, '') || 'postgres';
+        } catch (e) {
+            host = 'DATABASE_URL (Custom)';
+        }
+    } else if (process.env.PGHOST) {
+        host = `${process.env.PGHOST}:${process.env.PGPORT || 5432}`;
+    }
+
+    let isLive = false;
+    let version = null;
+    let latencyMs = null;
+    let rowCounts = { users: 0, cohorts: 0, students: 0, modules: 0 };
+
+    if (!pgPool) {
+        initPgPool();
+    }
+
+    if (pgPool) {
+        const start = Date.now();
+        let client = null;
+        try {
+            client = await pgPool.connect();
+            const res = await client.query('SELECT version()');
+            version = res.rows[0]?.version || 'PostgreSQL';
+            latencyMs = Date.now() - start;
+            isLive = true;
+            isPostgresConnected = true;
+            lastConnectionError = null;
+
+            const usersCount = await client.query('SELECT COUNT(*) FROM users');
+            const cohortsCount = await client.query('SELECT COUNT(*) FROM cohorts');
+            const studentsCount = await client.query('SELECT COUNT(*) FROM students');
+            const modulesCount = await client.query('SELECT COUNT(*) FROM modules');
+
+            rowCounts = {
+                users: parseInt(usersCount.rows[0].count, 10),
+                cohorts: parseInt(cohortsCount.rows[0].count, 10),
+                students: parseInt(studentsCount.rows[0].count, 10),
+                modules: parseInt(modulesCount.rows[0].count, 10)
+            };
+        } catch (err) {
+            isPostgresConnected = false;
+            lastConnectionError = (err.errors && err.errors.length)
+                ? err.errors.map(e => e.message || e.code || String(e)).join(' | ')
+                : (err.message || String(err));
+        } finally {
+            if (client) {
+                try { client.release(); } catch (e) {}
+            }
+        }
+    }
+
+    if (!isLive) {
+        rowCounts = {
+            users: memoryStore.users.length,
+            cohorts: memoryStore.cohorts.length,
+            students: memoryStore.students.length,
+            modules: memoryStore.modules.length
+        };
+    }
+
+    return {
+        connected: isLive,
+        storageEngine: isLive ? 'PostgreSQL' : 'In-Memory Fallback',
+        host,
+        database: dbName,
+        version: version ? version.split(' on ')[0] : null,
+        latencyMs,
+        counts: rowCounts,
+        error: isLive ? null : (lastConnectionError || 'PostgreSQL connection not established')
+    };
 }
 
 module.exports = {
@@ -529,6 +775,8 @@ module.exports = {
     revokeSession,
     getCohorts,
     getStudents,
+    createStudent,
+    deleteStudent,
     updateStudent,
     getModules,
     getStats,
@@ -536,5 +784,10 @@ module.exports = {
     createUser,
     deleteUser,
     updateUserRole,
+    getTraineeProfile,
+    normalizeRole,
+    VALID_ROLES,
+    getDatabaseStatus,
     isPostgresActive: () => isPostgresConnected
 };
+

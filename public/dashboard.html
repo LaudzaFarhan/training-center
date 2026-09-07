@@ -22,38 +22,46 @@
             </div>
 
             <nav class="nav-menu">
-                <div class="nav-section-title">TRAINING OPS</div>
-                <button class="nav-item active" data-tab="overview">
+                <div class="nav-section-title" id="navTitleTraining">TRAINING OPS</div>
+                <button class="nav-item active" data-tab="overview" data-roles="Admin,Trainer,SPV">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
                     <span>Overview & Stats</span>
                 </button>
-                <button class="nav-item" data-tab="sessions">
+                <button class="nav-item" data-tab="sessions" data-roles="Admin,Trainer">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                     <span>Live Class Session</span>
                     <span class="pill-indicator live">LIVE</span>
                 </button>
-                <button class="nav-item" data-tab="students">
+                <button class="nav-item" data-tab="students" data-roles="Admin,Trainer,SPV">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
                     <span>Trainee Roster</span>
                 </button>
-                <button class="nav-item" data-tab="modules">
+                <button class="nav-item" data-tab="modules" data-roles="Admin,Trainer,SPV">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
                     <span>Curriculum & Labs</span>
                 </button>
 
-                <div class="nav-section-title">TEAM &amp; COLLABORATION</div>
-                <button class="nav-item" data-tab="collab">
+                <!-- Dedicated Trainee Nav Item -->
+                <button class="nav-item" data-tab="trainee" id="navItemTrainee" data-roles="Trainee" style="display: none;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>
+                    <span>My Learning Portal</span>
+                    <span class="pill-indicator" style="background: var(--color-emerald-light); color: var(--color-emerald); font-weight: 800;">STUDENT</span>
+                </button>
+
+                <div class="nav-section-title" id="navTitleTeam">TEAM &amp; COLLABORATION</div>
+                <button class="nav-item" data-tab="collab" data-roles="Admin,Trainer,SPV">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
                     <span>Peer Onboarding</span>
                     <span class="pill-indicator" style="background: var(--brand-teal-light); color: var(--brand-teal-hover); font-weight: 800;">GUIDE</span>
                 </button>
-                <button class="nav-item" data-tab="users">
+                <button class="nav-item" data-tab="users" data-roles="Admin">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><polyline points="16 11 18 13 22 9"></polyline></svg>
                     <span>User Management</span>
+                    <span class="pill-indicator" style="background: var(--brand-yellow-light); color: #8C5E00; font-weight: 800;">ADMIN</span>
                 </button>
 
-                <div class="nav-section-title">SYSTEM &amp; PUBLIC</div>
-                <button class="nav-item" data-tab="vps">
+                <div class="nav-section-title" id="navTitleSystem">SYSTEM &amp; PUBLIC</div>
+                <button class="nav-item" data-tab="vps" data-roles="Admin">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
                     <span>Domain & VPS</span>
                     <span class="pill-indicator ready">READY</span>
@@ -70,6 +78,13 @@
                     <div class="status-info">
                         <span class="status-host">training.thelabindonesia.my.id</span>
                         <span class="status-ping">Connected • Reverse Proxy OK</span>
+                    </div>
+                </div>
+                <div class="system-status-card" id="dbStatusCard" style="margin-top: 8px; border-color: rgba(69, 183, 205, 0.25);">
+                    <div class="status-dot-pulse" id="dbStatusDot" style="background: #f59e0b;"></div>
+                    <div class="status-info">
+                        <span class="status-host" id="dbStatusTitle">Database Engine</span>
+                        <span class="status-ping" id="dbStatusDetail">Checking connection...</span>
                     </div>
                 </div>
             </div>
@@ -89,6 +104,11 @@
                 </div>
 
                 <div class="topbar-right">
+                    <div class="db-badge" id="topbarDbBadge" style="display: flex; align-items: center; gap: 7px; padding: 6px 13px; border-radius: 20px; font-size: 11.5px; font-weight: 700; background: rgba(14, 27, 77, 0.04); color: var(--brand-navy); border: 1px solid rgba(14, 27, 77, 0.08);">
+                        <span id="topbarDbDot" style="width: 8px; height: 8px; border-radius: 50%; background: #f59e0b; display: inline-block;"></span>
+                        <span id="topbarDbText">Checking DB...</span>
+                    </div>
+
                     <div class="time-clock" id="serverClock">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                         <span id="currentTime">14:35:00 WIB</span>
@@ -287,9 +307,13 @@
                         <h1>Trainee Roster & Grading</h1>
                         <p>Track student performance, lab submission marks, and quick-toggle attendance status.</p>
                     </div>
-                    <div class="filter-actions">
+                    <div class="filter-actions" style="display: flex; gap: 10px; align-items: center;">
                         <input type="text" id="searchTrainee" class="search-input" placeholder="Search by name or email...">
                         <button class="btn btn-secondary" id="btnMarkAllPresent">Mark All Present</button>
+                        <button class="btn btn-primary" id="btnOpenAddTrainee">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                            <span>Add Trainee</span>
+                        </button>
                     </div>
                 </div>
 
@@ -324,6 +348,94 @@
 
                 <div class="modules-grid" id="modulesGrid">
                     <!-- Populated by JS -->
+                </div>
+            </section>
+
+            <!-- Tab: Trainee Personal Learning Portal -->
+            <section id="tab-trainee" class="tab-pane">
+                <div class="section-hero flex-between">
+                    <div class="hero-text">
+                        <h1 id="traineePortalGreeting">My Learning Portal</h1>
+                        <p>Track your academic attendance rate, hands-on lab scores, cohort class schedule, and curriculum completion.</p>
+                    </div>
+                    <div class="hero-tags">
+                        <span class="badge badge-emerald" id="traineeBadgeStatus">Verified Trainee</span>
+                        <span class="badge badge-accent" id="traineeBadgeCohort">Cohort</span>
+                    </div>
+                </div>
+
+                <!-- Trainee KPI Grid -->
+                <div class="kpi-grid">
+                    <div class="kpi-card">
+                        <div class="kpi-icon-wrap icon-emerald">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                        </div>
+                        <div class="kpi-meta">
+                            <span class="kpi-label">My Attendance</span>
+                            <h3 class="kpi-value" id="traineeAttendanceVal">--%</h3>
+                            <span class="kpi-subtext positive" id="traineeAttendanceSub">Good standing</span>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card">
+                        <div class="kpi-icon-wrap icon-cyan">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>
+                        </div>
+                        <div class="kpi-meta">
+                            <span class="kpi-label">Lab Evaluation Score</span>
+                            <h3 class="kpi-value" id="traineeScoreVal">-- / 100</h3>
+                            <span class="kpi-subtext" id="traineeLabStatusSub">Status: Pending Review</span>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card">
+                        <div class="kpi-icon-wrap icon-amber">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                        </div>
+                        <div class="kpi-meta">
+                            <span class="kpi-label">Enrolled Cohort</span>
+                            <h3 class="kpi-value" style="font-size: 18px; margin-top: 4px;" id="traineeCohortName">Loading...</h3>
+                            <span class="kpi-subtext" id="traineeCohortRoom">Workstation Room</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Trainee Class Schedule & Modules -->
+                <div class="vps-cards-grid" style="margin-top: 24px;">
+                    <div class="panel-card">
+                        <div class="panel-header">
+                            <h3>Cohort Schedule & Details</h3>
+                            <span class="badge badge-subtle" id="traineeCohortIdBadge">ID</span>
+                        </div>
+                        <div class="dns-config-box" style="margin-top: 10px;">
+                            <div class="dns-row">
+                                <span class="dns-key">Cohort Name</span>
+                                <span class="dns-val" id="traineeCohortFullName">--</span>
+                            </div>
+                            <div class="dns-row">
+                                <span class="dns-key">Lead Instructor</span>
+                                <span class="dns-val" id="traineeCohortInstructor">--</span>
+                            </div>
+                            <div class="dns-row">
+                                <span class="dns-key">Class Schedule</span>
+                                <span class="dns-val" id="traineeCohortSchedule">--</span>
+                            </div>
+                            <div class="dns-row">
+                                <span class="dns-key">Workstation Room</span>
+                                <span class="dns-val" id="traineeCohortRoomDetail">--</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="panel-card">
+                        <div class="panel-header">
+                            <h3>Curriculum Roadmap</h3>
+                            <span class="badge badge-accent">2026 Core</span>
+                        </div>
+                        <div class="modules-grid" id="traineeModulesList" style="margin-top: 14px; grid-template-columns: 1fr;">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
                 </div>
             </section>
 
@@ -575,6 +687,24 @@ pm2 restart thelab-training</code></pre>
                     </button>
                 </div>
 
+                <div id="usersDbNotice" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 18px; border-radius: 10px; margin-bottom: 20px; font-size: 13px; background: rgba(69, 183, 205, 0.08); border: 1px solid rgba(69, 183, 205, 0.25); color: var(--brand-navy);">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span id="usersDbIcon" style="font-size: 16px;">🐘</span>
+                        <span id="usersDbText">Database Status: Checking PostgreSQL connection...</span>
+                    </div>
+                    <span id="usersDbCount" class="badge badge-accent" style="font-size: 11px;">0 Active Accounts</span>
+                </div>
+
+                <!-- Role Filter Bar -->
+                <div class="role-filter-bar" style="display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; align-items: center;">
+                    <span style="font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-right: 4px;">Filter by Role:</span>
+                    <button class="btn btn-sm role-filter-btn active" data-role="all" style="padding: 5px 12px; font-size: 12px; border-radius: 20px;">All (<span id="countAllUsers">0</span>)</button>
+                    <button class="btn btn-sm btn-subtle role-filter-btn" data-role="Admin" style="padding: 5px 12px; font-size: 12px; border-radius: 20px;">👑 Admin (<span id="countAdmin">0</span>)</button>
+                    <button class="btn btn-sm btn-subtle role-filter-btn" data-role="Trainer" style="padding: 5px 12px; font-size: 12px; border-radius: 20px;">🎓 Trainer (<span id="countTrainer">0</span>)</button>
+                    <button class="btn btn-sm btn-subtle role-filter-btn" data-role="Trainee" style="padding: 5px 12px; font-size: 12px; border-radius: 20px;">🎒 Trainee (<span id="countTrainee">0</span>)</button>
+                    <button class="btn btn-sm btn-subtle role-filter-btn" data-role="SPV" style="padding: 5px 12px; font-size: 12px; border-radius: 20px;">👔 SPV (<span id="countSPV">0</span>)</button>
+                </div>
+
                 <div class="table-container">
                     <table class="data-table" id="usersTable">
                         <thead>
@@ -625,6 +755,46 @@ pm2 restart thelab-training</code></pre>
         </div>
     </div>
 
+    <!-- Add Trainee Modal -->
+    <div class="modal-overlay" id="addTraineeModal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>Enroll New Trainee</h3>
+                <button class="btn-close" id="btnCloseAddTraineeModal">&times;</button>
+            </div>
+            <form id="addTraineeForm">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="newTraineeName">Full Name *</label>
+                        <input type="text" id="newTraineeName" class="input-field" placeholder="e.g. Ahmad Fauzi" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="newTraineeEmail">Email Address *</label>
+                        <input type="email" id="newTraineeEmail" class="input-field" placeholder="ahmad@thelab.id" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="newTraineeCohort">Assign to Cohort *</label>
+                        <select id="newTraineeCohort" class="input-field">
+                            <!-- Populated dynamically -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="newTraineeAttendance">Initial Attendance (%)</label>
+                        <input type="number" id="newTraineeAttendance" class="input-field" value="100" min="0" max="100">
+                    </div>
+                    <div class="form-group">
+                        <label for="newTraineeScore">Initial Lab Score (0-100)</label>
+                        <input type="number" id="newTraineeScore" class="input-field" value="85" min="0" max="100">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-subtle" id="btnCancelAddTrainee">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="btnSaveTrainee">Enroll Trainee</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Add User Modal -->
     <div class="modal-overlay" id="addUserModal">
         <div class="modal-box">
@@ -649,11 +819,16 @@ pm2 restart thelab-training</code></pre>
                     <div class="form-group">
                         <label for="newUserRole">Operational Role *</label>
                         <select id="newUserRole" class="input-field">
-                            <option value="Lead Instructor & Admin">Lead Instructor &amp; Admin</option>
-                            <option value="Instructor" selected>Instructor</option>
-                            <option value="Teaching Assistant">Teaching Assistant</option>
-                            <option value="Lab Technician">Lab Technician</option>
-                            <option value="Curriculum Reviewer">Curriculum Reviewer</option>
+                            <option value="Admin">👑 Admin (System Administrator)</option>
+                            <option value="Trainer" selected>🎓 Trainer (Instructor)</option>
+                            <option value="Trainee">🎒 Trainee (Student / Learner)</option>
+                            <option value="SPV">👔 SPV (Supervisor)</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="userCohortGroup" style="display: none;">
+                        <label for="userCohortSelect">Assign to Cohort (for Trainee)</label>
+                        <select id="userCohortSelect" class="input-field">
+                            <!-- Populated dynamically -->
                         </select>
                     </div>
                 </div>
@@ -678,11 +853,10 @@ pm2 restart thelab-training</code></pre>
                     <div class="form-group">
                         <label for="editRoleSelect">Change Role to:</label>
                         <select id="editRoleSelect" class="input-field">
-                            <option value="Lead Instructor & Admin">Lead Instructor &amp; Admin</option>
-                            <option value="Instructor">Instructor</option>
-                            <option value="Teaching Assistant">Teaching Assistant</option>
-                            <option value="Lab Technician">Lab Technician</option>
-                            <option value="Curriculum Reviewer">Curriculum Reviewer</option>
+                            <option value="Admin">👑 Admin (System Administrator)</option>
+                            <option value="Trainer">🎓 Trainer (Instructor)</option>
+                            <option value="Trainee">🎒 Trainee (Student / Learner)</option>
+                            <option value="SPV">👔 SPV (Supervisor)</option>
                         </select>
                     </div>
                 </div>

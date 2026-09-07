@@ -145,8 +145,18 @@ const server = http.createServer(async (req, res) => {
                 res.end(JSON.stringify({ authenticated: false, user: null }));
                 return;
             }
+            const role = sessionUser.role || 'Trainer';
+            const permissions = {
+                isAdmin: role === 'Admin',
+                isTrainer: role === 'Trainer' || role === 'Admin',
+                isSPV: role === 'SPV' || role === 'Admin',
+                isTrainee: role === 'Trainee',
+                canManageUsers: role === 'Admin',
+                canEvaluate: role === 'Admin' || role === 'Trainer',
+                canConductLive: role === 'Admin' || role === 'Trainer'
+            };
             res.writeHead(200);
-            res.end(JSON.stringify({ authenticated: true, user: sessionUser }));
+            res.end(JSON.stringify({ authenticated: true, user: sessionUser, permissions }));
             return;
         }
     }
@@ -171,11 +181,75 @@ const server = http.createServer(async (req, res) => {
             return;
         }
 
-        if (url.pathname === '/api/students') {
+        if (url.pathname === '/api/system/db-status' && req.method === 'GET') {
+            const dbStatus = await db.getDatabaseStatus();
+            res.writeHead(200);
+            res.end(JSON.stringify(dbStatus));
+            return;
+        }
+
+        if (url.pathname === '/api/students' && req.method === 'GET') {
             const cohortId = url.searchParams.get('cohortId');
             const data = await db.getStudents(cohortId);
             res.writeHead(200);
             res.end(JSON.stringify(data));
+            return;
+        }
+
+        if (url.pathname === '/api/students' && req.method === 'POST') {
+            if (!sessionUser) {
+                res.writeHead(401);
+                res.end(JSON.stringify({ error: 'Unauthorized' }));
+                return;
+            }
+            if (sessionUser.role !== 'Admin' && sessionUser.role !== 'Trainer') {
+                res.writeHead(403);
+                res.end(JSON.stringify({ error: 'Permission denied: Only Trainer or Admin can enroll trainees' }));
+                return;
+            }
+            try {
+                const body = await readJsonBody(req);
+                const { name, email } = body;
+                if (!name || !email) {
+                    res.writeHead(400);
+                    res.end(JSON.stringify({ error: 'Name and email are required' }));
+                    return;
+                }
+                const newStudent = await db.createStudent(body);
+                res.writeHead(201);
+                res.end(JSON.stringify({ success: true, student: newStudent }));
+            } catch (err) {
+                res.writeHead(400);
+                res.end(JSON.stringify({ error: err.message }));
+            }
+            return;
+        }
+
+        if (url.pathname === '/api/students/delete' && req.method === 'POST') {
+            if (!sessionUser) {
+                res.writeHead(401);
+                res.end(JSON.stringify({ error: 'Unauthorized' }));
+                return;
+            }
+            if (sessionUser.role !== 'Admin' && sessionUser.role !== 'Trainer') {
+                res.writeHead(403);
+                res.end(JSON.stringify({ error: 'Permission denied: Only Trainer or Admin can remove trainees' }));
+                return;
+            }
+            try {
+                const body = await readJsonBody(req);
+                if (!body.studentId) {
+                    res.writeHead(400);
+                    res.end(JSON.stringify({ error: 'studentId is required' }));
+                    return;
+                }
+                await db.deleteStudent(body.studentId);
+                res.writeHead(200);
+                res.end(JSON.stringify({ success: true, message: 'Student removed successfully' }));
+            } catch (err) {
+                res.writeHead(400);
+                res.end(JSON.stringify({ error: err.message }));
+            }
             return;
         }
 
@@ -187,6 +261,16 @@ const server = http.createServer(async (req, res) => {
         }
 
         if (url.pathname === '/api/attendance' && req.method === 'POST') {
+            if (!sessionUser) {
+                res.writeHead(401);
+                res.end(JSON.stringify({ error: 'Unauthorized' }));
+                return;
+            }
+            if (sessionUser.role !== 'Admin' && sessionUser.role !== 'Trainer') {
+                res.writeHead(403);
+                res.end(JSON.stringify({ error: 'Permission denied: Only Trainer or Admin can evaluate trainees' }));
+                return;
+            }
             try {
                 const body = await readJsonBody(req);
                 const updated = await db.updateStudent(body.studentId, body);
@@ -200,12 +284,32 @@ const server = http.createServer(async (req, res) => {
         }
 
         // ==========================================
-        // User & Role Management APIs
+        // Trainee Personal Profile API
         // ==========================================
-        if (url.pathname === '/api/users' && req.method === 'GET') {
+        if (url.pathname === '/api/trainee/my-profile' && req.method === 'GET') {
             if (!sessionUser) {
                 res.writeHead(401);
                 res.end(JSON.stringify({ error: 'Unauthorized' }));
+                return;
+            }
+            try {
+                const profile = await db.getTraineeProfile(sessionUser.email);
+                res.writeHead(200);
+                res.end(JSON.stringify({ success: true, user: sessionUser, profile, ...(profile || {}) }));
+            } catch (err) {
+                res.writeHead(500);
+                res.end(JSON.stringify({ error: 'Failed to load profile: ' + err.message }));
+            }
+            return;
+        }
+
+        // ==========================================
+        // User & Role Management APIs (Admin Only)
+        // ==========================================
+        if (url.pathname === '/api/users' && req.method === 'GET') {
+            if (!sessionUser || sessionUser.role !== 'Admin') {
+                res.writeHead(403);
+                res.end(JSON.stringify({ error: 'Permission denied: Admin privileges required' }));
                 return;
             }
             const users = await db.getAllUsers();
@@ -215,20 +319,20 @@ const server = http.createServer(async (req, res) => {
         }
 
         if (url.pathname === '/api/users' && req.method === 'POST') {
-            if (!sessionUser) {
-                res.writeHead(401);
-                res.end(JSON.stringify({ error: 'Unauthorized' }));
+            if (!sessionUser || sessionUser.role !== 'Admin') {
+                res.writeHead(403);
+                res.end(JSON.stringify({ error: 'Permission denied: Admin privileges required' }));
                 return;
             }
             try {
                 const body = await readJsonBody(req);
-                const { name, email, password, role } = body;
+                const { name, email, password, role, cohortId } = body;
                 if (!name || !email || !password) {
                     res.writeHead(400);
                     res.end(JSON.stringify({ error: 'Name, email, and password are required' }));
                     return;
                 }
-                const newUser = await db.createUser({ name, email, password, role });
+                const newUser = await db.createUser({ name, email, password, role, cohortId });
                 res.writeHead(201);
                 res.end(JSON.stringify({ success: true, user: newUser }));
             } catch (err) {
@@ -239,9 +343,9 @@ const server = http.createServer(async (req, res) => {
         }
 
         if (url.pathname === '/api/users/delete' && req.method === 'POST') {
-            if (!sessionUser) {
-                res.writeHead(401);
-                res.end(JSON.stringify({ error: 'Unauthorized' }));
+            if (!sessionUser || sessionUser.role !== 'Admin') {
+                res.writeHead(403);
+                res.end(JSON.stringify({ error: 'Permission denied: Admin privileges required' }));
                 return;
             }
             try {
@@ -262,9 +366,9 @@ const server = http.createServer(async (req, res) => {
         }
 
         if (url.pathname === '/api/users/update-role' && req.method === 'POST') {
-            if (!sessionUser) {
-                res.writeHead(401);
-                res.end(JSON.stringify({ error: 'Unauthorized' }));
+            if (!sessionUser || sessionUser.role !== 'Admin') {
+                res.writeHead(403);
+                res.end(JSON.stringify({ error: 'Permission denied: Admin privileges required' }));
                 return;
             }
             try {
