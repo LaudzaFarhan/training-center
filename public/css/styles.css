@@ -2500,4 +2500,232 @@ body {
     transform: scale(1.15);
 }
 
+/* ==========================================
+   Report QA Issue Modal Redesign (.qa-modal-new-issue)
+   ========================================== */
+.qa-modal-new-issue {
+    width: 760px !important;
+    max-width: 95vw !important;
+    max-height: 90vh !important;
+    display: flex !important;
+    flex-direction: column !important;
+    border-radius: 16px !important;
+    border: 1px solid rgba(14, 27, 77, 0.14) !important;
+    box-shadow: 0 25px 65px -10px rgba(14, 27, 77, 0.3), 0 0 0 1px rgba(14, 27, 77, 0.06) !important;
+    background: #FFFFFF !important;
+    overflow: hidden !important;
+    animation: qaModalPopIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes qaModalPopIn {
+    from { opacity: 0; transform: scale(0.96) translateY(12px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.qa-create-modal-header {
+    padding: 22px 28px 18px !important;
+    border-bottom: 1px solid var(--border-subtle) !important;
+    background: linear-gradient(180deg, #FFFFFF 0%, #FAFBFD 100%) !important;
+    display: flex !important;
+    align-items: flex-start !important;
+    justify-content: space-between !important;
+}
+
+.qa-create-modal-header .btn-close {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    transition: all 0.15s ease;
+    font-size: 24px;
+    line-height: 1;
+}
+
+.qa-create-modal-header .btn-close:hover {
+    background: rgba(14, 27, 77, 0.08);
+    color: var(--brand-navy);
+}
+
+.qa-create-modal-body {
+    padding: 24px 28px !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 18px !important;
+}
+
+.qa-create-modal-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.qa-create-modal-body::-webkit-scrollbar-track {
+    background: #F8FAFC;
+    border-radius: 4px;
+}
+
+.qa-create-modal-body::-webkit-scrollbar-thumb {
+    background: #CBD5E1;
+    border-radius: 4px;
+}
+
+.qa-create-modal-body::-webkit-scrollbar-thumb:hover {
+    background: #94A3B8;
+}
+
+.qa-form-meta-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.qa-form-meta-grid .form-group {
+    min-width: 0;
+}
+
+.qa-form-select {
+    width: 100% !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    padding-right: 28px !important;
+    cursor: pointer;
+}
+
+.qa-input-lg {
+    font-size: 14.5px !important;
+    font-weight: 600 !important;
+    padding: 11px 15px !important;
+}
+
+.qa-annotator-launch-btn {
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    color: var(--brand-teal-hover) !important;
+    background: var(--brand-teal-light) !important;
+    border: 1px solid rgba(69, 183, 205, 0.35) !important;
+    border-radius: 6px !important;
+    padding: 4px 12px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+    transition: all 0.2s ease !important;
+}
+
+.qa-annotator-launch-btn:hover {
+    background: var(--brand-teal) !important;
+    color: #FFFFFF !important;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(69, 183, 205, 0.35);
+}
+
+.qa-create-dropzone {
+    border: 2px dashed rgba(69, 183, 205, 0.45) !important;
+    background: #F8FAFD !important;
+    border-radius: var(--radius-sm) !important;
+    padding: 20px 18px !important;
+    text-align: center !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+}
+
+.qa-create-dropzone:hover, .qa-create-dropzone.dragover {
+    border-color: var(--brand-teal) !important;
+    background: rgba(69, 183, 205, 0.08) !important;
+    transform: translateY(-1px);
+}
+
+.qa-env-telemetry-card {
+    background: #F8FAFD;
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+    padding: 12px 16px;
+}
+
+.qa-env-telemetry-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 8px;
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--brand-navy);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+}
+
+.qa-env-telemetry-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+}
+
+.qa-env-telemetry-tile {
+    background: #FFFFFF;
+    border: 1px solid var(--border-subtle);
+    border-radius: 6px;
+    padding: 8px 10px;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.qa-env-telemetry-label {
+    font-size: 10px;
+    color: var(--text-muted);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.qa-env-telemetry-val {
+    font-size: 12px;
+    font-family: var(--font-mono);
+    color: var(--brand-navy);
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-top: 3px;
+}
+
+.qa-create-modal-footer {
+    padding: 16px 28px !important;
+    background: #FAFBFD !important;
+    border-top: 1px solid var(--border-subtle) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+}
+
+@media (max-width: 768px) {
+    .qa-modal-new-issue {
+        width: 95vw !important;
+        max-height: 94vh !important;
+    }
+    .qa-create-modal-header {
+        padding: 16px 20px 14px !important;
+    }
+    .qa-create-modal-body {
+        padding: 16px 20px !important;
+        gap: 14px !important;
+    }
+    .qa-form-meta-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    .qa-env-telemetry-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .qa-create-modal-footer {
+        padding: 14px 20px !important;
+    }
+}
+
 

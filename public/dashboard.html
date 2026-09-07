@@ -1235,25 +1235,29 @@ pm2 restart thelab-training</code></pre>
 
     <!-- 1. Report New Issue Modal -->
     <div class="modal-overlay" id="qaNewIssueModal">
-        <div class="modal-box" style="max-width: 680px; max-height: 90vh; display: flex; flex-direction: column;">
-            <div class="modal-header">
+        <div class="modal-box qa-modal-new-issue">
+            <div class="modal-header qa-create-modal-header">
                 <div>
-                    <span class="badge" style="background: rgba(244, 63, 94, 0.12); color: var(--color-rose); font-size: 11px; margin-bottom: 4px; font-weight: 700;">🐞 QA Ticket Creation</span>
-                    <h3 style="margin-top: 2px;">Report QA Issue / Defect</h3>
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                        <span class="badge" style="background: rgba(244, 63, 94, 0.12); color: var(--color-rose); font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px;">🐞 QA DEFECT TRACKER</span>
+                        <span style="font-size: 11.5px; color: var(--text-muted); font-weight: 600;">• PostgreSQL Backed</span>
+                    </div>
+                    <h3 style="font-size: 20px; font-weight: 800; color: var(--brand-navy); margin: 0; letter-spacing: -0.3px;">Report QA Issue / Defect</h3>
+                    <p style="font-size: 12.5px; color: var(--text-secondary); margin: 4px 0 0 0; line-height: 1.4;">Submit observations, UI adjustments, or bug reports with automated client telemetry.</p>
                 </div>
-                <button class="btn-close" id="btnCloseQaNewIssueModal">&times;</button>
+                <button class="btn-close" id="btnCloseQaNewIssueModal" title="Close (Esc)">&times;</button>
             </div>
             <form id="qaNewIssueForm" style="display: flex; flex-direction: column; overflow: hidden; flex: 1;">
-                <div class="modal-body" style="overflow-y: auto; padding: 22px 24px; flex: 1;">
+                <div class="modal-body qa-create-modal-body">
                     <div class="form-group">
                         <label for="qaIssueTitle">Issue Title *</label>
-                        <input type="text" id="qaIssueTitle" class="input-field" placeholder="e.g. Schedule column text overlaps on 1366px screen" required>
+                        <input type="text" id="qaIssueTitle" class="input-field qa-input-lg" placeholder="e.g. Calendar schedule column text overlaps on 1366px screen" required>
                     </div>
 
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                    <div class="qa-form-meta-grid">
                         <div class="form-group">
                             <label for="qaIssueType">Category / Type *</label>
-                            <select id="qaIssueType" class="input-field">
+                            <select id="qaIssueType" class="input-field qa-form-select">
                                 <option value="Bug" selected>🐛 Bug (Functional Defect)</option>
                                 <option value="UI/UX Tweak">🎨 UI/UX Tweak (Design / Polish)</option>
                                 <option value="Feature Request">✨ Feature Request (New Capability)</option>
@@ -1264,19 +1268,16 @@ pm2 restart thelab-training</code></pre>
                         </div>
                         <div class="form-group">
                             <label for="qaIssuePriority">Priority Level *</label>
-                            <select id="qaIssuePriority" class="input-field">
-                                <option value="Low">⚪ Low (Cosmetic / Nice to have)</option>
-                                <option value="Medium" selected>🔷 Medium (Standard defect)</option>
-                                <option value="High">⚠️ High (Blocks workflow)</option>
-                                <option value="Critical">🚨 Critical (System down / Data loss)</option>
+                            <select id="qaIssuePriority" class="input-field qa-form-select">
+                                <option value="Low">⚪ Low (Cosmetic / Minor)</option>
+                                <option value="Medium" selected>🔷 Medium (Standard Defect)</option>
+                                <option value="High">⚠️ High (Blocks Workflow)</option>
+                                <option value="Critical">🚨 Critical (Urgent / System Down)</option>
                             </select>
                         </div>
-                    </div>
-
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
                         <div class="form-group">
                             <label for="qaIssueModule">Affected Module *</label>
-                            <select id="qaIssueModule" class="input-field">
+                            <select id="qaIssueModule" class="input-field qa-form-select">
                                 <option value="Overview">Overview &amp; Stats</option>
                                 <option value="Sessions">Live Class Session</option>
                                 <option value="Students">Trainee Roster</option>
@@ -1289,7 +1290,7 @@ pm2 restart thelab-training</code></pre>
                         </div>
                         <div class="form-group">
                             <label for="qaIssueAssignee">Assignee (Optional)</label>
-                            <select id="qaIssueAssignee" class="input-field">
+                            <select id="qaIssueAssignee" class="input-field qa-form-select">
                                 <option value="">-- Leave Unassigned --</option>
                                 <!-- Populated by JS -->
                             </select>
@@ -1298,52 +1299,71 @@ pm2 restart thelab-training</code></pre>
 
                     <div class="form-group">
                         <label for="qaIssueDesc">Detailed Description / Reproduction Steps *</label>
-                        <textarea id="qaIssueDesc" class="input-field" rows="4" placeholder="Steps to reproduce:&#10;1. Navigate to...&#10;2. Click on...&#10;3. Observed vs Expected behavior" style="font-family: inherit; resize: vertical;" required></textarea>
+                        <textarea id="qaIssueDesc" class="input-field" rows="4" placeholder="Steps to reproduce:&#10;1. Navigate to...&#10;2. Click on...&#10;3. Observed behavior vs Expected behavior" style="font-family: inherit; resize: vertical; min-height: 96px; padding: 11px 14px; line-height: 1.5;" required></textarea>
                     </div>
 
                     <!-- Screenshot & Canvas Annotator Section -->
                     <div class="form-group">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                            <label style="margin-bottom: 0;">Screenshot Attachments &amp; Visual Notes</label>
-                            <button type="button" class="btn btn-sm btn-subtle" id="btnOpenAnnotatorFromNew" style="font-size: 11.5px; padding: 4px 10px; color: var(--brand-teal-hover);">
+                            <label style="margin-bottom: 0;">Screenshot Attachments &amp; Visual Evidence</label>
+                            <button type="button" class="qa-annotator-launch-btn" id="btnOpenAnnotatorFromNew">
                                 🎨 Open Canvas Annotator
                             </button>
                         </div>
-                        <div class="qa-dropzone" id="qaNewIssueDropzone">
+                        <div class="qa-dropzone qa-create-dropzone" id="qaNewIssueDropzone">
                             <input type="file" id="qaFileInput" accept="image/*" multiple style="display: none;">
                             <div class="qa-dropzone-content">
-                                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="color: var(--brand-teal);"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
-                                <div style="margin-top: 6px;">
-                                    <span style="font-weight: 700; color: var(--brand-navy); font-size: 13px;">Click to upload</span> or drag images here
+                                <div style="width: 44px; height: 44px; border-radius: 50%; background: var(--brand-teal-light); display: inline-flex; align-items: center; justify-content: center; margin-bottom: 8px;">
+                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--brand-teal);"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
                                 </div>
-                                <span style="font-size: 11.5px; color: var(--text-muted); display: block; margin-top: 3px;">
-                                    Tip: You can also press <kbd class="key-kbd">Ctrl + V</kbd> anywhere on this modal to paste screenshots directly!
-                                </span>
+                                <div>
+                                    <span style="font-weight: 700; color: var(--brand-navy); font-size: 13.5px;">Click to browse files</span> or drop images here
+                                </div>
+                                <div style="margin-top: 6px;">
+                                    <span style="display: inline-flex; align-items: center; gap: 4px; font-size: 11.5px; font-weight: 600; color: var(--brand-teal-hover); background: var(--brand-teal-light); padding: 3px 10px; border-radius: 20px;">📋 Press Ctrl + V anywhere on this modal to paste screenshots</span>
+                                </div>
                             </div>
                         </div>
                         <div class="qa-thumbnails-strip" id="qaNewIssueThumbnails"></div>
                     </div>
 
                     <!-- Environment Capture Snapshot Preview -->
-                    <div class="qa-env-preview-card">
-                        <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--brand-teal);"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
-                            <span style="font-size: 11.5px; font-weight: 700; color: var(--brand-navy); text-transform: uppercase; letter-spacing: 0.5px;">Auto-Captured Environment</span>
+                    <div class="qa-env-telemetry-card">
+                        <div class="qa-env-telemetry-header">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="color: var(--brand-teal);"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+                            <span>Auto-Captured Client Telemetry</span>
                         </div>
-                        <div class="qa-env-pills" id="qaNewIssueEnvPills">
-                            <span class="qa-env-pill" id="envPillBrowser">Browser: Loading...</span>
-                            <span class="qa-env-pill" id="envPillOs">OS: Loading...</span>
-                            <span class="qa-env-pill" id="envPillResolution">Screen: Loading...</span>
-                            <span class="qa-env-pill" id="envPillViewport">Viewport: Loading...</span>
+                        <div class="qa-env-telemetry-grid">
+                            <div class="qa-env-telemetry-tile">
+                                <span class="qa-env-telemetry-label">Browser</span>
+                                <span class="qa-env-telemetry-val" id="envPillBrowser">Detecting...</span>
+                            </div>
+                            <div class="qa-env-telemetry-tile">
+                                <span class="qa-env-telemetry-label">Operating System</span>
+                                <span class="qa-env-telemetry-val" id="envPillOs">Detecting...</span>
+                            </div>
+                            <div class="qa-env-telemetry-tile">
+                                <span class="qa-env-telemetry-label">Screen Resolution</span>
+                                <span class="qa-env-telemetry-val" id="envPillResolution">Detecting...</span>
+                            </div>
+                            <div class="qa-env-telemetry-tile">
+                                <span class="qa-env-telemetry-label">Viewport</span>
+                                <span class="qa-env-telemetry-val" id="envPillViewport">Detecting...</span>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer" style="padding: 14px 24px; background: #FAFBFD;">
-                    <button type="button" class="btn btn-subtle" id="btnCancelQaNewIssue">Cancel</button>
-                    <button type="submit" class="btn btn-primary" id="btnSubmitQaNewIssue">
-                        <span>Submit Issue Ticket</span>
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-                    </button>
+                <div class="modal-footer qa-create-modal-footer">
+                    <span style="font-size: 12px; color: var(--text-muted); display: inline-flex; align-items: center; gap: 4px;">
+                        🔒 Logged under active staff session
+                    </span>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <button type="button" class="btn btn-subtle" id="btnCancelQaNewIssue" style="padding: 7px 16px; font-weight: 600;">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="btnSubmitQaNewIssue" style="padding: 7px 20px; font-weight: 700; background: linear-gradient(135deg, #0E1B4D, #1E3A8A); box-shadow: 0 4px 12px rgba(14, 27, 77, 0.25);">
+                            <span>Submit Issue Ticket</span>
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                        </button>
+                    </div>
                 </div>
             </form>
         </div>

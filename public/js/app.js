@@ -1637,10 +1637,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const pOs = document.getElementById('envPillOs');
         const pRes = document.getElementById('envPillResolution');
         const pVp = document.getElementById('envPillViewport');
-        if (pBrowser) pBrowser.textContent = `Browser: ${env.browser}`;
-        if (pOs) pOs.textContent = `OS: ${env.os}`;
-        if (pRes) pRes.textContent = `Screen: ${env.screenRes}`;
-        if (pVp) pVp.textContent = `Viewport: ${env.viewport}`;
+        if (pBrowser) pBrowser.textContent = env.browser || 'Chrome';
+        if (pOs) pOs.textContent = env.os || 'Windows';
+        if (pRes) pRes.textContent = env.screenRes || '1920x1080';
+        if (pVp) pVp.textContent = env.viewport || '1920x960';
 
         qaNewIssueModal.classList.add('active');
     }
