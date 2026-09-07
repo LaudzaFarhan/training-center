@@ -143,11 +143,13 @@ const activeSessions = new Map();
 
 function generateSessionToken(user) {
     const token = crypto.randomBytes(32).toString('hex');
+    const mustChange = Boolean(user.must_change_password ?? user.mustChangePassword ?? false);
     activeSessions.set(token, {
         userId: user.id,
         email: user.email,
         name: user.name,
         role: user.role,
+        mustChangePassword: mustChange,
         createdAt: Date.now()
     });
     return token;
@@ -176,7 +178,9 @@ async function initDatabase() {
             name: adminName,
             email: adminEmail,
             password_hash: adminHash,
-            role: 'Admin'
+            role: 'Admin',
+            mustChangePassword: false,
+            must_change_password: false
         }
     ];
 
@@ -199,8 +203,11 @@ async function initDatabase() {
                 email VARCHAR(255) UNIQUE NOT NULL,
                 password_hash VARCHAR(255) NOT NULL,
                 role VARCHAR(100) DEFAULT 'Trainer',
+                must_change_password BOOLEAN DEFAULT true,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
+
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS must_change_password BOOLEAN DEFAULT true;
 
             CREATE TABLE IF NOT EXISTS cohorts (
                 id VARCHAR(50) PRIMARY KEY,
@@ -448,7 +455,7 @@ async function getModules() {
 async function getAllUsers() {
     if (isPostgresConnected && pgPool) {
         try {
-            const res = await pgPool.query('SELECT id, name, email, role, created_at AS "createdAt" FROM users ORDER BY id ASC');
+            const res = await pgPool.query('SELECT id, name, email, role, must_change_password AS "mustChangePassword", created_at AS "createdAt" FROM users ORDER BY id ASC');
             return res.rows;
         } catch (e) {
             console.warn('Postgres getAllUsers error:', e.message);
@@ -459,6 +466,7 @@ async function getAllUsers() {
         name: u.name,
         email: u.email,
         role: u.role,
+        mustChangePassword: Boolean(u.mustChangePassword ?? u.must_change_password ?? false),
         createdAt: u.createdAt || new Date().toISOString()
     }));
 }
@@ -494,7 +502,7 @@ async function createUser({ name, email, password, role, cohortId }) {
     if (isPostgresConnected && pgPool) {
         try {
             const res = await pgPool.query(
-                'INSERT INTO users (name, email, password_hash, role) VALUES ($1, $2, $3, $4) RETURNING id, name, email, role, created_at AS "createdAt"',
+                'INSERT INTO users (name, email, password_hash, role, must_change_password) VALUES ($1, $2, $3, $4, true) RETURNING id, name, email, role, must_change_password AS "mustChangePassword", created_at AS "createdAt"',
                 [name, email.toLowerCase(), passwordHash, userRole]
             );
             created = res.rows[0];
@@ -509,6 +517,8 @@ async function createUser({ name, email, password, role, cohortId }) {
             email: email.toLowerCase(),
             password_hash: passwordHash,
             role: userRole,
+            mustChangePassword: true,
+            must_change_password: true,
             createdAt: new Date().toISOString()
         };
         memoryStore.users.push(newUser);
@@ -517,6 +527,7 @@ async function createUser({ name, email, password, role, cohortId }) {
             name: newUser.name,
             email: newUser.email,
             role: newUser.role,
+            mustChangePassword: true,
             createdAt: newUser.createdAt
         };
     }
@@ -614,13 +625,22 @@ async function resetUserPassword(id, newPassword) {
 
     if (isPostgresConnected && pgPool) {
         try {
-            await pgPool.query('UPDATE users SET password_hash = $1 WHERE id = $2', [hash, id]);
+            await pgPool.query('UPDATE users SET password_hash = $1, must_change_password = true WHERE id = $2', [hash, id]);
         } catch (e) {
             console.warn('Postgres resetUserPassword update error:', e.message);
             throw e;
         }
     } else {
         user.password_hash = hash;
+        user.mustChangePassword = true;
+        user.must_change_password = true;
+    }
+
+    // Force active sessions for this user to trigger password change prompt
+    for (const [token, sess] of activeSessions.entries()) {
+        if (String(sess.userId) === String(id)) {
+            sess.mustChangePassword = true;
+        }
     }
 
     return {
@@ -630,8 +650,45 @@ async function resetUserPassword(id, newPassword) {
         role: user.role,
         password: passwordToSet,
         defaultPassword: defaultPwd,
-        isDefault: passwordToSet === defaultPwd
+        isDefault: passwordToSet === defaultPwd,
+        mustChangePassword: true
     };
+}
+
+async function changeOwnPassword(userId, newPassword) {
+    if (!newPassword || newPassword.trim().length < 6) {
+        throw new Error('New password must be at least 6 characters');
+    }
+    const cleanPwd = newPassword.trim();
+    const hash = hashPassword(cleanPwd);
+
+    if (isPostgresConnected && pgPool) {
+        try {
+            await pgPool.query(
+                'UPDATE users SET password_hash = $1, must_change_password = false WHERE id = $2',
+                [hash, userId]
+            );
+        } catch (e) {
+            console.warn('Postgres changeOwnPassword update error:', e.message);
+            throw e;
+        }
+    }
+
+    const memUser = memoryStore.users.find(u => String(u.id) === String(userId));
+    if (memUser) {
+        memUser.password_hash = hash;
+        memUser.mustChangePassword = false;
+        memUser.must_change_password = false;
+    }
+
+    // Update active sessions for this user
+    for (const [token, sess] of activeSessions.entries()) {
+        if (String(sess.userId) === String(userId)) {
+            sess.mustChangePassword = false;
+        }
+    }
+
+    return true;
 }
 
 async function getTraineeProfile(email) {
@@ -835,6 +892,7 @@ module.exports = {
     deleteUser,
     updateUserRole,
     resetUserPassword,
+    changeOwnPassword,
     getDefaultPasswordForRole,
     getTraineeProfile,
     normalizeRole,

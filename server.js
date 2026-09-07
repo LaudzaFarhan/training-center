@@ -156,7 +156,43 @@ const server = http.createServer(async (req, res) => {
                 canConductLive: role === 'Admin' || role === 'Trainer'
             };
             res.writeHead(200);
-            res.end(JSON.stringify({ authenticated: true, user: sessionUser, permissions }));
+            res.end(JSON.stringify({
+                authenticated: true,
+                user: {
+                    ...sessionUser,
+                    mustChangePassword: Boolean(sessionUser.mustChangePassword)
+                },
+                permissions
+            }));
+            return;
+        }
+
+        if (url.pathname === '/api/auth/change-password' && req.method === 'POST') {
+            if (!sessionUser) {
+                res.writeHead(401);
+                res.end(JSON.stringify({ error: 'Unauthorized' }));
+                return;
+            }
+            try {
+                const body = await readJsonBody(req);
+                const { newPassword } = body;
+                if (!newPassword || newPassword.trim().length < 6) {
+                    res.writeHead(400);
+                    res.end(JSON.stringify({ error: 'New password must be at least 6 characters' }));
+                    return;
+                }
+                await db.changeOwnPassword(sessionUser.userId, newPassword);
+                sessionUser.mustChangePassword = false;
+                res.writeHead(200);
+                res.end(JSON.stringify({
+                    success: true,
+                    message: 'Password updated successfully',
+                    mustChangePassword: false
+                }));
+            } catch (err) {
+                res.writeHead(400);
+                res.end(JSON.stringify({ error: err.message }));
+            }
             return;
         }
     }

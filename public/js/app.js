@@ -81,6 +81,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 applyRolePermissions(data.user.role || 'Trainer');
+
+                // Enforce first login password reset if flagged
+                if (data.user.mustChangePassword) {
+                    const firstLoginModal = document.getElementById('firstLoginModal');
+                    if (firstLoginModal) {
+                        firstLoginModal.classList.add('active');
+                    }
+                }
             }
         } catch (e) {
             console.warn('Auth check notice:', e);
@@ -698,7 +706,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     </td>
                     <td style="color: var(--text-secondary); font-family: var(--font-mono); font-size: 12.5px;">${user.email}</td>
                     <td>
-                        <span class="badge" style="${badgeStyle}">${roleEmoji} ${user.role}</span>
+                        <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                            <span class="badge" style="${badgeStyle}">${roleEmoji} ${user.role}</span>
+                            ${user.mustChangePassword 
+                                ? `<span class="badge" style="background: rgba(245, 158, 11, 0.12); color: #B45309; border: 1px solid rgba(245, 158, 11, 0.3); font-size: 10px; padding: 2px 6px;" title="User is still using initial default password">Initial Pwd</span>` 
+                                : `<span class="badge" style="background: rgba(16, 185, 129, 0.1); color: #059669; border: 1px solid rgba(16, 185, 129, 0.25); font-size: 10px; padding: 2px 6px;" title="User has set a personal password">Personal Pwd</span>`}
+                        </div>
                     </td>
                     <td style="color: var(--text-muted); font-size: 12.5px;">${dateStr}</td>
                     <td>
@@ -924,6 +937,66 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnUseDefaultPwdAdd && newUserRole && newUserPassword) {
         btnUseDefaultPwdAdd.addEventListener('click', () => {
             newUserPassword.value = `${newUserRole.value.toLowerCase()}12345`;
+        });
+    }
+
+    // -----------------------------------------------------------------
+    // First-Time Login / Forced Password Change Controller
+    // -----------------------------------------------------------------
+    const firstLoginModal = document.getElementById('firstLoginModal');
+    const firstLoginForm = document.getElementById('firstLoginForm');
+    const firstLoginNewPwd = document.getElementById('firstLoginNewPwd');
+    const firstLoginConfirmPwd = document.getElementById('firstLoginConfirmPwd');
+    const firstLoginError = document.getElementById('firstLoginError');
+
+    if (firstLoginForm) {
+        firstLoginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (firstLoginError) firstLoginError.style.display = 'none';
+
+            const pwd = firstLoginNewPwd.value.trim();
+            const confirmPwd = firstLoginConfirmPwd.value.trim();
+
+            if (pwd.length < 6) {
+                if (firstLoginError) {
+                    firstLoginError.textContent = 'Password must be at least 6 characters.';
+                    firstLoginError.style.display = 'block';
+                }
+                return;
+            }
+
+            if (pwd !== confirmPwd) {
+                if (firstLoginError) {
+                    firstLoginError.textContent = 'Passwords do not match. Please re-enter.';
+                    firstLoginError.style.display = 'block';
+                }
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/auth/change-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ newPassword: pwd })
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    if (firstLoginModal) firstLoginModal.classList.remove('active');
+                    alert('🎉 Your personal password has been successfully set! Welcome to The Lab.');
+                    if (currentUser) currentUser.mustChangePassword = false;
+                    loadUsers();
+                } else {
+                    if (firstLoginError) {
+                        firstLoginError.textContent = data.error || 'Failed to update password.';
+                        firstLoginError.style.display = 'block';
+                    }
+                }
+            } catch (err) {
+                if (firstLoginError) {
+                    firstLoginError.textContent = 'Network error while updating password.';
+                    firstLoginError.style.display = 'block';
+                }
+            }
         });
     }
 

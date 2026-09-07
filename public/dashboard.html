@@ -903,6 +903,40 @@ pm2 restart thelab-training</code></pre>
         </div>
     </div>
 
+    <!-- First Login / Forced Password Change Modal -->
+    <div class="modal-overlay" id="firstLoginModal" style="backdrop-filter: blur(8px); background: rgba(14, 27, 77, 0.75);">
+        <div class="modal-box" style="max-width: 440px; border: 2px solid var(--brand-teal); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);">
+            <div class="modal-header" style="background: linear-gradient(135deg, rgba(69, 183, 205, 0.12), rgba(246, 197, 81, 0.12)); padding: 20px 24px; border-bottom: 1px solid var(--border-subtle);">
+                <div>
+                    <span class="badge" style="background: var(--brand-yellow-light); color: #8C5E00; font-size: 11px; margin-bottom: 6px; font-weight: 700; border: 1px solid rgba(246, 197, 81, 0.5);">🔐 First Login Security</span>
+                    <h3 style="color: var(--brand-navy); font-size: 19px; margin-top: 4px;">Set Your Personal Password</h3>
+                </div>
+            </div>
+            <form id="firstLoginForm">
+                <div class="modal-body" style="padding: 24px;">
+                    <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 18px;">
+                        Welcome to <strong>The Lab Indonesia</strong>! Because your account is currently using a temporary default password, please create a personal password to secure your account.
+                    </p>
+                    <div class="form-group">
+                        <label for="firstLoginNewPwd">New Personal Password *</label>
+                        <input type="password" id="firstLoginNewPwd" class="input-field" placeholder="Minimum 6 characters" minlength="6" required autofocus>
+                    </div>
+                    <div class="form-group">
+                        <label for="firstLoginConfirmPwd">Confirm New Password *</label>
+                        <input type="password" id="firstLoginConfirmPwd" class="input-field" placeholder="Re-enter your new password" minlength="6" required>
+                    </div>
+                    <div id="firstLoginError" style="display: none; padding: 10px 14px; background: var(--color-rose-light); color: var(--color-rose); border-radius: 8px; font-size: 12.5px; margin-top: 10px; border: 1px solid rgba(244, 63, 94, 0.2);"></div>
+                </div>
+                <div class="modal-footer" style="padding: 16px 24px; background: #FAFBFD;">
+                    <button type="submit" class="btn btn-primary" id="btnSubmitFirstLoginPwd" style="width: 100%; justify-content: center; padding: 10px;">
+                        <span>Set Password &amp; Enter Dashboard</span>
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script src="js/app.js"></script>
 </body>
 </html>

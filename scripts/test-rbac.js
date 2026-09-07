@@ -315,8 +315,73 @@ async function runTests() {
         console.error('❌ Security breach: Non-admin could reset password');
     }
 
+    // Step 9: Test First Login Password Change (Self-Service)
+    console.log('\n9️⃣ Testing First Login Forced Password Change (/api/auth/change-password)...');
+    const newTrainerCookie = trainerNewLoginRes.cookies[0].split(';')[0];
+    
+    // Check auth state has mustChangePassword: true
+    const meRes1 = await request({
+        hostname: 'localhost',
+        port: PORT,
+        path: '/api/auth/me',
+        method: 'GET',
+        headers: { Cookie: newTrainerCookie }
+    });
+    if (meRes1.data.user?.mustChangePassword === true) {
+        console.log('✅ First Login detected: mustChangePassword is TRUE for initial default password');
+    } else {
+        console.error('❌ Expected mustChangePassword to be true, got:', meRes1.data.user?.mustChangePassword);
+    }
+
+    // Trainer changes their own password
+    const changeOwnRes = await request({
+        hostname: 'localhost',
+        port: PORT,
+        path: '/api/auth/change-password',
+        method: 'POST',
+        headers: { Cookie: newTrainerCookie }
+    }, {
+        newPassword: 'TrainerSecret2026!'
+    });
+
+    if (changeOwnRes.statusCode === 200 && changeOwnRes.data.success) {
+        console.log('✅ Trainer successfully set personal password: "TrainerSecret2026!"');
+    } else {
+        console.error('❌ Failed to change own password:', changeOwnRes.data);
+    }
+
+    // Check auth state now has mustChangePassword: false
+    const meRes2 = await request({
+        hostname: 'localhost',
+        port: PORT,
+        path: '/api/auth/me',
+        method: 'GET',
+        headers: { Cookie: newTrainerCookie }
+    });
+    if (meRes2.data.user?.mustChangePassword === false) {
+        console.log('✅ mustChangePassword successfully cleared to FALSE after personal password setup');
+    } else {
+        console.error('❌ Expected mustChangePassword to be false, got:', meRes2.data.user?.mustChangePassword);
+    }
+
+    // Verify trainer can now log in with their personal password
+    const trainerCustomLogin = await request({
+        hostname: 'localhost',
+        port: PORT,
+        path: '/api/auth/login',
+        method: 'POST'
+    }, {
+        email: 'tommy.trainer@thelab.id',
+        password: 'TrainerSecret2026!'
+    });
+    if (trainerCustomLogin.statusCode === 200 && trainerCustomLogin.data.success) {
+        console.log('✅ Trainer authenticated successfully with new personal password!');
+    } else {
+        console.error('❌ Failed to login with new personal password:', trainerCustomLogin.data);
+    }
+
     console.log('\n=======================================================');
-    console.log('🎉 ALL 4 ROLES & RBAC VERIFICATIONS PASSED 100%!');
+    console.log('🎉 ALL 4 ROLES, RBAC & FIRST-LOGIN PASSED 100%!');
     console.log('=======================================================\n');
 }
 
