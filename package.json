@@ -8,6 +8,7 @@
     "dev": "node server.js",
     "test:db": "node scripts/test-db.js",
     "test:rbac": "node scripts/test-rbac.js",
+    "test:qa": "node scripts/test-qa-tracker.js",
     "db:migrate": "node -e \"require('./db').initDatabase()\""
   },
   "keywords": [

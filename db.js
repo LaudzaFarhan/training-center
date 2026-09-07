@@ -125,6 +125,89 @@ const memoryStore = {
         { id: 'MOD-02', title: 'Module 2: Agent Tooling, Multi-Agent & Orchestration', hours: 12, status: 'In Progress', completion_rate: '75%' },
         { id: 'MOD-03', title: 'Module 3: Cloud Deployment, VPS & Production Pipeline', hours: 10, status: 'Next Up', completion_rate: '0%' },
         { id: 'MOD-04', title: 'Module 4: Capstone Project & Industry Lab Evaluation', hours: 16, status: 'Scheduled', completion_rate: '0%' }
+    ],
+    qaIssues: [
+        {
+            id: 1,
+            title: 'Calendar schedule column overlap on mobile viewport',
+            description: 'When resizing viewport below 768px, the Friday time slot card wraps onto the next row causing visual collision with workstation room badge.',
+            type: 'Bug',
+            priority: 'Critical',
+            status: 'Open',
+            module: 'Schedule',
+            reporterId: 1,
+            reporterName: 'Laudza Farhan',
+            reporterEmail: 'admin@thelabindonesia.my.id',
+            assigneeId: 2,
+            assigneeName: 'Christian Adrianus Siwabessy',
+            assigneeEmail: 'chsiwabessy.thelab@gmail.com',
+            envBrowser: 'Chrome 124.0.0.0',
+            envOs: 'Windows 11',
+            envResolution: '1920x1080',
+            envViewport: '412x915',
+            envUrl: 'https://training.thelabindonesia.my.id/new/qa-tracker',
+            attachments: '[]',
+            createdAt: new Date(Date.now() - 3600000 * 2).toISOString(),
+            updatedAt: new Date().toISOString()
+        },
+        {
+            id: 2,
+            title: 'Add CSV export headers for attendance report card',
+            description: 'Supervisors requested column headers for Cohort ID and Session Number when exporting weekly attendance reports.',
+            type: 'Feature Request',
+            priority: 'High',
+            status: 'In Progress',
+            module: 'Report Cards',
+            reporterId: 1,
+            reporterName: 'Sarah Supervisor',
+            reporterEmail: 'sarah.spv@thelab.id',
+            assigneeId: 1,
+            assigneeName: 'Laudza Farhan',
+            assigneeEmail: 'admin@thelabindonesia.my.id',
+            envBrowser: 'Edge 123.0',
+            envOs: 'Windows 11',
+            envResolution: '2560x1440',
+            envViewport: '1920x1080',
+            envUrl: 'https://training.thelabindonesia.my.id/dashboard#tab-students',
+            attachments: '[]',
+            createdAt: new Date(Date.now() - 3600000 * 8).toISOString(),
+            updatedAt: new Date().toISOString()
+        },
+        {
+            id: 3,
+            title: 'Dark mode card contrast on Workstation Room 101 badge',
+            description: 'The text color contrast ratio on the badge needs adjustment for accessibility compliance (WCAG 2.1 AA).',
+            type: 'UI/UX Tweak',
+            priority: 'Medium',
+            status: 'Ready for QA',
+            module: 'Operationals',
+            reporterId: 2,
+            reporterName: 'Tommy Trainer',
+            reporterEmail: 'tommy.trainer@thelab.id',
+            assigneeId: 2,
+            assigneeName: 'Christian Adrianus Siwabessy',
+            assigneeEmail: 'chsiwabessy.thelab@gmail.com',
+            envBrowser: 'Chrome 124.0.0.0',
+            envOs: 'macOS Sonoma',
+            envResolution: '1728x1117',
+            envViewport: '1728x960',
+            envUrl: 'https://training.thelabindonesia.my.id/dashboard#tab-overview',
+            attachments: '[]',
+            createdAt: new Date(Date.now() - 3600000 * 24).toISOString(),
+            updatedAt: new Date().toISOString()
+        }
+    ],
+    qaComments: [
+        {
+            id: 1,
+            issueId: 1,
+            authorName: 'Christian Adrianus Siwabessy',
+            authorRole: 'Trainer',
+            authorEmail: 'chsiwabessy.thelab@gmail.com',
+            comment: 'Investigating now. The CSS flex-wrap rule needs a media query override below 768px.',
+            attachments: '[]',
+            createdAt: new Date(Date.now() - 3600000).toISOString()
+        }
     ]
 };
 
@@ -239,6 +322,41 @@ async function initDatabase() {
                 status VARCHAR(50) DEFAULT 'Scheduled',
                 completion_rate VARCHAR(50) DEFAULT '0%'
             );
+
+            CREATE TABLE IF NOT EXISTS internal_qa_issues (
+                id SERIAL PRIMARY KEY,
+                title VARCHAR(255) NOT NULL,
+                description TEXT NOT NULL,
+                type VARCHAR(50) DEFAULT 'Bug',
+                priority VARCHAR(50) DEFAULT 'Medium',
+                status VARCHAR(50) DEFAULT 'Open',
+                module VARCHAR(100) DEFAULT 'General',
+                reporter_id INT,
+                reporter_name VARCHAR(255),
+                reporter_email VARCHAR(255),
+                assignee_id INT,
+                assignee_name VARCHAR(255),
+                assignee_email VARCHAR(255),
+                env_browser VARCHAR(255),
+                env_os VARCHAR(255),
+                env_resolution VARCHAR(100),
+                env_viewport VARCHAR(100),
+                env_url TEXT,
+                attachments TEXT DEFAULT '[]',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+
+            CREATE TABLE IF NOT EXISTS internal_qa_comments (
+                id SERIAL PRIMARY KEY,
+                issue_id INT REFERENCES internal_qa_issues(id) ON DELETE CASCADE,
+                author_name VARCHAR(255) NOT NULL,
+                author_role VARCHAR(100),
+                author_email VARCHAR(255),
+                comment TEXT NOT NULL,
+                attachments TEXT DEFAULT '[]',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
         `);
 
         // Seed Admin User
@@ -287,6 +405,40 @@ async function initDatabase() {
                     [m.id, m.title, m.hours, m.status, m.completion_rate]
                 );
             }
+        }
+
+        // Seed QA Issues & Comments
+        const qaIssuesCheck = await client.query('SELECT COUNT(*) FROM internal_qa_issues');
+        if (parseInt(qaIssuesCheck.rows[0].count, 10) === 0) {
+            for (const issue of memoryStore.qaIssues) {
+                const res = await client.query(
+                    `INSERT INTO internal_qa_issues (
+                        title, description, type, priority, status, module,
+                        reporter_id, reporter_name, reporter_email,
+                        assignee_id, assignee_name, assignee_email,
+                        env_browser, env_os, env_resolution, env_viewport, env_url,
+                        attachments, created_at, updated_at
+                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
+                    RETURNING id`,
+                    [
+                        issue.title, issue.description, issue.type, issue.priority, issue.status, issue.module,
+                        issue.reporterId, issue.reporterName, issue.reporterEmail,
+                        issue.assigneeId, issue.assigneeName, issue.assigneeEmail,
+                        issue.envBrowser, issue.envOs, issue.envResolution, issue.envViewport, issue.envUrl,
+                        issue.attachments || '[]', issue.createdAt || new Date(), issue.updatedAt || new Date()
+                    ]
+                );
+                const newId = res.rows[0].id;
+                const matchingComments = memoryStore.qaComments.filter(c => c.issueId === issue.id);
+                for (const cm of matchingComments) {
+                    await client.query(
+                        `INSERT INTO internal_qa_comments (issue_id, author_name, author_role, author_email, comment, attachments, created_at)
+                         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+                        [newId, cm.authorName, cm.authorRole, cm.authorEmail, cm.comment, cm.attachments || '[]', cm.createdAt || new Date()]
+                    );
+                }
+            }
+            console.log('✅ QA tracker starter issues seeded in PostgreSQL.');
         }
     } catch (err) {
         lastConnectionError = (err.errors && err.errors.length)
@@ -791,6 +943,420 @@ async function deleteStudent(id) {
     return false;
 }
 
+// ==========================================
+// QA & Bug Tracker Data Access API
+// ==========================================
+
+async function getQaIssues(filters = {}) {
+    const { status, type, priority, module: mod, q } = filters;
+    if (isPostgresConnected && pgPool) {
+        try {
+            const conditions = [];
+            const params = [];
+            let idx = 1;
+
+            if (status && status !== 'all') {
+                conditions.push(`status = $${idx++}`);
+                params.push(status);
+            }
+            if (type && type !== 'all') {
+                conditions.push(`type = $${idx++}`);
+                params.push(type);
+            }
+            if (priority && priority !== 'all') {
+                conditions.push(`priority = $${idx++}`);
+                params.push(priority);
+            }
+            if (mod && mod !== 'all') {
+                conditions.push(`module = $${idx++}`);
+                params.push(mod);
+            }
+            if (q && q.trim()) {
+                conditions.push(`(title ILIKE $${idx} OR description ILIKE $${idx} OR reporter_name ILIKE $${idx} OR assignee_name ILIKE $${idx})`);
+                params.push(`%${q.trim()}%`);
+                idx++;
+            }
+
+            const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+            const query = `
+                SELECT 
+                    i.id, i.title, i.description, i.type, i.priority, i.status, i.module,
+                    i.reporter_id AS "reporterId", i.reporter_name AS "reporterName", i.reporter_email AS "reporterEmail",
+                    i.assignee_id AS "assigneeId", i.assignee_name AS "assigneeName", i.assignee_email AS "assigneeEmail",
+                    i.env_browser AS "envBrowser", i.env_os AS "envOs", i.env_resolution AS "envResolution", i.env_viewport AS "envViewport", i.env_url AS "envUrl",
+                    i.attachments, i.created_at AS "createdAt", i.updated_at AS "updatedAt",
+                    COUNT(c.id)::int AS "commentCount"
+                FROM internal_qa_issues i
+                LEFT JOIN internal_qa_comments c ON c.issue_id = i.id
+                ${whereClause}
+                GROUP BY i.id
+                ORDER BY 
+                    CASE i.priority 
+                        WHEN 'Critical' THEN 1 
+                        WHEN 'High' THEN 2 
+                        WHEN 'Medium' THEN 3 
+                        WHEN 'Low' THEN 4 
+                        ELSE 5 
+                    END ASC,
+                    i.created_at DESC
+            `;
+            const res = await pgPool.query(query, params);
+            return res.rows.map(row => ({
+                ...row,
+                attachments: typeof row.attachments === 'string' ? JSON.parse(row.attachments || '[]') : (row.attachments || [])
+            }));
+        } catch (e) {
+            console.warn('Postgres getQaIssues error:', e.message);
+        }
+    }
+
+    // In-memory fallback
+    let list = [...(memoryStore.qaIssues || [])];
+    if (status && status !== 'all') list = list.filter(i => (i.status || '').toLowerCase() === status.toLowerCase());
+    if (type && type !== 'all') list = list.filter(i => (i.type || '').toLowerCase() === type.toLowerCase());
+    if (priority && priority !== 'all') list = list.filter(i => (i.priority || '').toLowerCase() === priority.toLowerCase());
+    if (mod && mod !== 'all') list = list.filter(i => (i.module || '').toLowerCase() === mod.toLowerCase());
+    if (q && q.trim()) {
+        const queryTerm = q.trim().toLowerCase();
+        list = list.filter(i => 
+            (i.title && i.title.toLowerCase().includes(queryTerm)) ||
+            (i.description && i.description.toLowerCase().includes(queryTerm)) ||
+            (i.reporterName && i.reporterName.toLowerCase().includes(queryTerm)) ||
+            (i.assigneeName && i.assigneeName.toLowerCase().includes(queryTerm))
+        );
+    }
+
+    const priorityRank = { 'Critical': 1, 'High': 2, 'Medium': 3, 'Low': 4 };
+    list.sort((a, b) => {
+        const prDiff = (priorityRank[a.priority] || 5) - (priorityRank[b.priority] || 5);
+        if (prDiff !== 0) return prDiff;
+        return new Date(b.createdAt) - new Date(a.createdAt);
+    });
+
+    return list.map(item => ({
+        ...item,
+        attachments: typeof item.attachments === 'string' ? JSON.parse(item.attachments || '[]') : (item.attachments || []),
+        commentCount: (memoryStore.qaComments || []).filter(c => c.issueId === item.id).length
+    }));
+}
+
+async function getQaIssueById(id) {
+    const issueId = parseInt(id, 10);
+    if (isPostgresConnected && pgPool) {
+        try {
+            const issueRes = await pgPool.query(`
+                SELECT 
+                    id, title, description, type, priority, status, module,
+                    reporter_id AS "reporterId", reporter_name AS "reporterName", reporter_email AS "reporterEmail",
+                    assignee_id AS "assigneeId", assignee_name AS "assigneeName", assignee_email AS "assigneeEmail",
+                    env_browser AS "envBrowser", env_os AS "envOs", env_resolution AS "envResolution", env_viewport AS "envViewport", env_url AS "envUrl",
+                    attachments, created_at AS "createdAt", updated_at AS "updatedAt"
+                FROM internal_qa_issues
+                WHERE id = $1
+            `, [issueId]);
+            if (issueRes.rows.length === 0) return null;
+
+            const commentsRes = await pgPool.query(`
+                SELECT id, issue_id AS "issueId", author_name AS "authorName", author_role AS "authorRole", author_email AS "authorEmail",
+                       comment, attachments, created_at AS "createdAt"
+                FROM internal_qa_comments
+                WHERE issue_id = $1
+                ORDER BY created_at ASC
+            `, [issueId]);
+
+            const issue = issueRes.rows[0];
+            return {
+                ...issue,
+                attachments: typeof issue.attachments === 'string' ? JSON.parse(issue.attachments || '[]') : (issue.attachments || []),
+                comments: commentsRes.rows.map(c => ({
+                    ...c,
+                    attachments: typeof c.attachments === 'string' ? JSON.parse(c.attachments || '[]') : (c.attachments || [])
+                }))
+            };
+        } catch (e) {
+            console.warn('Postgres getQaIssueById error:', e.message);
+        }
+    }
+
+    const item = (memoryStore.qaIssues || []).find(i => i.id === issueId);
+    if (!item) return null;
+    const comments = (memoryStore.qaComments || [])
+        .filter(c => c.issueId === issueId)
+        .map(c => ({
+            ...c,
+            attachments: typeof c.attachments === 'string' ? JSON.parse(c.attachments || '[]') : (c.attachments || [])
+        }));
+    return {
+        ...item,
+        attachments: typeof item.attachments === 'string' ? JSON.parse(item.attachments || '[]') : (item.attachments || []),
+        comments
+    };
+}
+
+async function createQaIssue(data) {
+    const {
+        title, description, type = 'Bug', priority = 'Medium', status = 'Open', module = 'General',
+        reporterId, reporterName, reporterEmail,
+        assigneeId, assigneeName, assigneeEmail,
+        envBrowser, envOs, envResolution, envViewport, envUrl,
+        attachments = []
+    } = data;
+
+    const attachmentsJson = typeof attachments === 'string' ? attachments : JSON.stringify(attachments);
+
+    if (isPostgresConnected && pgPool) {
+        try {
+            const query = `
+                INSERT INTO internal_qa_issues (
+                    title, description, type, priority, status, module,
+                    reporter_id, reporter_name, reporter_email,
+                    assignee_id, assignee_name, assignee_email,
+                    env_browser, env_os, env_resolution, env_viewport, env_url,
+                    attachments, created_at, updated_at
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, NOW(), NOW())
+                RETURNING 
+                    id, title, description, type, priority, status, module,
+                    reporter_id AS "reporterId", reporter_name AS "reporterName", reporter_email AS "reporterEmail",
+                    assignee_id AS "assigneeId", assignee_name AS "assigneeName", assignee_email AS "assigneeEmail",
+                    env_browser AS "envBrowser", env_os AS "envOs", env_resolution AS "envResolution", env_viewport AS "envViewport", env_url AS "envUrl",
+                    attachments, created_at AS "createdAt", updated_at AS "updatedAt"
+            `;
+            const res = await pgPool.query(query, [
+                title, description, type, priority, status, module,
+                reporterId || null, reporterName || 'Anonymous', reporterEmail || '',
+                assigneeId || null, assigneeName || null, assigneeEmail || null,
+                envBrowser || '', envOs || '', envResolution || '', envViewport || '', envUrl || '',
+                attachmentsJson
+            ]);
+            const created = res.rows[0];
+            return {
+                ...created,
+                attachments: typeof created.attachments === 'string' ? JSON.parse(created.attachments || '[]') : (created.attachments || []),
+                commentCount: 0
+            };
+        } catch (e) {
+            console.warn('Postgres createQaIssue error:', e.message);
+        }
+    }
+
+    const nextId = (memoryStore.qaIssues || []).length > 0 
+        ? Math.max(...memoryStore.qaIssues.map(i => i.id)) + 1 
+        : 1;
+    const newIssue = {
+        id: nextId,
+        title,
+        description,
+        type,
+        priority,
+        status,
+        module,
+        reporterId: reporterId || null,
+        reporterName: reporterName || 'Anonymous',
+        reporterEmail: reporterEmail || '',
+        assigneeId: assigneeId || null,
+        assigneeName: assigneeName || null,
+        assigneeEmail: assigneeEmail || null,
+        envBrowser: envBrowser || '',
+        envOs: envOs || '',
+        envResolution: envResolution || '',
+        envViewport: envViewport || '',
+        envUrl: envUrl || '',
+        attachments: attachmentsJson,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+    };
+    if (!memoryStore.qaIssues) memoryStore.qaIssues = [];
+    memoryStore.qaIssues.unshift(newIssue);
+    return {
+        ...newIssue,
+        attachments: typeof newIssue.attachments === 'string' ? JSON.parse(newIssue.attachments || '[]') : (newIssue.attachments || []),
+        commentCount: 0
+    };
+}
+
+async function updateQaIssueStatus(id, status) {
+    const issueId = parseInt(id, 10);
+    const validStatuses = ['Open', 'In Progress', 'Ready for QA', 'Resolved', 'Closed', 'Deferred'];
+    if (!validStatuses.includes(status)) {
+        throw new Error(`Invalid QA status: ${status}`);
+    }
+
+    if (isPostgresConnected && pgPool) {
+        try {
+            const res = await pgPool.query(`
+                UPDATE internal_qa_issues 
+                SET status = $1, updated_at = NOW() 
+                WHERE id = $2 
+                RETURNING id, status, updated_at AS "updatedAt"
+            `, [status, issueId]);
+            return res.rows[0] || null;
+        } catch (e) {
+            console.warn('Postgres updateQaIssueStatus error:', e.message);
+        }
+    }
+
+    const item = (memoryStore.qaIssues || []).find(i => i.id === issueId);
+    if (item) {
+        item.status = status;
+        item.updatedAt = new Date().toISOString();
+        return { id: item.id, status: item.status, updatedAt: item.updatedAt };
+    }
+    return null;
+}
+
+async function updateQaIssueAssignee(id, assigneeName, assigneeEmail, assigneeId = null) {
+    const issueId = parseInt(id, 10);
+    if (isPostgresConnected && pgPool) {
+        try {
+            const res = await pgPool.query(`
+                UPDATE internal_qa_issues 
+                SET assignee_name = $1, assignee_email = $2, assignee_id = $3, updated_at = NOW() 
+                WHERE id = $4 
+                RETURNING id, assignee_name AS "assigneeName", assignee_email AS "assigneeEmail", assignee_id AS "assigneeId", updated_at AS "updatedAt"
+            `, [assigneeName, assigneeEmail, assigneeId, issueId]);
+            return res.rows[0] || null;
+        } catch (e) {
+            console.warn('Postgres updateQaIssueAssignee error:', e.message);
+        }
+    }
+
+    const item = (memoryStore.qaIssues || []).find(i => i.id === issueId);
+    if (item) {
+        item.assigneeName = assigneeName;
+        item.assigneeEmail = assigneeEmail;
+        item.assigneeId = assigneeId;
+        item.updatedAt = new Date().toISOString();
+        return { id: item.id, assigneeName: item.assigneeName, assigneeEmail: item.assigneeEmail, assigneeId: item.assigneeId, updatedAt: item.updatedAt };
+    }
+    return null;
+}
+
+async function addQaComment(issueId, data) {
+    const id = parseInt(issueId, 10);
+    const { authorName, authorRole, authorEmail, comment, attachments = [] } = data;
+    const attachmentsJson = typeof attachments === 'string' ? attachments : JSON.stringify(attachments);
+
+    if (isPostgresConnected && pgPool) {
+        try {
+            const commentRes = await pgPool.query(`
+                INSERT INTO internal_qa_comments (issue_id, author_name, author_role, author_email, comment, attachments, created_at)
+                VALUES ($1, $2, $3, $4, $5, $6, NOW())
+                RETURNING id, issue_id AS "issueId", author_name AS "authorName", author_role AS "authorRole", author_email AS "authorEmail", comment, attachments, created_at AS "createdAt"
+            `, [id, authorName || 'Anonymous', authorRole || 'Staff', authorEmail || '', comment, attachmentsJson]);
+
+            await pgPool.query(`UPDATE internal_qa_issues SET updated_at = NOW() WHERE id = $1`, [id]);
+
+            const row = commentRes.rows[0];
+            return {
+                ...row,
+                attachments: typeof row.attachments === 'string' ? JSON.parse(row.attachments || '[]') : (row.attachments || [])
+            };
+        } catch (e) {
+            console.warn('Postgres addQaComment error:', e.message);
+        }
+    }
+
+    if (!memoryStore.qaComments) memoryStore.qaComments = [];
+    const nextId = memoryStore.qaComments.length > 0 
+        ? Math.max(...memoryStore.qaComments.map(c => c.id)) + 1 
+        : 1;
+    const newComment = {
+        id: nextId,
+        issueId: id,
+        authorName: authorName || 'Anonymous',
+        authorRole: authorRole || 'Staff',
+        authorEmail: authorEmail || '',
+        comment,
+        attachments: attachmentsJson,
+        createdAt: new Date().toISOString()
+    };
+    memoryStore.qaComments.push(newComment);
+
+    const issue = (memoryStore.qaIssues || []).find(i => i.id === id);
+    if (issue) {
+        issue.updatedAt = new Date().toISOString();
+    }
+
+    return {
+        ...newComment,
+        attachments: typeof newComment.attachments === 'string' ? JSON.parse(newComment.attachments || '[]') : (newComment.attachments || [])
+    };
+}
+
+async function getQaStats() {
+    if (isPostgresConnected && pgPool) {
+        try {
+            const res = await pgPool.query(`
+                SELECT 
+                    COUNT(*)::int AS total,
+                    COUNT(CASE WHEN status = 'Open' THEN 1 END)::int AS open,
+                    COUNT(CASE WHEN status = 'In Progress' THEN 1 END)::int AS in_progress,
+                    COUNT(CASE WHEN status = 'Ready for QA' THEN 1 END)::int AS ready_for_qa,
+                    COUNT(CASE WHEN status = 'Resolved' THEN 1 END)::int AS resolved,
+                    COUNT(CASE WHEN status = 'Closed' THEN 1 END)::int AS closed,
+                    COUNT(CASE WHEN priority = 'Critical' AND status NOT IN ('Resolved', 'Closed') THEN 1 END)::int AS critical
+                FROM internal_qa_issues
+            `);
+            const row = res.rows[0];
+            return {
+                total: row.total || 0,
+                open: row.open || 0,
+                inProgress: row.in_progress || 0,
+                readyForQa: row.ready_for_qa || 0,
+                resolved: row.resolved || 0,
+                closed: row.closed || 0,
+                resolvedClosed: (row.resolved || 0) + (row.closed || 0),
+                critical: row.critical || 0
+            };
+        } catch (e) {
+            console.warn('Postgres getQaStats error:', e.message);
+        }
+    }
+
+    const issues = memoryStore.qaIssues || [];
+    return {
+        total: issues.length,
+        open: issues.filter(i => i.status === 'Open').length,
+        inProgress: issues.filter(i => i.status === 'In Progress').length,
+        readyForQa: issues.filter(i => i.status === 'Ready for QA').length,
+        resolved: issues.filter(i => i.status === 'Resolved').length,
+        closed: issues.filter(i => i.status === 'Closed').length,
+        resolvedClosed: issues.filter(i => ['Resolved', 'Closed'].includes(i.status)).length,
+        critical: issues.filter(i => i.priority === 'Critical' && !['Resolved', 'Closed'].includes(i.status)).length
+    };
+}
+
+async function getRecentCriticalAlerts(sinceMs = 900000) {
+    const cutoff = new Date(Date.now() - sinceMs);
+    if (isPostgresConnected && pgPool) {
+        try {
+            const res = await pgPool.query(`
+                SELECT id, title, priority, status, module, reporter_name AS "reporterName", created_at AS "createdAt"
+                FROM internal_qa_issues
+                WHERE priority IN ('Critical', 'High') AND created_at >= $1
+                ORDER BY created_at DESC
+                LIMIT 5
+            `, [cutoff]);
+            return res.rows;
+        } catch (e) {
+            console.warn('Postgres getRecentCriticalAlerts error:', e.message);
+        }
+    }
+
+    return (memoryStore.qaIssues || [])
+        .filter(i => ['Critical', 'High'].includes(i.priority) && new Date(i.createdAt) >= cutoff)
+        .slice(0, 5)
+        .map(i => ({
+            id: i.id,
+            title: i.title,
+            priority: i.priority,
+            status: i.status,
+            module: i.module,
+            reporterName: i.reporterName,
+            createdAt: i.createdAt
+        }));
+}
+
 async function getDatabaseStatus() {
     let host = 'localhost:5432';
     let dbName = process.env.PGDATABASE || 'thelab_training';
@@ -810,7 +1376,7 @@ async function getDatabaseStatus() {
     let isLive = false;
     let version = null;
     let latencyMs = null;
-    let rowCounts = { users: 0, cohorts: 0, students: 0, modules: 0 };
+    let rowCounts = { users: 0, cohorts: 0, students: 0, modules: 0, qaIssues: 0 };
 
     if (!pgPool) {
         initPgPool();
@@ -832,12 +1398,14 @@ async function getDatabaseStatus() {
             const cohortsCount = await client.query('SELECT COUNT(*) FROM cohorts');
             const studentsCount = await client.query('SELECT COUNT(*) FROM students');
             const modulesCount = await client.query('SELECT COUNT(*) FROM modules');
+            const qaCount = await client.query('SELECT COUNT(*) FROM internal_qa_issues');
 
             rowCounts = {
                 users: parseInt(usersCount.rows[0].count, 10),
                 cohorts: parseInt(cohortsCount.rows[0].count, 10),
                 students: parseInt(studentsCount.rows[0].count, 10),
-                modules: parseInt(modulesCount.rows[0].count, 10)
+                modules: parseInt(modulesCount.rows[0].count, 10),
+                qaIssues: parseInt(qaCount.rows[0].count, 10)
             };
         } catch (err) {
             isPostgresConnected = false;
@@ -856,7 +1424,8 @@ async function getDatabaseStatus() {
             users: memoryStore.users.length,
             cohorts: memoryStore.cohorts.length,
             students: memoryStore.students.length,
-            modules: memoryStore.modules.length
+            modules: memoryStore.modules.length,
+            qaIssues: (memoryStore.qaIssues || []).length
         };
     }
 
@@ -898,6 +1467,14 @@ module.exports = {
     normalizeRole,
     VALID_ROLES,
     getDatabaseStatus,
+    getQaIssues,
+    getQaIssueById,
+    createQaIssue,
+    updateQaIssueStatus,
+    updateQaIssueAssignee,
+    addQaComment,
+    getQaStats,
+    getRecentCriticalAlerts,
     isPostgresActive: () => isPostgresConnected
 };
 

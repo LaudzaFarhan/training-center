@@ -257,6 +257,9 @@ document.addEventListener('DOMContentLoaded', () => {
             button.classList.add('active');
             const activePane = document.getElementById(`tab-${targetTab}`);
             if (activePane) activePane.classList.add('active');
+            if (targetTab === 'qa' && typeof loadQaData === 'function') {
+                loadQaData();
+            }
         });
     });
 
@@ -1116,11 +1119,1166 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // =========================================================================
+    // THE QA & BUG TRACKER CONTROLLER (/new/qa-tracker)
+    // =========================================================================
+    let qaIssues = [];
+    let qaStats = { total: 0, open: 0, inProgress: 0, readyForQa: 0, resolved: 0, closed: 0, critical: 0 };
+    let qaFilterState = { status: 'all', type: 'all', priority: 'all', module: 'all', q: '' };
+    let qaCurrentView = 'list';
+    let qaNewIssueAttachments = [];
+    let qaCommentAttachments = [];
+    let activeDetailIssueId = null;
+    const qaAlertsSeen = new Set();
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function getClientEnvironment() {
+        const ua = navigator.userAgent;
+        let browser = 'Chrome';
+        if (ua.includes('Edg/')) browser = 'Edge ' + (ua.match(/Edg\/(\d+[\.\d]*)/)?.[1] || '');
+        else if (ua.includes('Chrome/')) browser = 'Chrome ' + (ua.match(/Chrome\/(\d+[\.\d]*)/)?.[1] || '');
+        else if (ua.includes('Firefox/')) browser = 'Firefox ' + (ua.match(/Firefox\/(\d+[\.\d]*)/)?.[1] || '');
+        else if (ua.includes('Safari/') && !ua.includes('Chrome/')) browser = 'Safari ' + (ua.match(/Version\/(\d+[\.\d]*)/)?.[1] || '');
+
+        let os = 'Windows 11';
+        if (ua.includes('Windows NT 10.0')) os = 'Windows 10/11';
+        else if (ua.includes('Macintosh')) os = 'macOS';
+        else if (ua.includes('Linux')) os = 'Linux';
+        else if (ua.includes('Android')) os = 'Android';
+        else if (ua.includes('iPhone') || ua.includes('iPad')) os = 'iOS';
+
+        const screenRes = `${window.screen.width}x${window.screen.height}`;
+        const viewport = `${window.innerWidth}x${window.innerHeight}`;
+        const currentUrl = window.location.href;
+
+        return { browser, os, screenRes, viewport, currentUrl };
+    }
+
+    function showQaToast(title, message, type = 'info', issueId = null) {
+        const container = document.getElementById('qaToastContainer');
+        if (!container) return;
+
+        const toast = document.createElement('div');
+        toast.className = `qa-toast ${type === 'critical' ? 'critical' : (type === 'high' ? 'high' : '')}`;
+        toast.innerHTML = `
+            <div style="font-size: 20px; flex-shrink: 0;">${type === 'critical' ? '🚨' : (type === 'high' ? '⚠️' : '🐞')}</div>
+            <div class="qa-toast-content" style="flex: 1; cursor: ${issueId ? 'pointer' : 'default'};">
+                <h5>${escapeHtml(title)}</h5>
+                <p>${escapeHtml(message)}</p>
+            </div>
+            <button class="qa-toast-close">&times;</button>
+        `;
+        if (issueId) {
+            toast.querySelector('.qa-toast-content').addEventListener('click', () => {
+                openQaDetailModal(issueId);
+                toast.remove();
+            });
+        }
+        toast.querySelector('.qa-toast-close').addEventListener('click', () => toast.remove());
+        container.appendChild(toast);
+
+        setTimeout(() => {
+            if (toast.parentElement) toast.remove();
+        }, 7000);
+    }
+
+    async function loadQaData() {
+        await Promise.all([loadQaStats(), loadQaIssues(), populateQaAssignees()]);
+    }
+
+    async function loadQaStats() {
+        try {
+            const res = await fetch('/api/qa/stats');
+            if (!res.ok) return;
+            qaStats = await res.json();
+
+            const statTotal = document.getElementById('qaStatTotal');
+            const statOpen = document.getElementById('qaStatOpen');
+            const statInProgress = document.getElementById('qaStatInProgress');
+            const statReadyQa = document.getElementById('qaStatReadyQa');
+            const statResolved = document.getElementById('qaStatResolved');
+            const statCritical = document.getElementById('qaStatCritical');
+            const sidebarQaBadge = document.getElementById('sidebarQaBadge');
+
+            if (statTotal) statTotal.textContent = qaStats.total || 0;
+            if (statOpen) statOpen.textContent = qaStats.open || 0;
+            if (statInProgress) statInProgress.textContent = qaStats.inProgress || 0;
+            if (statReadyQa) statReadyQa.textContent = qaStats.readyForQa || 0;
+            if (statResolved) statResolved.textContent = (qaStats.resolved || 0) + (qaStats.closed || 0);
+            if (statCritical) {
+                statCritical.textContent = qaStats.critical || 0;
+                const cardCrit = document.getElementById('qaKpiCritical');
+                if (cardCrit) {
+                    if (qaStats.critical > 0) cardCrit.classList.add('critical');
+                    else cardCrit.classList.remove('critical');
+                }
+            }
+            if (sidebarQaBadge) {
+                if (qaStats.critical > 0) {
+                    sidebarQaBadge.textContent = `${qaStats.critical} CRIT`;
+                    sidebarQaBadge.style.background = 'rgba(244, 63, 94, 0.2)';
+                    sidebarQaBadge.style.color = '#e11d48';
+                } else if (qaStats.open > 0) {
+                    sidebarQaBadge.textContent = `${qaStats.open} OPEN`;
+                    sidebarQaBadge.style.background = 'rgba(59, 130, 246, 0.14)';
+                    sidebarQaBadge.style.color = '#2563eb';
+                } else {
+                    sidebarQaBadge.textContent = 'QA';
+                    sidebarQaBadge.style.background = 'rgba(244, 63, 94, 0.14)';
+                    sidebarQaBadge.style.color = 'var(--color-rose)';
+                }
+            }
+        } catch (e) {
+            console.warn('Failed to load QA stats:', e);
+        }
+    }
+
+    async function loadQaIssues() {
+        try {
+            const params = new URLSearchParams();
+            if (qaFilterState.status !== 'all') params.append('status', qaFilterState.status);
+            if (qaFilterState.type !== 'all') params.append('type', qaFilterState.type);
+            if (qaFilterState.priority !== 'all') params.append('priority', qaFilterState.priority);
+            if (qaFilterState.module !== 'all') params.append('module', qaFilterState.module);
+            if (qaFilterState.q) params.append('q', qaFilterState.q);
+
+            const res = await fetch(`/api/qa/issues?${params.toString()}`);
+            if (!res.ok) return;
+            qaIssues = await res.json();
+
+            renderQaListView();
+            renderQaKanbanView();
+        } catch (e) {
+            console.warn('Failed to load QA issues:', e);
+        }
+    }
+
+    async function populateQaAssignees() {
+        const select = document.getElementById('qaIssueAssignee');
+        if (!select || select.options.length > 1) return;
+        try {
+            const res = await fetch('/api/users');
+            if (res.ok) {
+                const users = await res.json();
+                users.forEach(u => {
+                    const opt = document.createElement('option');
+                    opt.value = JSON.stringify({ id: u.id, name: u.name, email: u.email });
+                    opt.textContent = `${u.name} (${u.role})`;
+                    select.appendChild(opt);
+                });
+            }
+        } catch (e) {}
+    }
+
+    function renderQaListView() {
+        const tbody = document.getElementById('qaIssuesTableBody');
+        if (!tbody) return;
+
+        if (qaIssues.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="9" style="text-align: center; padding: 36px 14px; color: var(--text-muted);">
+                        <div style="font-size: 30px; margin-bottom: 8px;">🎉</div>
+                        <strong>No QA tickets match the selected filter criteria.</strong>
+                        <p style="font-size: 12.5px; margin-top: 4px;">Click "Report Issue / Bug" above to record a new defect or observation.</p>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        tbody.innerHTML = qaIssues.map(issue => {
+            const priorityClass = `badge-priority-${(issue.priority || 'medium').toLowerCase()}`;
+            const attachmentsCount = (issue.attachments && Array.isArray(issue.attachments)) ? issue.attachments.length : 0;
+            const thumbHtml = attachmentsCount > 0
+                ? `<span class="qa-thumb-indicator" data-id="${issue.id}" style="cursor: pointer; display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 700; color: var(--brand-teal-hover); background: var(--brand-teal-light); padding: 2px 7px; border-radius: 4px;" title="View attached screenshot">🖼️ ${attachmentsCount}</span>`
+                : `<span style="color: var(--text-muted); font-size: 11px;">--</span>`;
+
+            return `
+                <tr data-id="${issue.id}">
+                    <td>
+                        <span class="qa-id-pill">#QA-${String(issue.id).padStart(2, '0')}</span>
+                    </td>
+                    <td>
+                        <span class="badge ${priorityClass}">${issue.priority}</span>
+                    </td>
+                    <td>
+                        <div style="font-weight: 700; color: var(--brand-navy); font-size: 13.5px; cursor: pointer;" class="qa-title-click" data-id="${issue.id}">
+                            ${escapeHtml(issue.title)}
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 6px; margin-top: 3px;">
+                            <span class="badge-type-tag">${issue.type || 'Bug'}</span>
+                            <span style="font-size: 11px; color: var(--text-muted);">Module: <strong>${issue.module || 'General'}</strong></span>
+                        </div>
+                    </td>
+                    <td>
+                        <div style="font-weight: 600; font-size: 12.5px; color: var(--brand-navy);">${escapeHtml(issue.reporterName || 'Anonymous')}</div>
+                        <small style="font-size: 11px; color: var(--text-muted);">${escapeHtml(issue.reporterEmail || '')}</small>
+                    </td>
+                    <td>
+                        <div style="font-weight: 600; font-size: 12.5px; color: ${issue.assigneeName ? 'var(--brand-navy)' : 'var(--text-muted)'};">
+                            ${issue.assigneeName ? '👤 ' + escapeHtml(issue.assigneeName) : '<em>Unassigned</em>'}
+                        </div>
+                    </td>
+                    <td style="text-align: center;">
+                        ${thumbHtml}
+                    </td>
+                    <td style="text-align: center;">
+                        <span style="font-size: 12px; font-weight: 700; color: var(--brand-navy);">💬 ${issue.commentCount || 0}</span>
+                    </td>
+                    <td>
+                        <select class="qa-select-sm qa-inline-status" data-id="${issue.id}" style="font-size: 11.5px; padding: 3px 6px;">
+                            <option value="Open" ${issue.status === 'Open' ? 'selected' : ''}>Open</option>
+                            <option value="In Progress" ${issue.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
+                            <option value="Ready for QA" ${issue.status === 'Ready for QA' ? 'selected' : ''}>Ready for QA</option>
+                            <option value="Resolved" ${issue.status === 'Resolved' ? 'selected' : ''}>Resolved</option>
+                            <option value="Closed" ${issue.status === 'Closed' ? 'selected' : ''}>Closed</option>
+                            <option value="Deferred" ${issue.status === 'Deferred' ? 'selected' : ''}>Deferred</option>
+                        </select>
+                    </td>
+                    <td style="text-align: right;">
+                        <button class="btn btn-sm btn-subtle qa-btn-details" data-id="${issue.id}" style="padding: 4px 8px; font-size: 11.5px;">
+                            Details &rarr;
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+
+        tbody.querySelectorAll('.qa-title-click, .qa-btn-details').forEach(btn => {
+            btn.addEventListener('click', () => openQaDetailModal(btn.getAttribute('data-id')));
+        });
+        tbody.querySelectorAll('.qa-thumb-indicator').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const issueId = btn.getAttribute('data-id');
+                const issue = qaIssues.find(i => String(i.id) === String(issueId));
+                if (issue && issue.attachments && issue.attachments[0]) {
+                    openQaLightbox(issue.attachments[0]);
+                }
+            });
+        });
+        tbody.querySelectorAll('.qa-inline-status').forEach(select => {
+            select.addEventListener('change', async (e) => {
+                const issueId = select.getAttribute('data-id');
+                const newStatus = e.target.value;
+                await updateQaIssueStatus(issueId, newStatus);
+            });
+        });
+    }
+
+    function renderQaKanbanView() {
+        const statuses = ['Open', 'In Progress', 'Ready for QA', 'Resolved', 'Closed'];
+        statuses.forEach(status => {
+            const containerKey = status.replace(/\s+/g, '');
+            const cardsContainer = document.getElementById(`kanbanCards${containerKey}`);
+            const countPill = document.getElementById(`kanbanCount${containerKey}`);
+            if (!cardsContainer) return;
+
+            const columnIssues = qaIssues.filter(i => (i.status || 'Open').toLowerCase() === status.toLowerCase());
+            if (countPill) countPill.textContent = columnIssues.length;
+
+            if (columnIssues.length === 0) {
+                cardsContainer.innerHTML = `
+                    <div style="text-align: center; padding: 24px 10px; color: var(--text-muted); font-size: 12px; font-style: italic;">
+                        No tickets in ${status}
+                    </div>
+                `;
+            } else {
+                cardsContainer.innerHTML = columnIssues.map(issue => {
+                    const priorityClass = (issue.priority || 'medium').toLowerCase();
+                    const nextAction = getNextStatusAction(issue.status);
+                    const hasAttachment = (issue.attachments && issue.attachments.length > 0);
+
+                    return `
+                        <div class="qa-card ${priorityClass}" draggable="true" data-id="${issue.id}">
+                            <div class="qa-card-header">
+                                <span class="qa-id-pill">#QA-${String(issue.id).padStart(2, '0')}</span>
+                                <span class="badge badge-priority-${priorityClass}">${issue.priority}</span>
+                            </div>
+                            <h5 class="qa-card-title" data-id="${issue.id}">${escapeHtml(issue.title)}</h5>
+                            <div class="qa-card-meta">
+                                <span class="badge-type-tag">${issue.type || 'Bug'}</span>
+                                <span style="font-size: 11px;">📂 ${issue.module || 'General'}</span>
+                            </div>
+                            ${hasAttachment ? `<div style="font-size: 11px; color: var(--brand-teal-hover); display: flex; align-items: center; gap: 4px;">🖼️ 1+ Screenshot</div>` : ''}
+                            <div class="qa-card-footer">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span>👤 ${escapeHtml(issue.assigneeName ? issue.assigneeName.split(' ')[0] : 'Unassigned')}</span>
+                                    <span>💬 ${issue.commentCount || 0}</span>
+                                </div>
+                                ${nextAction ? `
+                                    <button class="qa-quick-advance-btn" data-id="${issue.id}" data-next="${nextAction.status}">
+                                        ${nextAction.label} &rarr;
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                cardsContainer.querySelectorAll('.qa-card').forEach(card => {
+                    card.addEventListener('dragstart', (e) => {
+                        e.dataTransfer.setData('text/plain', card.getAttribute('data-id'));
+                        e.dataTransfer.effectAllowed = 'move';
+                    });
+                    card.querySelector('.qa-card-title').addEventListener('click', () => {
+                        openQaDetailModal(card.getAttribute('data-id'));
+                    });
+                });
+
+                cardsContainer.querySelectorAll('.qa-quick-advance-btn').forEach(btn => {
+                    btn.addEventListener('click', async (e) => {
+                        e.stopPropagation();
+                        const issueId = btn.getAttribute('data-id');
+                        const nextStatus = btn.getAttribute('data-next');
+                        await updateQaIssueStatus(issueId, nextStatus);
+                    });
+                });
+            }
+
+            cardsContainer.ondragover = (e) => {
+                e.preventDefault();
+                cardsContainer.classList.add('drag-over');
+            };
+            cardsContainer.ondragleave = () => {
+                cardsContainer.classList.remove('drag-over');
+            };
+            cardsContainer.ondrop = async (e) => {
+                e.preventDefault();
+                cardsContainer.classList.remove('drag-over');
+                const issueId = e.dataTransfer.getData('text/plain');
+                if (issueId) {
+                    await updateQaIssueStatus(issueId, status);
+                }
+            };
+        });
+    }
+
+    function getNextStatusAction(currentStatus) {
+        switch (currentStatus) {
+            case 'Open': return { status: 'In Progress', label: 'Fix' };
+            case 'In Progress': return { status: 'Ready for QA', label: 'Ready QA' };
+            case 'Ready for QA': return { status: 'Resolved', label: 'Verify' };
+            case 'Resolved': return { status: 'Closed', label: 'Close' };
+            default: return null;
+        }
+    }
+
+    async function updateQaIssueStatus(issueId, newStatus) {
+        try {
+            const res = await fetch(`/api/qa/issues/${issueId}/status`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: newStatus })
+            });
+            const data = await res.json();
+            if (res.ok && data.success) {
+                showQaToast('Status Updated', `Ticket #QA-${issueId} changed to "${newStatus}"`, 'info');
+                await Promise.all([loadQaStats(), loadQaIssues()]);
+                if (activeDetailIssueId && String(activeDetailIssueId) === String(issueId)) {
+                    openQaDetailModal(issueId);
+                }
+            } else {
+                alert(data.error || 'Failed to update ticket status');
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Network error updating ticket status');
+        }
+    }
+
+    // New Issue Modal & Dropzone Logic
+    const qaNewIssueModal = document.getElementById('qaNewIssueModal');
+    const btnQaNewIssue = document.getElementById('btnQaNewIssue');
+    const btnCloseQaNewIssueModal = document.getElementById('btnCloseQaNewIssueModal');
+    const btnCancelQaNewIssue = document.getElementById('btnCancelQaNewIssue');
+    const qaNewIssueForm = document.getElementById('qaNewIssueForm');
+    const qaNewIssueDropzone = document.getElementById('qaNewIssueDropzone');
+    const qaFileInput = document.getElementById('qaFileInput');
+    const qaNewIssueThumbnails = document.getElementById('qaNewIssueThumbnails');
+
+    function openNewIssueModal() {
+        if (!qaNewIssueModal) return;
+        qaNewIssueAttachments = [];
+        renderNewIssueThumbnails();
+        if (qaNewIssueForm) qaNewIssueForm.reset();
+
+        // Update environment preview pills
+        const env = getClientEnvironment();
+        const pBrowser = document.getElementById('envPillBrowser');
+        const pOs = document.getElementById('envPillOs');
+        const pRes = document.getElementById('envPillResolution');
+        const pVp = document.getElementById('envPillViewport');
+        if (pBrowser) pBrowser.textContent = `Browser: ${env.browser}`;
+        if (pOs) pOs.textContent = `OS: ${env.os}`;
+        if (pRes) pRes.textContent = `Screen: ${env.screenRes}`;
+        if (pVp) pVp.textContent = `Viewport: ${env.viewport}`;
+
+        qaNewIssueModal.classList.add('active');
+    }
+
+    if (btnQaNewIssue) btnQaNewIssue.addEventListener('click', openNewIssueModal);
+    if (btnCloseQaNewIssueModal) btnCloseQaNewIssueModal.addEventListener('click', () => qaNewIssueModal.classList.remove('active'));
+    if (btnCancelQaNewIssue) btnCancelQaNewIssue.addEventListener('click', () => qaNewIssueModal.classList.remove('active'));
+
+    if (qaNewIssueDropzone && qaFileInput) {
+        qaNewIssueDropzone.addEventListener('click', () => qaFileInput.click());
+        qaFileInput.addEventListener('change', (e) => {
+            handleImageFiles(e.target.files, qaNewIssueAttachments, renderNewIssueThumbnails);
+        });
+
+        qaNewIssueDropzone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            qaNewIssueDropzone.classList.add('dragover');
+        });
+        qaNewIssueDropzone.addEventListener('dragleave', () => qaNewIssueDropzone.classList.remove('dragover'));
+        qaNewIssueDropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            qaNewIssueDropzone.classList.remove('dragover');
+            if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                handleImageFiles(e.dataTransfer.files, qaNewIssueAttachments, renderNewIssueThumbnails);
+            }
+        });
+    }
+
+    function handleImageFiles(files, targetArray, renderCallback) {
+        Array.from(files).forEach(file => {
+            if (!file.type.startsWith('image/')) return;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                targetArray.push(event.target.result);
+                renderCallback();
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    function renderNewIssueThumbnails() {
+        if (!qaNewIssueThumbnails) return;
+        qaNewIssueThumbnails.innerHTML = qaNewIssueAttachments.map((src, index) => `
+            <div class="qa-thumbnail-item">
+                <img src="${src}" alt="attachment" onclick="openQaLightbox('${src}')">
+                <button type="button" class="qa-thumbnail-remove" data-index="${index}">&times;</button>
+            </div>
+        `).join('');
+
+        qaNewIssueThumbnails.querySelectorAll('.qa-thumbnail-remove').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const idx = parseInt(btn.getAttribute('data-index'), 10);
+                qaNewIssueAttachments.splice(idx, 1);
+                renderNewIssueThumbnails();
+            });
+        });
+    }
+
+    if (qaNewIssueForm) {
+        qaNewIssueForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const title = document.getElementById('qaIssueTitle').value.trim();
+            const type = document.getElementById('qaIssueType').value;
+            const priority = document.getElementById('qaIssuePriority').value;
+            const module = document.getElementById('qaIssueModule').value;
+            const description = document.getElementById('qaIssueDesc').value.trim();
+            const assigneeRaw = document.getElementById('qaIssueAssignee').value;
+
+            let assigneeId = null, assigneeName = null, assigneeEmail = null;
+            if (assigneeRaw) {
+                try {
+                    const parsed = JSON.parse(assigneeRaw);
+                    assigneeId = parsed.id;
+                    assigneeName = parsed.name;
+                    assigneeEmail = parsed.email;
+                } catch (err) {}
+            }
+
+            const env = getClientEnvironment();
+
+            const submitBtn = document.getElementById('btnSubmitQaNewIssue');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = `<span>Saving...</span>`;
+            }
+
+            try {
+                const res = await fetch('/api/qa/issues', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        title,
+                        type,
+                        priority,
+                        module,
+                        description,
+                        assigneeId,
+                        assigneeName,
+                        assigneeEmail,
+                        envBrowser: env.browser,
+                        envOs: env.os,
+                        envResolution: env.screenRes,
+                        envViewport: env.viewport,
+                        envUrl: env.currentUrl,
+                        attachments: qaNewIssueAttachments
+                    })
+                });
+
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    showQaToast('Issue Created', `Reported #${data.issue.id}: ${title}`, priority === 'Critical' ? 'critical' : 'info');
+                    qaNewIssueModal.classList.remove('active');
+                    await Promise.all([loadQaStats(), loadQaIssues()]);
+                } else {
+                    alert(data.error || 'Failed to submit issue ticket');
+                }
+            } catch (err) {
+                alert('Network error submitting issue ticket');
+            } finally {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = `<span>Submit Issue Ticket</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>`;
+                }
+            }
+        });
+    }
+
+    // Global Paste Listener (Ctrl+V) for New Issue and Comment
+    window.addEventListener('paste', (e) => {
+        const newIssueModalActive = qaNewIssueModal && qaNewIssueModal.classList.contains('active');
+        const detailModalActive = qaDetailModal && qaDetailModal.classList.contains('active');
+        if (!newIssueModalActive && !detailModalActive) return;
+
+        const items = (e.clipboardData || e.originalEvent?.clipboardData)?.items;
+        if (!items) return;
+
+        for (let i = 0; i < items.length; i++) {
+            const item = items[i];
+            if (item.kind === 'file' && item.type.startsWith('image/')) {
+                const blob = item.getAsFile();
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const base64Url = event.target.result;
+                    if (newIssueModalActive) {
+                        qaNewIssueAttachments.push(base64Url);
+                        renderNewIssueThumbnails();
+                        showQaToast('Screenshot Pasted', 'Screenshot added from clipboard!', 'info');
+                    } else if (detailModalActive) {
+                        qaCommentAttachments.push(base64Url);
+                        renderCommentThumbnails();
+                        showQaToast('Screenshot Pasted', 'Screenshot attached to reply!', 'info');
+                    }
+                };
+                reader.readAsDataURL(blob);
+            }
+        }
+    });
+
+    // ==========================================
+    // Canvas Annotator Subsystem
+    // ==========================================
+    const qaAnnotatorModal = document.getElementById('qaAnnotatorModal');
+    const btnOpenAnnotatorFromNew = document.getElementById('btnOpenAnnotatorFromNew');
+    const btnCloseAnnotatorModal = document.getElementById('btnCloseAnnotatorModal');
+    const btnCancelAnnotator = document.getElementById('btnCancelAnnotator');
+    const btnSaveAnnotator = document.getElementById('btnSaveAnnotator');
+    const canvas = document.getElementById('qaAnnotatorCanvas');
+    const ctx = canvas ? canvas.getContext('2d') : null;
+    const annotatorImageLoader = document.getElementById('qaAnnotatorImageLoader');
+
+    let annotatorTool = 'rect';
+    let annotatorColor = '#ef4444';
+    let annotatorSize = 4;
+    let isDrawing = false;
+    let startX = 0, startY = 0;
+    let canvasHistory = [];
+    let baseCanvasImage = null;
+
+    function initCanvas() {
+        if (!canvas || !ctx) return;
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        saveCanvasState();
+    }
+
+    function saveCanvasState() {
+        if (!ctx) return;
+        canvasHistory.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
+        if (canvasHistory.length > 25) canvasHistory.shift();
+    }
+
+    function undoCanvasState() {
+        if (!ctx || canvasHistory.length <= 1) return;
+        canvasHistory.pop();
+        const prev = canvasHistory[canvasHistory.length - 1];
+        ctx.putImageData(prev, 0, 0);
+    }
+
+    function openCanvasAnnotator() {
+        if (!qaAnnotatorModal) return;
+        qaAnnotatorModal.classList.add('active');
+        canvasHistory = [];
+        initCanvas();
+    }
+
+    if (btnOpenAnnotatorFromNew) btnOpenAnnotatorFromNew.addEventListener('click', openCanvasAnnotator);
+    if (btnCloseAnnotatorModal) btnCloseAnnotatorModal.addEventListener('click', () => qaAnnotatorModal.classList.remove('active'));
+    if (btnCancelAnnotator) btnCancelAnnotator.addEventListener('click', () => qaAnnotatorModal.classList.remove('active'));
+
+    // Annotator Tool and Style pickers
+    document.querySelectorAll('.qa-tool-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.qa-tool-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            annotatorTool = btn.getAttribute('data-tool');
+        });
+    });
+
+    document.querySelectorAll('.qa-color-swatch').forEach(swatch => {
+        swatch.addEventListener('click', () => {
+            document.querySelectorAll('.qa-color-swatch').forEach(s => s.classList.remove('active'));
+            swatch.classList.add('active');
+            annotatorColor = swatch.getAttribute('data-color');
+        });
+    });
+
+    document.querySelectorAll('.qa-stroke-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.qa-stroke-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            annotatorSize = parseInt(btn.getAttribute('data-size'), 10);
+        });
+    });
+
+    const btnAnnotatorUndo = document.getElementById('btnAnnotatorUndo');
+    const btnAnnotatorClear = document.getElementById('btnAnnotatorClear');
+    if (btnAnnotatorUndo) btnAnnotatorUndo.addEventListener('click', undoCanvasState);
+    if (btnAnnotatorClear) btnAnnotatorClear.addEventListener('click', initCanvas);
+
+    if (annotatorImageLoader) {
+        annotatorImageLoader.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                const img = new Image();
+                img.onload = () => {
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    saveCanvasState();
+                };
+                img.src = ev.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    if (canvas && ctx) {
+        canvas.addEventListener('mousedown', (e) => {
+            isDrawing = true;
+            const rect = canvas.getBoundingClientRect();
+            startX = (e.clientX - rect.left) * (canvas.width / rect.width);
+            startY = (e.clientY - rect.top) * (canvas.height / rect.height);
+
+            if (annotatorTool === 'pen') {
+                ctx.beginPath();
+                ctx.moveTo(startX, startY);
+            }
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            if (!isDrawing) return;
+            const rect = canvas.getBoundingClientRect();
+            const currentX = (e.clientX - rect.left) * (canvas.width / rect.width);
+            const currentY = (e.clientY - rect.top) * (canvas.height / rect.height);
+
+            if (annotatorTool === 'pen') {
+                ctx.strokeStyle = annotatorColor;
+                ctx.lineWidth = annotatorSize;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                ctx.lineTo(currentX, currentY);
+                ctx.stroke();
+            } else {
+                // Restore last snapshot and draw preview
+                const lastSnap = canvasHistory[canvasHistory.length - 1];
+                if (lastSnap) ctx.putImageData(lastSnap, 0, 0);
+
+                ctx.strokeStyle = annotatorColor;
+                ctx.fillStyle = annotatorColor;
+                ctx.lineWidth = annotatorSize;
+
+                if (annotatorTool === 'rect') {
+                    ctx.strokeRect(startX, startY, currentX - startX, currentY - startY);
+                } else if (annotatorTool === 'circle') {
+                    ctx.beginPath();
+                    const radiusX = Math.abs(currentX - startX) / 2;
+                    const radiusY = Math.abs(currentY - startY) / 2;
+                    const centerX = Math.min(startX, currentX) + radiusX;
+                    const centerY = Math.min(startY, currentY) + radiusY;
+                    ctx.ellipse(centerX, centerY, radiusX, radiusY, 0, 0, 2 * Math.PI);
+                    ctx.stroke();
+                } else if (annotatorTool === 'arrow') {
+                    drawArrow(ctx, startX, startY, currentX, currentY, annotatorSize * 3);
+                }
+            }
+        });
+
+        canvas.addEventListener('mouseup', (e) => {
+            if (!isDrawing) return;
+            isDrawing = false;
+            if (annotatorTool === 'text') {
+                const rect = canvas.getBoundingClientRect();
+                const clickX = (e.clientX - rect.left) * (canvas.width / rect.width);
+                const clickY = (e.clientY - rect.top) * (canvas.height / rect.height);
+                const label = prompt('Enter annotation text label:');
+                if (label && label.trim()) {
+                    ctx.fillStyle = annotatorColor;
+                    ctx.font = `bold ${annotatorSize * 4 + 10}px 'Plus Jakarta Sans', sans-serif`;
+                    ctx.fillText(label.trim(), clickX, clickY);
+                }
+            }
+            saveCanvasState();
+        });
+
+        canvas.addEventListener('mouseleave', () => {
+            if (isDrawing) {
+                isDrawing = false;
+                saveCanvasState();
+            }
+        });
+    }
+
+    function drawArrow(context, fromx, fromy, tox, toy, headlen = 12) {
+        const dx = tox - fromx;
+        const dy = toy - fromy;
+        const angle = Math.atan2(dy, dx);
+        context.beginPath();
+        context.moveTo(fromx, fromy);
+        context.lineTo(tox, toy);
+        context.stroke();
+
+        context.beginPath();
+        context.moveTo(tox, toy);
+        context.lineTo(tox - headlen * Math.cos(angle - Math.PI / 6), toy - headlen * Math.sin(angle - Math.PI / 6));
+        context.lineTo(tox - headlen * Math.cos(angle + Math.PI / 6), toy - headlen * Math.sin(angle + Math.PI / 6));
+        context.closePath();
+        context.fill();
+    }
+
+    if (btnSaveAnnotator && canvas) {
+        btnSaveAnnotator.addEventListener('click', () => {
+            const dataUrl = canvas.toDataURL('image/png');
+            qaNewIssueAttachments.push(dataUrl);
+            renderNewIssueThumbnails();
+            qaAnnotatorModal.classList.remove('active');
+            showQaToast('Annotation Saved', 'Canvas markup attached to ticket!', 'info');
+        });
+    }
+
+    // ==========================================
+    // Issue Details & Discussion Thread Modal
+    // ==========================================
+    const qaDetailModal = document.getElementById('qaDetailModal');
+    const btnCloseQaDetailModal = document.getElementById('btnCloseQaDetailModal');
+    const qaNewCommentForm = document.getElementById('qaNewCommentForm');
+    const qaCommentFileInput = document.getElementById('qaCommentFileInput');
+    const qaCommentThumbnails = document.getElementById('qaCommentThumbnails');
+
+    if (btnCloseQaDetailModal) btnCloseQaDetailModal.addEventListener('click', () => qaDetailModal.classList.remove('active'));
+
+    async function openQaDetailModal(issueId) {
+        if (!qaDetailModal) return;
+        activeDetailIssueId = issueId;
+        qaCommentAttachments = [];
+        renderCommentThumbnails();
+
+        try {
+            const res = await fetch(`/api/qa/issues/${issueId}`);
+            if (!res.ok) {
+                alert('Issue ticket not found');
+                return;
+            }
+            const issue = await res.json();
+
+            // Populate metadata
+            document.getElementById('qaDetailId').textContent = `#QA-${String(issue.id).padStart(2, '0')}`;
+            document.getElementById('qaDetailTitle').textContent = issue.title;
+
+            const pBadge = document.getElementById('qaDetailPriorityBadge');
+            pBadge.className = `badge badge-priority-${(issue.priority || 'medium').toLowerCase()}`;
+            pBadge.textContent = issue.priority;
+
+            const tBadge = document.getElementById('qaDetailTypeBadge');
+            tBadge.textContent = issue.type;
+
+            const mBadge = document.getElementById('qaDetailModuleBadge');
+            mBadge.textContent = issue.module;
+
+            document.getElementById('qaDetailReporter').textContent = `${issue.reporterName || 'Anonymous'} (${issue.reporterEmail || ''})`;
+            document.getElementById('qaDetailDate').textContent = new Date(issue.createdAt).toLocaleString();
+            document.getElementById('qaDetailAssignee').textContent = issue.assigneeName ? issue.assigneeName : 'Unassigned';
+
+            // Stage Progression Buttons
+            document.querySelectorAll('.qa-stage-btn').forEach(btn => {
+                const s = btn.getAttribute('data-status');
+                if (s === issue.status) {
+                    btn.classList.add('active-stage');
+                } else {
+                    btn.classList.remove('active-stage');
+                }
+                btn.onclick = async () => {
+                    await updateQaIssueStatus(issue.id, s);
+                };
+            });
+
+            // Description
+            document.getElementById('qaDetailDescription').textContent = issue.description;
+
+            // Gallery
+            const gallerySec = document.getElementById('qaDetailAttachmentsSection');
+            const gallery = document.getElementById('qaDetailGallery');
+            if (issue.attachments && Array.isArray(issue.attachments) && issue.attachments.length > 0) {
+                gallerySec.style.display = 'block';
+                gallery.innerHTML = issue.attachments.map(url => `
+                    <div class="qa-gallery-thumb" onclick="openQaLightbox('${url}')">
+                        <img src="${url}" alt="evidence">
+                    </div>
+                `).join('');
+            } else {
+                gallerySec.style.display = 'none';
+            }
+
+            // Environment Grid
+            const envGrid = document.getElementById('qaDetailEnvGrid');
+            envGrid.innerHTML = `
+                <div class="qa-env-card"><label>Browser</label><span>${escapeHtml(issue.envBrowser || 'N/A')}</span></div>
+                <div class="qa-env-card"><label>Operating System</label><span>${escapeHtml(issue.envOs || 'N/A')}</span></div>
+                <div class="qa-env-card"><label>Screen Resolution</label><span>${escapeHtml(issue.envResolution || 'N/A')}</span></div>
+                <div class="qa-env-card"><label>Viewport</label><span>${escapeHtml(issue.envViewport || 'N/A')}</span></div>
+                <div class="qa-env-card" style="grid-column: 1 / -1;"><label>Capture URL</label><span>${escapeHtml(issue.envUrl || 'N/A')}</span></div>
+            `;
+
+            // Discussion comments
+            renderCommentsThread(issue.comments || []);
+            document.getElementById('qaDetailCommentCount').textContent = (issue.comments || []).length;
+
+            qaDetailModal.classList.add('active');
+        } catch (err) {
+            console.error('Failed to load issue details:', err);
+        }
+    }
+
+    function renderCommentsThread(comments) {
+        const thread = document.getElementById('qaCommentsThread');
+        if (!thread) return;
+
+        if (comments.length === 0) {
+            thread.innerHTML = `
+                <div style="text-align: center; padding: 20px; color: var(--text-muted); font-size: 13px;">
+                    No activity yet. Leave the first reply or verification note below.
+                </div>
+            `;
+            return;
+        }
+
+        thread.innerHTML = comments.map(c => {
+            const hasAtt = c.attachments && Array.isArray(c.attachments) && c.attachments.length > 0;
+            return `
+                <div class="qa-comment-bubble">
+                    <div class="qa-comment-header">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <strong style="color: var(--brand-navy); font-size: 13px;">${escapeHtml(c.authorName)}</strong>
+                            <span class="badge" style="font-size: 10px; padding: 1px 6px;">${c.authorRole || 'Staff'}</span>
+                        </div>
+                        <span style="font-size: 11px; color: var(--text-muted);">${new Date(c.createdAt).toLocaleString()}</span>
+                    </div>
+                    <div class="qa-comment-body">${escapeHtml(c.comment)}</div>
+                    ${hasAtt ? `
+                        <div style="display: flex; gap: 8px; margin-top: 8px;">
+                            ${c.attachments.map(src => `
+                                <img src="${src}" style="width: 70px; height: 50px; object-fit: cover; border-radius: 4px; cursor: pointer; border: 1px solid var(--border-light);" onclick="openQaLightbox('${src}')">
+                            `).join('')}
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }).join('');
+    }
+
+    if (qaCommentFileInput) {
+        qaCommentFileInput.addEventListener('change', (e) => {
+            handleImageFiles(e.target.files, qaCommentAttachments, renderCommentThumbnails);
+        });
+    }
+
+    function renderCommentThumbnails() {
+        if (!qaCommentThumbnails) return;
+        qaCommentThumbnails.innerHTML = qaCommentAttachments.map((src, index) => `
+            <div class="qa-thumbnail-item" style="width: 60px; height: 46px;">
+                <img src="${src}" alt="attachment" onclick="openQaLightbox('${src}')">
+                <button type="button" class="qa-thumbnail-remove" data-index="${index}">&times;</button>
+            </div>
+        `).join('');
+
+        qaCommentThumbnails.querySelectorAll('.qa-thumbnail-remove').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const idx = parseInt(btn.getAttribute('data-index'), 10);
+                qaCommentAttachments.splice(idx, 1);
+                renderCommentThumbnails();
+            });
+        });
+    }
+
+    if (qaNewCommentForm) {
+        qaNewCommentForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!activeDetailIssueId) return;
+
+            const commentInput = document.getElementById('qaCommentInput');
+            const comment = commentInput.value.trim();
+            if (!comment) return;
+
+            const submitBtn = document.getElementById('btnSubmitComment');
+            if (submitBtn) submitBtn.disabled = true;
+
+            try {
+                const res = await fetch(`/api/qa/issues/${activeDetailIssueId}/comments`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        comment,
+                        attachments: qaCommentAttachments
+                    })
+                });
+
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    commentInput.value = '';
+                    qaCommentAttachments = [];
+                    renderCommentThumbnails();
+                    await openQaDetailModal(activeDetailIssueId);
+                    await loadQaIssues();
+                } else {
+                    alert(data.error || 'Failed to submit reply');
+                }
+            } catch (err) {
+                alert('Network error submitting reply');
+            } finally {
+                if (submitBtn) submitBtn.disabled = false;
+            }
+        });
+    }
+
+    // Lightbox Functionality
+    const qaLightboxModal = document.getElementById('qaLightboxModal');
+    const qaLightboxImg = document.getElementById('qaLightboxImg');
+    const btnCloseLightbox = document.getElementById('btnCloseLightbox');
+
+    window.openQaLightbox = function(src) {
+        if (qaLightboxModal && qaLightboxImg) {
+            qaLightboxImg.src = src;
+            qaLightboxModal.classList.add('active');
+        }
+    };
+
+    if (btnCloseLightbox && qaLightboxModal) {
+        btnCloseLightbox.addEventListener('click', () => qaLightboxModal.classList.remove('active'));
+        qaLightboxModal.addEventListener('click', (e) => {
+            if (e.target === qaLightboxModal) qaLightboxModal.classList.remove('active');
+        });
+    }
+
+    // View Switching: List vs Kanban
+    const btnQaViewList = document.getElementById('btnQaViewList');
+    const btnQaViewKanban = document.getElementById('btnQaViewKanban');
+    const qaListView = document.getElementById('qaListView');
+    const qaKanbanView = document.getElementById('qaKanbanView');
+
+    if (btnQaViewList && btnQaViewKanban) {
+        btnQaViewList.addEventListener('click', () => {
+            btnQaViewList.classList.add('active');
+            btnQaViewKanban.classList.remove('active');
+            if (qaListView) qaListView.style.display = 'block';
+            if (qaKanbanView) qaKanbanView.style.display = 'none';
+            qaCurrentView = 'list';
+        });
+
+        btnQaViewKanban.addEventListener('click', () => {
+            btnQaViewKanban.classList.add('active');
+            btnQaViewList.classList.remove('active');
+            if (qaListView) qaListView.style.display = 'none';
+            if (qaKanbanView) qaKanbanView.style.display = 'block';
+            qaCurrentView = 'kanban';
+            renderQaKanbanView();
+        });
+    }
+
+    // Filter controls
+    const qaSearchInput = document.getElementById('qaSearchInput');
+    const qaClearSearchBtn = document.getElementById('qaClearSearchBtn');
+    const qaFilterStatus = document.getElementById('qaFilterStatus');
+    const qaFilterType = document.getElementById('qaFilterType');
+    const qaFilterPriority = document.getElementById('qaFilterPriority');
+    const qaFilterModule = document.getElementById('qaFilterModule');
+    const btnQaResetFilters = document.getElementById('btnQaResetFilters');
+
+    let qaSearchTimeout = null;
+    if (qaSearchInput) {
+        qaSearchInput.addEventListener('input', () => {
+            clearTimeout(qaSearchTimeout);
+            const val = qaSearchInput.value.trim();
+            if (qaClearSearchBtn) qaClearSearchBtn.style.display = val ? 'inline-block' : 'none';
+            qaSearchTimeout = setTimeout(() => {
+                qaFilterState.q = val;
+                loadQaIssues();
+            }, 300);
+        });
+    }
+
+    if (qaClearSearchBtn && qaSearchInput) {
+        qaClearSearchBtn.addEventListener('click', () => {
+            qaSearchInput.value = '';
+            qaClearSearchBtn.style.display = 'none';
+            qaFilterState.q = '';
+            loadQaIssues();
+        });
+    }
+
+    [
+        { el: qaFilterStatus, key: 'status' },
+        { el: qaFilterType, key: 'type' },
+        { el: qaFilterPriority, key: 'priority' },
+        { el: qaFilterModule, key: 'module' }
+    ].forEach(({ el, key }) => {
+        if (el) {
+            el.addEventListener('change', () => {
+                qaFilterState[key] = el.value;
+                loadQaIssues();
+            });
+        }
+    });
+
+    if (btnQaResetFilters) {
+        btnQaResetFilters.addEventListener('click', () => {
+            qaFilterState = { status: 'all', type: 'all', priority: 'all', module: 'all', q: '' };
+            if (qaSearchInput) qaSearchInput.value = '';
+            if (qaClearSearchBtn) qaClearSearchBtn.style.display = 'none';
+            if (qaFilterStatus) qaFilterStatus.value = 'all';
+            if (qaFilterType) qaFilterType.value = 'all';
+            if (qaFilterPriority) qaFilterPriority.value = 'all';
+            if (qaFilterModule) qaFilterModule.value = 'all';
+            loadQaIssues();
+        });
+    }
+
+    // Markdown & CSV Export Handlers
+    const btnQaCopyMarkdown = document.getElementById('btnQaCopyMarkdown');
+    const btnQaExportCsv = document.getElementById('btnQaExportCsv');
+
+    if (btnQaCopyMarkdown) {
+        btnQaCopyMarkdown.addEventListener('click', () => {
+            if (!qaIssues || qaIssues.length === 0) {
+                alert('No QA issues currently loaded to copy.');
+                return;
+            }
+
+            const dateStr = new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+            let md = `### 🐞 The Lab Indonesia QA & Bug Tracker - Standup Report (${dateStr})\n`;
+            md += `**Total Tickets:** ${qaStats.total || qaIssues.length} | **Open:** ${qaStats.open || 0} | **In Progress:** ${qaStats.inProgress || 0} | **Ready for QA:** ${qaStats.readyForQa || 0} | **Critical:** ${qaStats.critical || 0}\n\n`;
+            md += `| ID | Priority | Category | Title | Assignee | Status |\n`;
+            md += `|---|---|---|---|---|---|\n`;
+
+            qaIssues.forEach(i => {
+                md += `| #QA-${String(i.id).padStart(2, '0')} | ${i.priority} | ${i.type || 'Bug'} | ${i.title.replace(/\|/g, '-')} | ${i.assigneeName || 'Unassigned'} | ${i.status} |\n`;
+            });
+
+            navigator.clipboard.writeText(md).then(() => {
+                showQaToast('Standup Copied', 'Markdown table copied to clipboard! Paste into your team channel.', 'info');
+            }).catch(() => {
+                alert('Failed to copy Markdown to clipboard');
+            });
+        });
+    }
+
+    if (btnQaExportCsv) {
+        btnQaExportCsv.addEventListener('click', () => {
+            if (!qaIssues || qaIssues.length === 0) {
+                alert('No QA issues currently available to export.');
+                return;
+            }
+
+            const headers = ['ID', 'Title', 'Type', 'Priority', 'Status', 'Module', 'Reporter Name', 'Reporter Email', 'Assignee Name', 'Comments', 'Created At'];
+            const rows = qaIssues.map(i => [
+                `QA-${String(i.id).padStart(2, '0')}`,
+                `"${(i.title || '').replace(/"/g, '""')}"`,
+                `"${i.type || ''}"`,
+                `"${i.priority || ''}"`,
+                `"${i.status || ''}"`,
+                `"${i.module || ''}"`,
+                `"${(i.reporterName || '').replace(/"/g, '""')}"`,
+                `"${(i.reporterEmail || '').replace(/"/g, '""')}"`,
+                `"${(i.assigneeName || '').replace(/"/g, '""')}"`,
+                i.commentCount || 0,
+                `"${i.createdAt || ''}"`
+            ]);
+
+            const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement('a');
+            link.setAttribute('href', encodedUri);
+            link.setAttribute('download', `thelab-qa-tracker-${new Date().toISOString().slice(0, 10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showQaToast('CSV Exported', 'Downloaded CSV issue log successfully.', 'info');
+        });
+    }
+
+    // Real-Time Notification Poller
+    async function pollQaNotifications() {
+        try {
+            const res = await fetch('/api/qa/notifications?since=600000');
+            if (!res.ok) return;
+            const data = await res.json();
+            if (data.alerts && Array.isArray(data.alerts)) {
+                data.alerts.forEach(alert => {
+                    if (!qaAlertsSeen.has(alert.id)) {
+                        qaAlertsSeen.add(alert.id);
+                        showQaToast(
+                            `🚨 ${alert.priority} Issue: #${alert.id}`,
+                            `${alert.title} (${alert.module})`,
+                            alert.priority.toLowerCase(),
+                            alert.id
+                        );
+                    }
+                });
+            }
+        } catch (e) {}
+    }
+
     // Initialize
     loadInitialData();
     loadUsers();
     checkDbStatus();
+    loadQaData();
     setInterval(checkDbStatus, 20000);
+    setInterval(pollQaNotifications, 15000);
+
+    // Deep link check for /new/qa-tracker or #tab-qa
+    if (window.location.pathname === '/new/qa-tracker' || window.location.pathname === '/qa-tracker' || window.location.hash === '#tab-qa') {
+        const qaNavBtn = document.getElementById('navItemQa');
+        if (qaNavBtn) {
+            setTimeout(() => qaNavBtn.click(), 150);
+        }
+    }
 });
 
 // Global copy snippet utility for peer onboarding tutorial

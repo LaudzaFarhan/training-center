@@ -42,11 +42,19 @@ function parseCookies(cookieHeader) {
     return cookies;
 }
 
-// Helper to parse JSON request bodies
-function readJsonBody(req) {
+// Helper to parse JSON request bodies (supports up to 15MB for screenshots)
+function readJsonBody(req, maxBytes = 15 * 1024 * 1024) {
     return new Promise((resolve, reject) => {
         let body = '';
-        req.on('data', chunk => { body += chunk; });
+        let received = 0;
+        req.on('data', chunk => {
+            received += chunk.length;
+            if (received > maxBytes) {
+                req.destroy(new Error('Payload Too Large (15MB Limit)'));
+                return;
+            }
+            body += chunk;
+        });
         req.on('end', () => {
             try {
                 resolve(body ? JSON.parse(body) : {});
@@ -57,6 +65,7 @@ function readJsonBody(req) {
         req.on('error', reject);
     });
 }
+
 
 const server = http.createServer(async (req, res) => {
     // CORS headers
@@ -443,6 +452,214 @@ const server = http.createServer(async (req, res) => {
             return;
         }
 
+        // ==========================================
+        // QA & Bug Tracker Endpoints (/api/qa/*)
+        // ==========================================
+        if (url.pathname === '/api/qa/stats' && req.method === 'GET') {
+            if (!sessionUser) {
+                res.writeHead(401);
+                res.end(JSON.stringify({ error: 'Unauthorized' }));
+                return;
+            }
+            const stats = await db.getQaStats();
+            res.writeHead(200);
+            res.end(JSON.stringify(stats));
+            return;
+        }
+
+        if (url.pathname === '/api/qa/notifications' && req.method === 'GET') {
+            if (!sessionUser) {
+                res.writeHead(401);
+                res.end(JSON.stringify({ error: 'Unauthorized' }));
+                return;
+            }
+            const sinceParam = url.searchParams.get('since');
+            const sinceMs = sinceParam ? parseInt(sinceParam, 10) : 900000;
+            const alerts = await db.getRecentCriticalAlerts(sinceMs);
+            res.writeHead(200);
+            res.end(JSON.stringify({ alerts }));
+            return;
+        }
+
+        if (url.pathname === '/api/qa/issues' && req.method === 'GET') {
+            if (!sessionUser) {
+                res.writeHead(401);
+                res.end(JSON.stringify({ error: 'Unauthorized' }));
+                return;
+            }
+            const filters = {
+                status: url.searchParams.get('status') || '',
+                type: url.searchParams.get('type') || '',
+                priority: url.searchParams.get('priority') || '',
+                module: url.searchParams.get('module') || '',
+                q: url.searchParams.get('q') || ''
+            };
+            const issues = await db.getQaIssues(filters);
+            res.writeHead(200);
+            res.end(JSON.stringify(issues));
+            return;
+        }
+
+        if (url.pathname === '/api/qa/issues' && req.method === 'POST') {
+            if (!sessionUser) {
+                res.writeHead(401);
+                res.end(JSON.stringify({ error: 'Unauthorized' }));
+                return;
+            }
+            try {
+                const body = await readJsonBody(req);
+                const { title, description, type, priority, status, module, envBrowser, envOs, envResolution, envViewport, envUrl, attachments } = body;
+                if (!title || !title.trim()) {
+                    res.writeHead(400);
+                    res.end(JSON.stringify({ error: 'Issue title is required' }));
+                    return;
+                }
+                const newIssue = await db.createQaIssue({
+                    title: title.trim(),
+                    description: description || '',
+                    type: type || 'Bug',
+                    priority: priority || 'Medium',
+                    status: status || 'Open',
+                    module: module || 'General',
+                    reporterId: sessionUser.userId,
+                    reporterName: sessionUser.name,
+                    reporterEmail: sessionUser.email,
+                    envBrowser,
+                    envOs,
+                    envResolution,
+                    envViewport,
+                    envUrl,
+                    attachments: attachments || []
+                });
+                res.writeHead(201);
+                res.end(JSON.stringify({ success: true, issue: newIssue }));
+            } catch (err) {
+                res.writeHead(400);
+                res.end(JSON.stringify({ error: err.message }));
+            }
+            return;
+        }
+
+        const qaIssueMatch = url.pathname.match(/^\/api\/qa\/issues\/(\d+)$/);
+        if (qaIssueMatch && req.method === 'GET') {
+            if (!sessionUser) {
+                res.writeHead(401);
+                res.end(JSON.stringify({ error: 'Unauthorized' }));
+                return;
+            }
+            const issueId = qaIssueMatch[1];
+            const issue = await db.getQaIssueById(issueId);
+            if (!issue) {
+                res.writeHead(404);
+                res.end(JSON.stringify({ error: 'Issue not found' }));
+                return;
+            }
+            res.writeHead(200);
+            res.end(JSON.stringify(issue));
+            return;
+        }
+
+        const qaStatusMatch = url.pathname.match(/^\/api\/qa\/issues\/(\d+)\/status$/);
+        if (qaStatusMatch && req.method === 'POST') {
+            if (!sessionUser) {
+                res.writeHead(401);
+                res.end(JSON.stringify({ error: 'Unauthorized' }));
+                return;
+            }
+            try {
+                const issueId = qaStatusMatch[1];
+                const body = await readJsonBody(req);
+                const { status } = body;
+                if (!status) {
+                    res.writeHead(400);
+                    res.end(JSON.stringify({ error: 'Status is required' }));
+                    return;
+                }
+                const updated = await db.updateQaIssueStatus(issueId, status);
+                if (!updated) {
+                    res.writeHead(404);
+                    res.end(JSON.stringify({ error: 'Issue not found' }));
+                    return;
+                }
+                await db.addQaComment(issueId, {
+                    authorName: sessionUser.name,
+                    authorRole: sessionUser.role,
+                    authorEmail: sessionUser.email,
+                    comment: `🔄 Status changed to **${status}** by ${sessionUser.name} (${sessionUser.role})`
+                });
+                res.writeHead(200);
+                res.end(JSON.stringify({ success: true, issue: updated }));
+            } catch (err) {
+                res.writeHead(400);
+                res.end(JSON.stringify({ error: err.message }));
+            }
+            return;
+        }
+
+        const qaAssignMatch = url.pathname.match(/^\/api\/qa\/issues\/(\d+)\/assign$/);
+        if (qaAssignMatch && req.method === 'POST') {
+            if (!sessionUser) {
+                res.writeHead(401);
+                res.end(JSON.stringify({ error: 'Unauthorized' }));
+                return;
+            }
+            try {
+                const issueId = qaAssignMatch[1];
+                const body = await readJsonBody(req);
+                const { assigneeName, assigneeEmail, assigneeId } = body;
+                const updated = await db.updateQaIssueAssignee(issueId, assigneeName, assigneeEmail, assigneeId);
+                if (!updated) {
+                    res.writeHead(404);
+                    res.end(JSON.stringify({ error: 'Issue not found' }));
+                    return;
+                }
+                await db.addQaComment(issueId, {
+                    authorName: sessionUser.name,
+                    authorRole: sessionUser.role,
+                    authorEmail: sessionUser.email,
+                    comment: `👤 Assigned to **${assigneeName || 'Unassigned'}**`
+                });
+                res.writeHead(200);
+                res.end(JSON.stringify({ success: true, issue: updated }));
+            } catch (err) {
+                res.writeHead(400);
+                res.end(JSON.stringify({ error: err.message }));
+            }
+            return;
+        }
+
+        const qaCommentMatch = url.pathname.match(/^\/api\/qa\/issues\/(\d+)\/comments$/);
+        if (qaCommentMatch && req.method === 'POST') {
+            if (!sessionUser) {
+                res.writeHead(401);
+                res.end(JSON.stringify({ error: 'Unauthorized' }));
+                return;
+            }
+            try {
+                const issueId = qaCommentMatch[1];
+                const body = await readJsonBody(req);
+                const { comment, attachments } = body;
+                if (!comment || !comment.trim()) {
+                    res.writeHead(400);
+                    res.end(JSON.stringify({ error: 'Comment text cannot be empty' }));
+                    return;
+                }
+                const newComment = await db.addQaComment(issueId, {
+                    authorName: sessionUser.name,
+                    authorRole: sessionUser.role,
+                    authorEmail: sessionUser.email,
+                    comment: comment.trim(),
+                    attachments: attachments || []
+                });
+                res.writeHead(201);
+                res.end(JSON.stringify({ success: true, comment: newComment }));
+            } catch (err) {
+                res.writeHead(400);
+                res.end(JSON.stringify({ error: err.message }));
+            }
+            return;
+        }
+
         res.writeHead(404);
         res.end(JSON.stringify({ error: 'Endpoint not found' }));
         return;
@@ -467,11 +684,15 @@ const server = http.createServer(async (req, res) => {
         }
         targetPath = 'login.html';
     }
-    // Route: Protected Dashboard
-    else if (targetPath === '/dashboard' || targetPath === '/dashboard/' || targetPath === '/dashboard.html' || targetPath === '/instructor') {
+    // Route: Protected Dashboard & QA Tracker
+    else if (
+        targetPath === '/dashboard' || targetPath === '/dashboard/' || targetPath === '/dashboard.html' ||
+        targetPath === '/instructor' || targetPath === '/new/qa-tracker' || targetPath === '/new/qa-tracker/' ||
+        targetPath === '/qa-tracker' || targetPath === '/qa-tracker/'
+    ) {
         // Enforce Authentication: redirect unauthenticated users to /login
         if (!sessionUser) {
-            res.writeHead(302, { 'Location': '/login?redirect=/dashboard' });
+            res.writeHead(302, { 'Location': `/login?redirect=${encodeURIComponent(url.pathname)}` });
             res.end();
             return;
         }
