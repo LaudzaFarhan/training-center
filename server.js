@@ -13,10 +13,76 @@ try {
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const db = require('./db');
 
 const PORT = process.env.PORT || 3050;
 const PUBLIC_DIR = path.join(__dirname, 'public');
+
+// ==========================================
+// Live Code Synchronization & Versioning
+// ==========================================
+const SERVER_BOOT_TIME = Date.now();
+const sseReloadClients = new Set();
+
+function computeAppVersion() {
+    try {
+        const hash = crypto.createHash('md5');
+        hash.update(String(SERVER_BOOT_TIME));
+
+        const filesToCheck = [
+            path.join(__dirname, 'server.js'),
+            path.join(__dirname, 'db.js'),
+            path.join(PUBLIC_DIR, 'dashboard.html'),
+            path.join(PUBLIC_DIR, 'index.html'),
+            path.join(PUBLIC_DIR, 'login.html'),
+            path.join(PUBLIC_DIR, 'js', 'app.js'),
+            path.join(PUBLIC_DIR, 'js', 'auto-reload.js'),
+            path.join(PUBLIC_DIR, 'css', 'styles.css')
+        ];
+        for (const file of filesToCheck) {
+            if (fs.existsSync(file)) {
+                const stat = fs.statSync(file);
+                hash.update(`${file}-${stat.mtimeMs}-${stat.size}`);
+            }
+        }
+        return hash.digest('hex').slice(0, 12);
+    } catch (e) {
+        return String(SERVER_BOOT_TIME);
+    }
+}
+
+let currentAppVersion = computeAppVersion();
+
+function broadcastCodeReload(reason = 'code_update') {
+    currentAppVersion = computeAppVersion();
+    console.log(`📡 [Live Reload] Code update detected (${reason})! Broadcasting version ${currentAppVersion} to ${sseReloadClients.size} active client(s)...`);
+    const payload = JSON.stringify({ type: 'reload', version: currentAppVersion, reason, timestamp: Date.now() });
+    for (const client of sseReloadClients) {
+        try {
+            client.write(`data: ${payload}\n\n`);
+        } catch (e) {
+            sseReloadClients.delete(client);
+        }
+    }
+}
+
+// Watch public directory and server source files for changes
+let fileWatchDebounceTimer = null;
+function onSourceFileChanged(eventType, filename) {
+    if (fileWatchDebounceTimer) clearTimeout(fileWatchDebounceTimer);
+    fileWatchDebounceTimer = setTimeout(() => {
+        broadcastCodeReload(`file changed: ${filename || 'unknown'}`);
+    }, 250);
+}
+
+try {
+    fs.watch(PUBLIC_DIR, { recursive: true }, onSourceFileChanged);
+    fs.watch(path.join(__dirname, 'server.js'), onSourceFileChanged);
+    fs.watch(path.join(__dirname, 'db.js'), onSourceFileChanged);
+} catch (e) {
+    // Non-fatal if recursive fs.watch is limited on current OS
+}
 
 // MIME types dictionary
 const MIME_TYPES = {
@@ -230,6 +296,60 @@ const server = http.createServer(async (req, res) => {
             const dbStatus = await db.getDatabaseStatus();
             res.writeHead(200);
             res.end(JSON.stringify(dbStatus));
+            return;
+        }
+
+        // Auto-Reload: Current Version Check
+        if (url.pathname === '/api/system/version' && req.method === 'GET') {
+            res.writeHead(200, {
+                'Content-Type': 'application/json',
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache',
+                'Expires': '0'
+            });
+            res.end(JSON.stringify({
+                version: currentAppVersion,
+                bootTime: SERVER_BOOT_TIME,
+                now: Date.now()
+            }));
+            return;
+        }
+
+        // Auto-Reload: Server-Sent Events (SSE) Live Stream
+        if (url.pathname === '/api/system/version-stream' && req.method === 'GET') {
+            res.writeHead(200, {
+                'Content-Type': 'text/event-stream',
+                'Cache-Control': 'no-cache, no-transform',
+                'Connection': 'keep-alive',
+                'Access-Control-Allow-Origin': '*'
+            });
+
+            // Initial version message
+            res.write(`data: ${JSON.stringify({ type: 'init', version: currentAppVersion })}\n\n`);
+            sseReloadClients.add(res);
+
+            // Periodic heartbeat ping to keep connection alive
+            const pingInterval = setInterval(() => {
+                try {
+                    res.write(': ping\n\n');
+                } catch (e) {
+                    clearInterval(pingInterval);
+                    sseReloadClients.delete(res);
+                }
+            }, 20000);
+
+            req.on('close', () => {
+                clearInterval(pingInterval);
+                sseReloadClients.delete(res);
+            });
+            return;
+        }
+
+        // Auto-Reload: Manual Trigger (Admin / CI/CD)
+        if (url.pathname === '/api/system/trigger-reload' && req.method === 'POST') {
+            broadcastCodeReload('manual_trigger');
+            res.writeHead(200);
+            res.end(JSON.stringify({ success: true, version: currentAppVersion, clientsNotified: sseReloadClients.size }));
             return;
         }
 
@@ -764,7 +884,22 @@ const server = http.createServer(async (req, res) => {
                 res.end('Server Error');
                 return;
             }
-            res.writeHead(200, { 'Content-Type': contentType });
+
+            const headers = { 'Content-Type': contentType };
+
+            // Cache prevention: ensure clients never serve stale HTML, JS, or CSS
+            if (ext === '.html') {
+                headers['Cache-Control'] = 'no-cache, no-store, must-revalidate';
+                headers['Pragma'] = 'no-cache';
+                headers['Expires'] = '0';
+                headers['X-App-Version'] = currentAppVersion;
+            } else if (ext === '.js' || ext === '.css') {
+                headers['Cache-Control'] = 'no-cache, must-revalidate';
+                headers['ETag'] = `"${currentAppVersion}-${path.basename(filePath)}"`;
+                headers['X-App-Version'] = currentAppVersion;
+            }
+
+            res.writeHead(200, headers);
             res.end(content);
         });
     });

@@ -10,6 +10,7 @@
     "test:rbac": "node scripts/test-rbac.js",
     "test:qa": "node scripts/test-qa-tracker.js",
     "test:sidebar": "node scripts/test-sidebar-minimize.js",
+    "test:autoreload": "node scripts/test-auto-reload.js",
     "db:migrate": "node -e \"require('./db').initDatabase()\""
   },
   "keywords": [
