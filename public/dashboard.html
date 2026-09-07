@@ -845,6 +845,29 @@ pm2 restart thelab-training</code></pre>
                     </div>
                 </div>
 
+                <!-- Draft Alert Strip (shown when local drafts exist) -->
+                <div class="qa-draft-alert-strip" id="qaDraftAlertStrip" style="display: none;">
+                    <div class="qa-draft-alert-left">
+                        <span class="qa-draft-pulse-icon">📝</span>
+                        <div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <strong id="qaDraftAlertMsg" style="color: #92400E; font-size: 13px;">You have unsubmitted defect draft(s)</strong>
+                                <span class="badge" style="background: rgba(245, 158, 11, 0.2); color: #B45309; font-size: 10.5px; font-weight: 700; padding: 1px 7px;">Auto-Saved</span>
+                            </div>
+                            <span class="qa-draft-alert-sub" id="qaDraftAlertSnippet">"Calendar schedule column text overlaps..."</span>
+                        </div>
+                    </div>
+                    <div class="qa-draft-alert-actions">
+                        <button type="button" class="btn btn-sm btn-primary" id="btnResumeLatestDraft" style="padding: 5px 12px; font-size: 12px; font-weight: 700; background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff; border: none; box-shadow: 0 2px 6px rgba(217, 119, 6, 0.25);">
+                            <span>Resume Editing ✏️</span>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-subtle" id="btnGoToDraftsView" style="padding: 5px 11px; font-size: 12px;">
+                            <span>View All Drafts</span>
+                        </button>
+                        <button type="button" class="btn-close-sm" id="btnDismissDraftAlert" title="Dismiss">&times;</button>
+                    </div>
+                </div>
+
                 <!-- 2. Search, Filter, & View Mode Switcher Toolbar -->
                 <div class="qa-toolbar-card">
                     <div class="qa-toolbar-row">
@@ -854,7 +877,7 @@ pm2 restart thelab-training</code></pre>
                             <button id="qaClearSearchBtn" style="display: none; background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 16px;">&times;</button>
                         </div>
 
-                        <!-- View Toggle: List vs Kanban -->
+                        <!-- View Toggle: List vs Kanban vs Drafts -->
                         <div class="qa-view-toggle">
                             <button type="button" class="qa-view-btn active" id="btnQaViewList" title="Interactive List View">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
@@ -863,6 +886,11 @@ pm2 restart thelab-training</code></pre>
                             <button type="button" class="qa-view-btn" id="btnQaViewKanban" title="Agile Kanban Board View">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="5" height="18" rx="1"></rect><rect x="10" y="3" width="5" height="12" rx="1"></rect><rect x="17" y="3" width="5" height="15" rx="1"></rect></svg>
                                 <span>Kanban Board</span>
+                            </button>
+                            <button type="button" class="qa-view-btn" id="btnQaViewDrafts" title="Drafts & In-Progress Defect Reports">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                                <span>Drafts</span>
+                                <span class="qa-draft-pill-count" id="qaDraftCountBadge" style="display: none;">0</span>
                             </button>
                         </div>
                     </div>
@@ -1011,6 +1039,67 @@ pm2 restart thelab-training</code></pre>
                                 <span class="col-count-pill" id="kanbanCountClosed">0</span>
                             </div>
                             <div class="qa-kanban-cards" id="kanbanCardsClosed" data-status="Closed"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 5. Drafts View Container (Distinct Purpose-Built Table Design) -->
+                <div class="qa-view-container" id="qaDraftsView" style="display: none;">
+                    <div class="qa-drafts-card">
+                        <div class="qa-drafts-header">
+                            <div class="qa-drafts-header-title">
+                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                                    <span class="badge badge-draft-header">📝 Staged Unsubmitted Work</span>
+                                    <span style="font-size: 11.5px; color: var(--text-muted); font-weight: 600;">• Saved in Local Browser Storage</span>
+                                </div>
+                                <h3 style="font-size: 18px; font-weight: 800; color: var(--brand-navy); margin: 0; letter-spacing: -0.2px;">Draft Defect Reports &amp; Observations</h3>
+                                <p style="font-size: 12.5px; color: var(--text-secondary); margin: 4px 0 0 0; line-height: 1.4;">Reports are saved here automatically whenever you fill the form and cancel or close the window. Resume anytime to submit them, or discard notes you no longer need.</p>
+                            </div>
+                            <div class="qa-drafts-header-actions">
+                                <button type="button" class="btn btn-sm btn-subtle" id="btnRefreshDrafts" title="Refresh drafts list">
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                                    <span>Refresh</span>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-danger-subtle" id="btnDiscardAllDrafts" title="Discard All Drafts">
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                    <span>Discard All</span>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-primary" id="btnDraftNewBlank" style="background: linear-gradient(135deg, #0E1B4D, #182C75);">
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                                    <span>+ New Issue</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Distinct Drafts Table -->
+                        <div class="table-container qa-table-wrapper" style="border: none; border-radius: 0 0 12px 12px; margin-bottom: 0;">
+                            <table class="qa-drafts-table" id="qaDraftsTable">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 120px; min-width: 120px; text-align: center;">Draft Ref</th>
+                                        <th style="min-width: 320px;">Draft Title &amp; Details Snippet</th>
+                                        <th style="width: 160px; min-width: 160px;">Target Context</th>
+                                        <th style="width: 110px; min-width: 110px; text-align: center;">Evidence</th>
+                                        <th style="width: 155px; min-width: 155px;">Readiness Score</th>
+                                        <th style="width: 130px; min-width: 130px;">Last Modified</th>
+                                        <th style="width: 175px; min-width: 175px; text-align: right;">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="qaDraftsTableBody">
+                                    <!-- Populated dynamically by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Empty State for Drafts -->
+                        <div id="qaDraftsEmptyState" class="qa-drafts-empty" style="display: none;">
+                            <div class="qa-drafts-empty-icon">📝</div>
+                            <h4>No Saved Drafts</h4>
+                            <p>Whenever you start filling out a bug report or UI observation and close or cancel the window, your entered text and screenshots are automatically kept here so nothing gets lost.</p>
+                            <button type="button" class="btn btn-primary" id="btnDraftsEmptyCreate" style="margin-top: 14px; background: linear-gradient(135deg, #0E1B4D, #182C75);">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                                <span>Report an Issue</span>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -1239,11 +1328,11 @@ pm2 restart thelab-training</code></pre>
             <div class="modal-header qa-create-modal-header">
                 <div>
                     <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
-                        <span class="badge" style="background: rgba(244, 63, 94, 0.12); color: var(--color-rose); font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px;">🐞 QA DEFECT TRACKER</span>
-                        <span style="font-size: 11.5px; color: var(--text-muted); font-weight: 600;">• PostgreSQL Backed</span>
+                        <span class="badge" id="qaNewIssueModalBadge" style="background: rgba(244, 63, 94, 0.12); color: var(--color-rose); font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px;">🐞 QA DEFECT TRACKER</span>
+                        <span id="qaNewIssueModalStorageTag" style="font-size: 11.5px; color: var(--text-muted); font-weight: 600;">• PostgreSQL Backed</span>
                     </div>
-                    <h3 style="font-size: 20px; font-weight: 800; color: var(--brand-navy); margin: 0; letter-spacing: -0.3px;">Report QA Issue / Defect</h3>
-                    <p style="font-size: 12.5px; color: var(--text-secondary); margin: 4px 0 0 0; line-height: 1.4;">Submit observations, UI adjustments, or bug reports with automated client telemetry.</p>
+                    <h3 id="qaNewIssueModalTitle" style="font-size: 20px; font-weight: 800; color: var(--brand-navy); margin: 0; letter-spacing: -0.3px;">Report QA Issue / Defect</h3>
+                    <p id="qaNewIssueModalDesc" style="font-size: 12.5px; color: var(--text-secondary); margin: 4px 0 0 0; line-height: 1.4;">Submit observations, UI adjustments, or bug reports with automated client telemetry.</p>
                 </div>
                 <button class="btn-close" id="btnCloseQaNewIssueModal" title="Close (Esc)">&times;</button>
             </div>

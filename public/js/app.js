@@ -1261,6 +1261,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function loadQaData() {
         await Promise.all([loadQaStats(), loadQaIssues(), populateQaAssignees()]);
+        updateDraftBadges();
     }
 
     async function loadQaStats() {
@@ -1615,6 +1616,429 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // =========================================================
+    // QA Defect Drafts Engine (Auto-Save on Cancel / Close)
+    // =========================================================
+    const QA_DRAFTS_STORAGE_KEY = 'thelab_qa_drafts';
+    let currentEditingDraftId = null;
+    let draftAlertDismissed = false;
+
+    function getQaDrafts() {
+        try {
+            const raw = localStorage.getItem(QA_DRAFTS_STORAGE_KEY);
+            return raw ? JSON.parse(raw) : [];
+        } catch (e) {
+            console.error('Error reading QA drafts:', e);
+            return [];
+        }
+    }
+
+    function saveQaDraftsList(drafts) {
+        try {
+            localStorage.setItem(QA_DRAFTS_STORAGE_KEY, JSON.stringify(drafts));
+        } catch (e) {
+            console.error('Error saving QA drafts:', e);
+        }
+    }
+
+    function saveOrUpdateCurrentDraft() {
+        const titleInput = document.getElementById('qaIssueTitle');
+        const descInput = document.getElementById('qaIssueDesc');
+        const typeInput = document.getElementById('qaIssueType');
+        const priorityInput = document.getElementById('qaIssuePriority');
+        const moduleInput = document.getElementById('qaIssueModule');
+        const assigneeInput = document.getElementById('qaIssueAssignee');
+
+        const title = titleInput ? titleInput.value.trim() : '';
+        const description = descInput ? descInput.value.trim() : '';
+        const type = typeInput ? typeInput.value : 'Bug';
+        const priority = priorityInput ? priorityInput.value : 'Medium';
+        const module = moduleInput ? moduleInput.value : 'General';
+        const assigneeRaw = assigneeInput ? assigneeInput.value : '';
+
+        let assigneeName = '';
+        if (assigneeRaw) {
+            try {
+                const parsed = JSON.parse(assigneeRaw);
+                assigneeName = parsed.name || '';
+            } catch (err) {}
+        }
+
+        // Check if form is dirty: title or description filled, or screenshots attached
+        const hasContent = title.length > 0 || description.length > 0 || (qaNewIssueAttachments && qaNewIssueAttachments.length > 0);
+        if (!hasContent) {
+            return false;
+        }
+
+        const drafts = getQaDrafts();
+        const nowIso = new Date().toISOString();
+
+        if (currentEditingDraftId) {
+            const idx = drafts.findIndex(d => d.id === currentEditingDraftId);
+            if (idx !== -1) {
+                drafts[idx] = {
+                    ...drafts[idx],
+                    title,
+                    description,
+                    type,
+                    priority,
+                    module,
+                    assignee: assigneeRaw,
+                    assigneeName,
+                    attachments: [...(qaNewIssueAttachments || [])],
+                    updatedAt: nowIso
+                };
+                saveQaDraftsList(drafts);
+                return true;
+            }
+        }
+
+        // Create new draft record
+        const newDraft = {
+            id: 'draft_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+            title,
+            description,
+            type,
+            priority,
+            module,
+            assignee: assigneeRaw,
+            assigneeName,
+            attachments: [...(qaNewIssueAttachments || [])],
+            createdAt: nowIso,
+            updatedAt: nowIso
+        };
+        drafts.unshift(newDraft);
+        saveQaDraftsList(drafts);
+        return true;
+    }
+
+    function deleteQaDraft(draftId) {
+        const drafts = getQaDrafts().filter(d => d.id !== draftId);
+        saveQaDraftsList(drafts);
+        updateDraftBadges();
+        if (qaCurrentView === 'drafts') {
+            renderQaDraftsView(qaSearchInput ? qaSearchInput.value : '');
+        }
+    }
+
+    function clearAllQaDrafts() {
+        const drafts = getQaDrafts();
+        if (drafts.length === 0) return;
+        if (!confirm('Are you sure you want to discard all saved drafts? All unsaved defect notes and screenshots will be permanently deleted.')) {
+            return;
+        }
+        saveQaDraftsList([]);
+        updateDraftBadges();
+        if (qaCurrentView === 'drafts') {
+            renderQaDraftsView();
+        }
+        showQaToast('Drafts Cleared 🗑️', 'All uncommitted issue drafts have been discarded.', 'info');
+    }
+
+    function checkAndSaveDraftOnClose() {
+        if (!qaNewIssueModal || !qaNewIssueModal.classList.contains('active')) return;
+
+        const saved = saveOrUpdateCurrentDraft();
+        qaNewIssueModal.classList.remove('active');
+        currentEditingDraftId = null;
+        resetModalHeaderToDefault();
+
+        if (saved) {
+            showQaToast('Draft Auto-Saved 📝', 'Your in-progress defect report was saved to drafts. You can resume it anytime.', 'info');
+            updateDraftBadges();
+            if (qaCurrentView === 'drafts') {
+                renderQaDraftsView(qaSearchInput ? qaSearchInput.value : '');
+            }
+        }
+    }
+
+    function resumeQaDraft(draftId) {
+        const drafts = getQaDrafts();
+        const draft = drafts.find(d => d.id === draftId) || drafts[0];
+        if (!draft) return;
+
+        currentEditingDraftId = draft.id;
+
+        if (qaNewIssueForm) qaNewIssueForm.reset();
+
+        const titleInput = document.getElementById('qaIssueTitle');
+        const descInput = document.getElementById('qaIssueDesc');
+        const typeInput = document.getElementById('qaIssueType');
+        const priorityInput = document.getElementById('qaIssuePriority');
+        const moduleInput = document.getElementById('qaIssueModule');
+        const assigneeInput = document.getElementById('qaIssueAssignee');
+
+        if (titleInput) titleInput.value = draft.title || '';
+        if (descInput) descInput.value = draft.description || '';
+        if (typeInput) typeInput.value = draft.type || 'Bug';
+        if (priorityInput) priorityInput.value = draft.priority || 'Medium';
+        if (moduleInput) moduleInput.value = draft.module || 'General';
+        if (assigneeInput) assigneeInput.value = draft.assignee || '';
+
+        qaNewIssueAttachments = Array.isArray(draft.attachments) ? [...draft.attachments] : [];
+        renderNewIssueThumbnails();
+
+        // Update modal header to draft mode
+        setModalHeaderToDraftMode(draft);
+
+        // Update environment telemetry preview pills
+        const env = getClientEnvironment();
+        const pBrowser = document.getElementById('envPillBrowser');
+        const pOs = document.getElementById('envPillOs');
+        const pRes = document.getElementById('envPillResolution');
+        const pVp = document.getElementById('envPillViewport');
+        if (pBrowser) pBrowser.textContent = env.browser || 'Chrome';
+        if (pOs) pOs.textContent = env.os || 'Windows';
+        if (pRes) pRes.textContent = env.screenRes || '1920x1080';
+        if (pVp) pVp.textContent = env.viewport || '1920x960';
+
+        if (qaNewIssueModal) qaNewIssueModal.classList.add('active');
+    }
+
+    function setModalHeaderToDraftMode(draft) {
+        const badge = document.getElementById('qaNewIssueModalBadge');
+        const storageTag = document.getElementById('qaNewIssueModalStorageTag');
+        const title = document.getElementById('qaNewIssueModalTitle');
+        const desc = document.getElementById('qaNewIssueModalDesc');
+
+        if (badge) {
+            badge.textContent = '📝 EDITING DRAFT (AUTO-SAVING)';
+            badge.style.background = 'rgba(245, 158, 11, 0.16)';
+            badge.style.color = '#B45309';
+        }
+        if (storageTag) {
+            storageTag.textContent = '• Local Browser Staged';
+        }
+        if (title) {
+            title.textContent = draft.title ? `Resume: ${draft.title}` : 'Resume Defect Draft';
+        }
+        if (desc) {
+            desc.textContent = 'Editing saved draft. If you cancel or close, your latest modifications will be automatically preserved.';
+        }
+    }
+
+    function resetModalHeaderToDefault() {
+        const badge = document.getElementById('qaNewIssueModalBadge');
+        const storageTag = document.getElementById('qaNewIssueModalStorageTag');
+        const title = document.getElementById('qaNewIssueModalTitle');
+        const desc = document.getElementById('qaNewIssueModalDesc');
+
+        if (badge) {
+            badge.textContent = '🐞 QA DEFECT TRACKER';
+            badge.style.background = 'rgba(244, 63, 94, 0.12)';
+            badge.style.color = 'var(--color-rose)';
+        }
+        if (storageTag) {
+            storageTag.textContent = '• PostgreSQL Backed';
+        }
+        if (title) {
+            title.textContent = 'Report QA Issue / Defect';
+        }
+        if (desc) {
+            desc.textContent = 'Submit observations, UI adjustments, or bug reports with automated client telemetry.';
+        }
+    }
+
+    function calculateDraftReadiness(draft) {
+        let score = 0;
+
+        if (draft.title && draft.title.trim().length > 3) {
+            score += 30;
+        }
+
+        if (draft.description && draft.description.trim().length >= 15) {
+            score += 40;
+        } else if (draft.description && draft.description.trim().length > 0) {
+            score += 20;
+        }
+
+        if (draft.module && draft.module !== 'General') {
+            score += 15;
+        } else {
+            score += 10;
+        }
+
+        if (draft.attachments && draft.attachments.length > 0) {
+            score += 15;
+        } else if (draft.assignee) {
+            score += 10;
+        }
+
+        score = Math.min(score, 100);
+
+        let color = '#f43f5e';
+        let label = `${score}% (Needs Details)`;
+        if (score >= 80) {
+            color = '#10b981';
+            label = `${score}% Ready to Submit`;
+        } else if (score >= 50) {
+            color = '#f59e0b';
+            label = `${score}% In Progress`;
+        }
+
+        return { score, color, label };
+    }
+
+    function renderQaDraftsView(filterText = '') {
+        const tableBody = document.getElementById('qaDraftsTableBody');
+        const emptyState = document.getElementById('qaDraftsEmptyState');
+        const tableWrap = document.querySelector('#qaDraftsView .qa-table-wrapper');
+        if (!tableBody) return;
+
+        let drafts = getQaDrafts();
+
+        if (filterText && filterText.trim()) {
+            const q = filterText.trim().toLowerCase();
+            drafts = drafts.filter(d => 
+                (d.title && d.title.toLowerCase().includes(q)) ||
+                (d.description && d.description.toLowerCase().includes(q)) ||
+                (d.module && d.module.toLowerCase().includes(q)) ||
+                (d.type && d.type.toLowerCase().includes(q))
+            );
+        }
+
+        if (drafts.length === 0) {
+            tableBody.innerHTML = '';
+            if (tableWrap) tableWrap.style.display = 'none';
+            if (emptyState) emptyState.style.display = 'block';
+            return;
+        }
+
+        if (tableWrap) tableWrap.style.display = 'block';
+        if (emptyState) emptyState.style.display = 'none';
+
+        tableBody.innerHTML = drafts.map((draft, idx) => {
+            const draftNum = String(idx + 1).padStart(2, '0');
+            const titleDisplay = draft.title ? escapeHtml(draft.title) : '<em style="color: var(--text-muted); font-weight: 500;">(Untitled Defect Draft)</em>';
+            const descSnippet = draft.description ? escapeHtml(draft.description) : 'No reproduction steps provided yet...';
+            const readiness = calculateDraftReadiness(draft);
+            const priorityClass = (draft.priority || 'medium').toLowerCase();
+            const dateStr = formatQaDate(draft.updatedAt || draft.createdAt || new Date().toISOString());
+
+            const attCount = Array.isArray(draft.attachments) ? draft.attachments.length : 0;
+            let evidenceHtml = `<span style="font-size: 11.5px; color: var(--text-muted);">None</span>`;
+            if (attCount > 0) {
+                const thumbs = draft.attachments.slice(0, 3).map(src => 
+                    `<img src="${src}" class="qa-draft-thumb-mini" alt="thumbnail" onclick="openQaLightbox('${src}')">`
+                ).join('');
+                evidenceHtml = `
+                    <div class="qa-draft-evidence-wrap">
+                        ${thumbs}
+                        ${attCount > 3 ? `<span style="font-size: 10.5px; font-weight: 700; color: var(--brand-teal);">+${attCount - 3}</span>` : ''}
+                    </div>
+                `;
+            }
+
+            return `
+                <tr data-draft-id="${draft.id}">
+                    <td style="text-align: center;">
+                        <span class="qa-draft-ref-pill">#DRAFT-${draftNum}</span>
+                        <div style="font-size: 10px; color: #b45309; font-weight: 600; margin-top: 3px;">⚡ Local Staged</div>
+                    </td>
+                    <td>
+                        <div style="font-weight: 700; color: var(--brand-navy); font-size: 14px; line-height: 1.35; cursor: pointer;" class="qa-draft-title-click" data-id="${draft.id}">
+                            ${titleDisplay}
+                        </div>
+                        <div class="qa-draft-snippet-box">
+                            "${descSnippet}"
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 6px; margin-top: 6px; flex-wrap: wrap;">
+                            <span class="badge badge-type-tag" style="font-size: 11px; padding: 2px 7px;">${escapeHtml(draft.type || 'Bug')}</span>
+                            <span class="badge badge-priority-${priorityClass}" style="font-size: 11px; padding: 2px 7px;">${escapeHtml(draft.priority || 'Medium')}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <div style="font-weight: 700; font-size: 12.5px; color: var(--brand-navy); display: flex; align-items: center; gap: 4px;">
+                            <span>📍</span> <span>${escapeHtml(draft.module || 'General')}</span>
+                        </div>
+                        <div style="font-size: 11.5px; color: var(--text-secondary); margin-top: 3px; display: flex; align-items: center; gap: 4px;">
+                            <span>👤</span> <span>${escapeHtml(draft.assigneeName || 'Unassigned')}</span>
+                        </div>
+                    </td>
+                    <td style="text-align: center;">
+                        ${evidenceHtml}
+                    </td>
+                    <td>
+                        <div class="qa-readiness-wrap">
+                            <div class="qa-readiness-head">
+                                <span class="qa-readiness-pct" style="color: ${readiness.color};">${readiness.score}%</span>
+                                <span class="qa-readiness-label">${readiness.label}</span>
+                            </div>
+                            <div class="qa-readiness-bar">
+                                <div class="qa-readiness-fill" style="width: ${readiness.score}%; background: ${readiness.color};"></div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <span style="font-size: 12px; color: var(--text-secondary); white-space: nowrap;" title="${draft.updatedAt || draft.createdAt}">
+                            ${dateStr}
+                        </span>
+                    </td>
+                    <td style="text-align: right;">
+                        <div style="display: inline-flex; align-items: center; gap: 6px; justify-content: flex-end;">
+                            <button type="button" class="btn-draft-resume" data-id="${draft.id}" title="Resume Editing Draft">
+                                <span>✏️ Resume</span>
+                            </button>
+                            <button type="button" class="btn-draft-discard" data-id="${draft.id}" title="Discard this Draft">
+                                <span>🗑️</span>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+
+        // Wire row resume click
+        tableBody.querySelectorAll('.qa-draft-title-click, .btn-draft-resume').forEach(el => {
+            el.addEventListener('click', () => {
+                const id = el.getAttribute('data-id');
+                resumeQaDraft(id);
+            });
+        });
+
+        // Wire row discard click
+        tableBody.querySelectorAll('.btn-draft-discard').forEach(el => {
+            el.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const id = el.getAttribute('data-id');
+                if (confirm('Discard this draft report? All entered text and screenshots will be permanently deleted.')) {
+                    deleteQaDraft(id);
+                    showQaToast('Draft Discarded 🗑️', 'The draft was removed from your local storage.', 'info');
+                }
+            });
+        });
+    }
+
+    function updateDraftBadges() {
+        const drafts = getQaDrafts();
+        const count = drafts.length;
+
+        const badge = document.getElementById('qaDraftCountBadge');
+        if (badge) {
+            badge.textContent = count;
+            badge.style.display = count > 0 ? 'inline-flex' : 'none';
+        }
+
+        const alertStrip = document.getElementById('qaDraftAlertStrip');
+        if (alertStrip) {
+            if (count > 0 && !draftAlertDismissed && qaCurrentView !== 'drafts') {
+                alertStrip.style.display = 'flex';
+                const msgEl = document.getElementById('qaDraftAlertMsg');
+                const snipEl = document.getElementById('qaDraftAlertSnippet');
+                if (msgEl) {
+                    msgEl.textContent = `You have ${count} unsubmitted defect report draft${count > 1 ? 's' : ''}`;
+                }
+                if (snipEl) {
+                    const latest = drafts[0];
+                    const snip = latest.title || (latest.description ? latest.description.substring(0, 50) + '...' : 'Untitled defect draft');
+                    snipEl.textContent = `"${snip}"`;
+                }
+            } else {
+                alertStrip.style.display = 'none';
+            }
+        }
+    }
+
     // New Issue Modal & Dropzone Logic
     const qaNewIssueModal = document.getElementById('qaNewIssueModal');
     const btnQaNewIssue = document.getElementById('btnQaNewIssue');
@@ -1627,9 +2051,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function openNewIssueModal() {
         if (!qaNewIssueModal) return;
+        currentEditingDraftId = null;
         qaNewIssueAttachments = [];
         renderNewIssueThumbnails();
         if (qaNewIssueForm) qaNewIssueForm.reset();
+        resetModalHeaderToDefault();
 
         // Update environment preview pills
         const env = getClientEnvironment();
@@ -1646,8 +2072,16 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (btnQaNewIssue) btnQaNewIssue.addEventListener('click', openNewIssueModal);
-    if (btnCloseQaNewIssueModal) btnCloseQaNewIssueModal.addEventListener('click', () => qaNewIssueModal.classList.remove('active'));
-    if (btnCancelQaNewIssue) btnCancelQaNewIssue.addEventListener('click', () => qaNewIssueModal.classList.remove('active'));
+    if (btnCloseQaNewIssueModal) btnCloseQaNewIssueModal.addEventListener('click', checkAndSaveDraftOnClose);
+    if (btnCancelQaNewIssue) btnCancelQaNewIssue.addEventListener('click', checkAndSaveDraftOnClose);
+
+    if (qaNewIssueModal) {
+        qaNewIssueModal.addEventListener('click', (e) => {
+            if (e.target === qaNewIssueModal) {
+                checkAndSaveDraftOnClose();
+            }
+        });
+    }
 
     if (qaNewIssueDropzone && qaFileInput) {
         qaNewIssueDropzone.addEventListener('click', () => qaFileInput.click());
@@ -1752,8 +2186,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const data = await res.json();
                 if (res.ok && data.success) {
+                    if (currentEditingDraftId) {
+                        deleteQaDraft(currentEditingDraftId);
+                        currentEditingDraftId = null;
+                    }
                     showQaToast('Issue Created', `Reported #${data.issue.id}: ${title}`, priority === 'Critical' ? 'critical' : 'info');
                     qaNewIssueModal.classList.remove('active');
+                    resetModalHeaderToDefault();
+                    updateDraftBadges();
+                    if (qaCurrentView === 'drafts') {
+                        renderQaDraftsView(qaSearchInput ? qaSearchInput.value : '');
+                    }
                     await Promise.all([loadQaStats(), loadQaIssues()]);
                 } else {
                     alert(data.error || 'Failed to submit issue ticket');
@@ -2224,30 +2667,90 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // View Switching: List vs Kanban
+    // View Switching: List vs Kanban vs Drafts
     const btnQaViewList = document.getElementById('btnQaViewList');
     const btnQaViewKanban = document.getElementById('btnQaViewKanban');
+    const btnQaViewDrafts = document.getElementById('btnQaViewDrafts');
     const qaListView = document.getElementById('qaListView');
     const qaKanbanView = document.getElementById('qaKanbanView');
+    const qaDraftsView = document.getElementById('qaDraftsView');
 
-    if (btnQaViewList && btnQaViewKanban) {
-        btnQaViewList.addEventListener('click', () => {
-            btnQaViewList.classList.add('active');
-            btnQaViewKanban.classList.remove('active');
-            if (qaListView) qaListView.style.display = 'block';
-            if (qaKanbanView) qaKanbanView.style.display = 'none';
-            qaCurrentView = 'list';
-        });
+    function switchQaView(viewName) {
+        qaCurrentView = viewName;
+        if (btnQaViewList) btnQaViewList.classList.toggle('active', viewName === 'list');
+        if (btnQaViewKanban) btnQaViewKanban.classList.toggle('active', viewName === 'kanban');
+        if (btnQaViewDrafts) btnQaViewDrafts.classList.toggle('active', viewName === 'drafts');
 
-        btnQaViewKanban.addEventListener('click', () => {
-            btnQaViewKanban.classList.add('active');
-            btnQaViewList.classList.remove('active');
-            if (qaListView) qaListView.style.display = 'none';
-            if (qaKanbanView) qaKanbanView.style.display = 'block';
-            qaCurrentView = 'kanban';
+        if (qaListView) qaListView.style.display = viewName === 'list' ? 'block' : 'none';
+        if (qaKanbanView) qaKanbanView.style.display = viewName === 'kanban' ? 'block' : 'none';
+        if (qaDraftsView) qaDraftsView.style.display = viewName === 'drafts' ? 'block' : 'none';
+
+        updateDraftBadges();
+
+        if (viewName === 'kanban') {
             renderQaKanbanView();
+        } else if (viewName === 'drafts') {
+            renderQaDraftsView(qaSearchInput ? qaSearchInput.value : '');
+        }
+    }
+
+    if (btnQaViewList) btnQaViewList.addEventListener('click', () => switchQaView('list'));
+    if (btnQaViewKanban) btnQaViewKanban.addEventListener('click', () => switchQaView('kanban'));
+    if (btnQaViewDrafts) btnQaViewDrafts.addEventListener('click', () => switchQaView('drafts'));
+
+    // Draft Alert Strip & Action Bar Handlers
+    const btnResumeLatestDraft = document.getElementById('btnResumeLatestDraft');
+    const btnGoToDraftsView = document.getElementById('btnGoToDraftsView');
+    const btnDismissDraftAlert = document.getElementById('btnDismissDraftAlert');
+
+    if (btnResumeLatestDraft) {
+        btnResumeLatestDraft.addEventListener('click', () => {
+            const drafts = getQaDrafts();
+            if (drafts.length > 0) resumeQaDraft(drafts[0].id);
         });
     }
+
+    if (btnGoToDraftsView) {
+        btnGoToDraftsView.addEventListener('click', () => switchQaView('drafts'));
+    }
+
+    if (btnDismissDraftAlert) {
+        btnDismissDraftAlert.addEventListener('click', () => {
+            draftAlertDismissed = true;
+            const strip = document.getElementById('qaDraftAlertStrip');
+            if (strip) strip.style.display = 'none';
+        });
+    }
+
+    const btnRefreshDrafts = document.getElementById('btnRefreshDrafts');
+    if (btnRefreshDrafts) {
+        btnRefreshDrafts.addEventListener('click', () => {
+            renderQaDraftsView(qaSearchInput ? qaSearchInput.value : '');
+            showQaToast('Drafts Refreshed 🔄', 'Drafts list updated from local cache.', 'info');
+        });
+    }
+
+    const btnDiscardAllDrafts = document.getElementById('btnDiscardAllDrafts');
+    if (btnDiscardAllDrafts) {
+        btnDiscardAllDrafts.addEventListener('click', clearAllQaDrafts);
+    }
+
+    const btnDraftNewBlank = document.getElementById('btnDraftNewBlank');
+    if (btnDraftNewBlank) {
+        btnDraftNewBlank.addEventListener('click', openNewIssueModal);
+    }
+
+    const btnDraftsEmptyCreate = document.getElementById('btnDraftsEmptyCreate');
+    if (btnDraftsEmptyCreate) {
+        btnDraftsEmptyCreate.addEventListener('click', openNewIssueModal);
+    }
+
+    // Escape key closes modal and auto-saves draft
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && qaNewIssueModal && qaNewIssueModal.classList.contains('active')) {
+            checkAndSaveDraftOnClose();
+        }
+    });
 
     // Filter controls
     const qaSearchInput = document.getElementById('qaSearchInput');
@@ -2266,7 +2769,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (qaClearSearchBtn) qaClearSearchBtn.style.display = val ? 'inline-block' : 'none';
             qaSearchTimeout = setTimeout(() => {
                 qaFilterState.q = val;
-                loadQaIssues();
+                if (qaCurrentView === 'drafts') {
+                    renderQaDraftsView(val);
+                } else {
+                    loadQaIssues();
+                }
             }, 300);
         });
     }
@@ -2276,7 +2783,11 @@ document.addEventListener('DOMContentLoaded', () => {
             qaSearchInput.value = '';
             qaClearSearchBtn.style.display = 'none';
             qaFilterState.q = '';
-            loadQaIssues();
+            if (qaCurrentView === 'drafts') {
+                renderQaDraftsView('');
+            } else {
+                loadQaIssues();
+            }
         });
     }
 
@@ -2303,7 +2814,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (qaFilterType) qaFilterType.value = 'all';
             if (qaFilterPriority) qaFilterPriority.value = 'all';
             if (qaFilterModule) qaFilterModule.value = 'all';
-            loadQaIssues();
+            if (qaCurrentView === 'drafts') {
+                renderQaDraftsView('');
+            } else {
+                loadQaIssues();
+            }
         });
     }
 
