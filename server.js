@@ -559,6 +559,48 @@ const server = http.createServer(async (req, res) => {
             return;
         }
 
+        if (qaIssueMatch && req.method === 'DELETE') {
+            if (!sessionUser) {
+                res.writeHead(401);
+                res.end(JSON.stringify({ error: 'Unauthorized' }));
+                return;
+            }
+            try {
+                const issueId = qaIssueMatch[1];
+                const existing = await db.getQaIssueById(issueId);
+                if (!existing) {
+                    res.writeHead(404);
+                    res.end(JSON.stringify({ error: 'Issue ticket not found' }));
+                    return;
+                }
+
+                // Authorization: Admin, SPV, Trainer, or the reporter can delete
+                const isPrivileged = ['Admin', 'SPV', 'Trainer'].includes(sessionUser.role);
+                const isReporter = (existing.reporterEmail && sessionUser.email && existing.reporterEmail.toLowerCase() === sessionUser.email.toLowerCase())
+                    || (existing.reporterId && sessionUser.userId && String(existing.reporterId) === String(sessionUser.userId));
+
+                if (!isPrivileged && !isReporter) {
+                    res.writeHead(403);
+                    res.end(JSON.stringify({ error: 'Forbidden: You do not have permission to delete this QA ticket' }));
+                    return;
+                }
+
+                const deleted = await db.deleteQaIssue(issueId);
+                if (!deleted) {
+                    res.writeHead(404);
+                    res.end(JSON.stringify({ error: 'Failed to delete issue: not found' }));
+                    return;
+                }
+
+                res.writeHead(200);
+                res.end(JSON.stringify({ success: true, message: `Issue #QA-${issueId} deleted successfully` }));
+            } catch (err) {
+                res.writeHead(500);
+                res.end(JSON.stringify({ error: err.message }));
+            }
+            return;
+        }
+
         const qaStatusMatch = url.pathname.match(/^\/api\/qa\/issues\/(\d+)\/status$/);
         if (qaStatusMatch && req.method === 'POST') {
             if (!sessionUser) {

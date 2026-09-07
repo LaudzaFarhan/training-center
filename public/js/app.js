@@ -1414,9 +1414,14 @@ document.addEventListener('DOMContentLoaded', () => {
                         </select>
                     </td>
                     <td style="text-align: right; white-space: nowrap;">
-                        <button class="btn btn-sm btn-subtle qa-btn-details" data-id="${issue.id}" style="padding: 5px 10px; font-size: 11.5px; font-weight: 700;">
-                            Details &rarr;
-                        </button>
+                        <div style="display: inline-flex; align-items: center; justify-content: flex-end; gap: 6px;">
+                            <button class="btn btn-sm btn-subtle qa-btn-details" data-id="${issue.id}" style="padding: 5px 10px; font-size: 11.5px; font-weight: 700;">
+                                Details &rarr;
+                            </button>
+                            <button class="btn btn-sm btn-danger-subtle qa-btn-delete" data-id="${issue.id}" data-title="${escapeHtml(issue.title)}" title="Delete Ticket" style="padding: 5px 8px; font-size: 12px; line-height: 1;">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                            </button>
+                        </div>
                     </td>
                 </tr>
             `;
@@ -1424,6 +1429,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         tbody.querySelectorAll('.qa-title-click, .qa-btn-details').forEach(btn => {
             btn.addEventListener('click', () => openQaDetailModal(btn.getAttribute('data-id')));
+        });
+        tbody.querySelectorAll('.qa-btn-delete').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const issueId = btn.getAttribute('data-id');
+                const title = btn.getAttribute('data-title') || '';
+                deleteQaIssue(issueId, title);
+            });
         });
         tbody.querySelectorAll('.qa-thumb-indicator').forEach(btn => {
             btn.addEventListener('click', () => {
@@ -1470,7 +1483,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div class="qa-card ${priorityClass}" draggable="true" data-id="${issue.id}">
                             <div class="qa-card-header">
                                 <span class="qa-id-pill">#QA-${String(issue.id).padStart(2, '0')}</span>
-                                <span class="badge badge-priority-${priorityClass}">${issue.priority}</span>
+                                <div style="display: flex; align-items: center; gap: 6px;">
+                                    <span class="badge badge-priority-${priorityClass}">${issue.priority}</span>
+                                    <button type="button" class="qa-card-del-btn qa-btn-delete" data-id="${issue.id}" data-title="${escapeHtml(issue.title)}" title="Delete Ticket">&times;</button>
+                                </div>
                             </div>
                             <h5 class="qa-card-title" data-id="${issue.id}">${escapeHtml(issue.title)}</h5>
                             <div class="qa-card-meta">
@@ -1509,6 +1525,15 @@ document.addEventListener('DOMContentLoaded', () => {
                         const issueId = btn.getAttribute('data-id');
                         const nextStatus = btn.getAttribute('data-next');
                         await updateQaIssueStatus(issueId, nextStatus);
+                    });
+                });
+
+                cardsContainer.querySelectorAll('.qa-btn-delete').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const issueId = btn.getAttribute('data-id');
+                        const title = btn.getAttribute('data-title') || '';
+                        deleteQaIssue(issueId, title);
                     });
                 });
             }
@@ -1561,6 +1586,32 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (err) {
             console.error(err);
             alert('Network error updating ticket status');
+        }
+    }
+
+    async function deleteQaIssue(issueId, title = '') {
+        const titleSnippet = title ? ` "${title}"` : '';
+        const confirmMsg = `Are you sure you want to delete QA ticket #QA-${String(issueId).padStart(2, '0')}${titleSnippet}?\n\nThis will permanently remove the ticket and its discussion history.`;
+        if (!confirm(confirmMsg)) return;
+
+        try {
+            const res = await fetch(`/api/qa/issues/${issueId}`, {
+                method: 'DELETE'
+            });
+            const data = await res.json();
+            if (res.ok && data.success) {
+                if (activeDetailIssueId && String(activeDetailIssueId) === String(issueId)) {
+                    if (qaDetailModal) qaDetailModal.classList.remove('active');
+                    activeDetailIssueId = null;
+                }
+                showQaToast('Ticket Removed', `Ticket #QA-${String(issueId).padStart(2, '0')} was permanently deleted.`);
+                await Promise.all([loadQaStats(), loadQaIssues()]);
+            } else {
+                alert(data.error || 'Failed to delete QA ticket');
+            }
+        } catch (err) {
+            console.error('Delete QA ticket error:', err);
+            alert('Network error deleting QA ticket');
         }
     }
 
@@ -1958,8 +2009,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const qaNewCommentForm = document.getElementById('qaNewCommentForm');
     const qaCommentFileInput = document.getElementById('qaCommentFileInput');
     const qaCommentThumbnails = document.getElementById('qaCommentThumbnails');
+    const btnQaDeleteDetail = document.getElementById('btnQaDeleteDetail');
 
     if (btnCloseQaDetailModal) btnCloseQaDetailModal.addEventListener('click', () => qaDetailModal.classList.remove('active'));
+    if (btnQaDeleteDetail) {
+        btnQaDeleteDetail.addEventListener('click', () => {
+            if (!activeDetailIssueId) return;
+            const issue = qaIssues.find(i => String(i.id) === String(activeDetailIssueId));
+            const title = issue ? issue.title : (document.getElementById('qaDetailTitle')?.textContent || '');
+            deleteQaIssue(activeDetailIssueId, title);
+        });
+    }
 
     async function openQaDetailModal(issueId) {
         if (!qaDetailModal) return;

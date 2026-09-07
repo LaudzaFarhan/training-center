@@ -11,6 +11,7 @@
  * 8. POST /api/qa/issues/:id/comments (Threaded discussion reply with attachment)
  * 9. GET /api/qa/notifications (Real-time Critical/High priority toast listener)
  * 10. GET /new/qa-tracker and GET /qa-tracker (Page routing)
+ * 11. DELETE /api/qa/issues/:id (Removing / deleting QA issue ticket)
  */
 
 const http = require('http');
@@ -334,8 +335,66 @@ async function runTests() {
         process.exit(1);
     }
 
+    // Step 11: DELETE /api/qa/issues/:id (Remove issue ticket)
+    console.log(`\n1️⃣1️⃣ Testing DELETE /api/qa/issues/${createdIssueId} (Deleting QA ticket)...`);
+    try {
+        // First test unauthenticated delete
+        const unauthDel = await request({
+            hostname: 'localhost',
+            port: PORT,
+            path: `/api/qa/issues/${createdIssueId}`,
+            method: 'DELETE'
+        });
+        if (unauthDel.statusCode !== 401) {
+            throw new Error(`Expected 401 Unauthorized for unauthenticated DELETE, got ${unauthDel.statusCode}`);
+        }
+        console.log(`   ✅ Unauthenticated deletion correctly rejected with 401 Unauthorized.`);
+
+        // Authenticated delete as Admin
+        const authDel = await request({
+            hostname: 'localhost',
+            port: PORT,
+            path: `/api/qa/issues/${createdIssueId}`,
+            method: 'DELETE',
+            headers: { Cookie: adminCookie }
+        });
+        if (authDel.statusCode !== 200 || !authDel.data || !authDel.data.success) {
+            throw new Error(`Failed to delete issue: status=${authDel.statusCode}, body=${JSON.stringify(authDel.data)}`);
+        }
+        console.log(`   ✅ Successfully deleted issue #QA-${createdIssueId}: "${authDel.data.message}"`);
+
+        // Verify GET /api/qa/issues/:id returns 404
+        const verifyNotFound = await request({
+            hostname: 'localhost',
+            port: PORT,
+            path: `/api/qa/issues/${createdIssueId}`,
+            method: 'GET',
+            headers: { Cookie: adminCookie }
+        });
+        if (verifyNotFound.statusCode !== 404) {
+            throw new Error(`Expected 404 Not Found after deletion, got ${verifyNotFound.statusCode}`);
+        }
+        console.log(`   ✅ Verified GET /api/qa/issues/${createdIssueId} returns 404 Not Found.`);
+
+        // Deleting non-existent issue should also return 404
+        const repeatDel = await request({
+            hostname: 'localhost',
+            port: PORT,
+            path: `/api/qa/issues/${createdIssueId}`,
+            method: 'DELETE',
+            headers: { Cookie: adminCookie }
+        });
+        if (repeatDel.statusCode !== 404) {
+            throw new Error(`Expected 404 Not Found for repeated delete, got ${repeatDel.statusCode}`);
+        }
+        console.log(`   ✅ Verified repeated delete correctly returns 404 Not Found.`);
+    } catch (err) {
+        console.error('   ❌ Issue deletion test failed:', err.message);
+        process.exit(1);
+    }
+
     console.log('\n=======================================================');
-    console.log('🎉 ALL 10 QA & BUG TRACKER TESTS PASSED SUCCESSFULLY! 🎉');
+    console.log('🎉 ALL 11 QA & BUG TRACKER TESTS PASSED SUCCESSFULLY! 🎉');
     console.log('=======================================================\n');
 }
 

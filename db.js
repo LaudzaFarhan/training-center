@@ -1231,6 +1231,32 @@ async function updateQaIssueAssignee(id, assigneeName, assigneeEmail, assigneeId
     return null;
 }
 
+async function deleteQaIssue(id) {
+    const issueId = parseInt(id, 10);
+    if (isNaN(issueId)) return false;
+
+    if (isPostgresConnected && pgPool) {
+        try {
+            await pgPool.query('DELETE FROM internal_qa_comments WHERE issue_id = $1', [issueId]);
+            const res = await pgPool.query('DELETE FROM internal_qa_issues WHERE id = $1 RETURNING id', [issueId]);
+            return (res.rowCount || res.rows.length) > 0;
+        } catch (e) {
+            console.warn('Postgres deleteQaIssue error:', e.message);
+            throw e;
+        }
+    }
+
+    if (memoryStore.qaComments) {
+        memoryStore.qaComments = memoryStore.qaComments.filter(c => c.issueId !== issueId);
+    }
+    const idx = (memoryStore.qaIssues || []).findIndex(i => i.id === issueId);
+    if (idx !== -1) {
+        memoryStore.qaIssues.splice(idx, 1);
+        return true;
+    }
+    return false;
+}
+
 async function addQaComment(issueId, data) {
     const id = parseInt(issueId, 10);
     const { authorName, authorRole, authorEmail, comment, attachments = [] } = data;
@@ -1473,6 +1499,7 @@ module.exports = {
     updateQaIssueStatus,
     updateQaIssueAssignee,
     addQaComment,
+    deleteQaIssue,
     getQaStats,
     getRecentCriticalAlerts,
     isPostgresActive: () => isPostgresConnected
