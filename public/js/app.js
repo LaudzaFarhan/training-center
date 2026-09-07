@@ -1373,38 +1373,38 @@ document.addEventListener('DOMContentLoaded', () => {
 
             return `
                 <tr data-id="${issue.id}">
-                    <td>
+                    <td style="text-align: center; white-space: nowrap;">
                         <span class="qa-id-pill">#QA-${String(issue.id).padStart(2, '0')}</span>
                     </td>
-                    <td>
+                    <td style="text-align: center; white-space: nowrap;">
                         <span class="badge ${priorityClass}">${issue.priority}</span>
                     </td>
                     <td>
-                        <div style="font-weight: 700; color: var(--brand-navy); font-size: 13.5px; cursor: pointer;" class="qa-title-click" data-id="${issue.id}">
+                        <div style="font-weight: 700; color: var(--brand-navy); font-size: 13.5px; cursor: pointer; line-height: 1.4;" class="qa-title-click" data-id="${issue.id}">
                             ${escapeHtml(issue.title)}
                         </div>
-                        <div style="display: flex; align-items: center; gap: 6px; margin-top: 3px;">
+                        <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px; flex-wrap: wrap;">
                             <span class="badge-type-tag">${issue.type || 'Bug'}</span>
-                            <span style="font-size: 11px; color: var(--text-muted);">Module: <strong>${issue.module || 'General'}</strong></span>
+                            <span style="font-size: 11.5px; color: var(--text-muted);">Module: <strong style="color: var(--brand-navy);">${issue.module || 'General'}</strong></span>
                         </div>
                     </td>
                     <td>
-                        <div style="font-weight: 600; font-size: 12.5px; color: var(--brand-navy);">${escapeHtml(issue.reporterName || 'Anonymous')}</div>
-                        <small style="font-size: 11px; color: var(--text-muted);">${escapeHtml(issue.reporterEmail || '')}</small>
+                        <div style="font-weight: 600; font-size: 12.5px; color: var(--brand-navy); line-height: 1.25;">${escapeHtml(issue.reporterName || 'Anonymous')}</div>
+                        <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 170px;" title="${escapeHtml(issue.reporterEmail || '')}">${escapeHtml(issue.reporterEmail || '')}</div>
                     </td>
                     <td>
-                        <div style="font-weight: 600; font-size: 12.5px; color: ${issue.assigneeName ? 'var(--brand-navy)' : 'var(--text-muted)'};">
+                        <div style="font-weight: 600; font-size: 12.5px; color: ${issue.assigneeName ? 'var(--brand-navy)' : 'var(--text-muted)'}; line-height: 1.25;">
                             ${issue.assigneeName ? '👤 ' + escapeHtml(issue.assigneeName) : '<em>Unassigned</em>'}
                         </div>
                     </td>
-                    <td style="text-align: center;">
+                    <td style="text-align: center; white-space: nowrap;">
                         ${thumbHtml}
                     </td>
-                    <td style="text-align: center;">
+                    <td style="text-align: center; white-space: nowrap;">
                         <span style="font-size: 12px; font-weight: 700; color: var(--brand-navy);">💬 ${issue.commentCount || 0}</span>
                     </td>
                     <td>
-                        <select class="qa-select-sm qa-inline-status" data-id="${issue.id}" style="font-size: 11.5px; padding: 3px 6px;">
+                        <select class="qa-select-sm qa-inline-status" data-id="${issue.id}">
                             <option value="Open" ${issue.status === 'Open' ? 'selected' : ''}>Open</option>
                             <option value="In Progress" ${issue.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
                             <option value="Ready for QA" ${issue.status === 'Ready for QA' ? 'selected' : ''}>Ready for QA</option>
@@ -1413,8 +1413,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             <option value="Deferred" ${issue.status === 'Deferred' ? 'selected' : ''}>Deferred</option>
                         </select>
                     </td>
-                    <td style="text-align: right;">
-                        <button class="btn btn-sm btn-subtle qa-btn-details" data-id="${issue.id}" style="padding: 4px 8px; font-size: 11.5px;">
+                    <td style="text-align: right; white-space: nowrap;">
+                        <button class="btn btn-sm btn-subtle qa-btn-details" data-id="${issue.id}" style="padding: 5px 10px; font-size: 11.5px; font-weight: 700;">
                             Details &rarr;
                         </button>
                     </td>

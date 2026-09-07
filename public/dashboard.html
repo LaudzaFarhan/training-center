@@ -746,9 +746,9 @@ pm2 restart thelab-training</code></pre>
             <!-- QA & Bug Tracker Section (/new/qa-tracker) -->
             <!-- ========================================== -->
             <section id="tab-qa" class="tab-pane">
-                <div class="content-header" style="flex-wrap: wrap; gap: 14px;">
-                    <div>
-                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px;">
+                <div class="content-header qa-content-header">
+                    <div class="qa-header-info">
+                        <div class="qa-header-badges">
                             <span class="badge" style="background: rgba(244, 63, 94, 0.12); color: var(--color-rose); font-weight: 700; border: 1px solid rgba(244, 63, 94, 0.3);">
                                 🐞 Integrated Issue Tracking &amp; QA
                             </span>
@@ -760,7 +760,7 @@ pm2 restart thelab-training</code></pre>
                         <p class="text-secondary">Capture defects, submit visual annotations, collaborate across roles, and track release quality without third-party tools.</p>
                     </div>
 
-                    <div class="header-actions" style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                    <div class="header-actions qa-header-actions">
                         <button class="btn btn-subtle" id="btnQaCopyMarkdown" title="Copy Team Standup Summary in Markdown format">
                             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                             <span>Copy Standup (MD)</span>
@@ -769,7 +769,7 @@ pm2 restart thelab-training</code></pre>
                             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                             <span>Export CSV</span>
                         </button>
-                        <button class="btn btn-primary" id="btnQaNewIssue" style="background: linear-gradient(135deg, #0E1B4D, #182C75); box-shadow: 0 4px 14px rgba(14, 27, 77, 0.25);">
+                        <button class="btn btn-primary" id="btnQaNewIssue" style="background: linear-gradient(135deg, #0E1B4D, #182C75); box-shadow: 0 4px 14px rgba(14, 27, 77, 0.25); white-space: nowrap;">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                             <span>Report Issue / Bug</span>
                         </button>
@@ -928,19 +928,19 @@ pm2 restart thelab-training</code></pre>
 
                 <!-- 3. List View Container -->
                 <div class="qa-view-container" id="qaListView">
-                    <div class="table-container">
+                    <div class="table-container qa-table-wrapper">
                         <table class="data-table" id="qaIssuesTable">
                             <thead>
                                 <tr>
-                                    <th style="width: 85px;">ID</th>
-                                    <th style="width: 95px;">Priority</th>
-                                    <th>Title &amp; Module</th>
-                                    <th style="width: 140px;">Reporter</th>
-                                    <th style="width: 150px;">Assignee</th>
-                                    <th style="width: 75px; text-align: center;">Media</th>
-                                    <th style="width: 80px; text-align: center;">Comments</th>
-                                    <th style="width: 140px;">Status</th>
-                                    <th style="width: 90px; text-align: right;">Action</th>
+                                    <th style="width: 105px; min-width: 105px; text-align: center;">ID</th>
+                                    <th style="width: 115px; min-width: 115px; text-align: center;">Priority</th>
+                                    <th style="min-width: 290px;">Title &amp; Module</th>
+                                    <th style="width: 180px; min-width: 180px;">Reporter</th>
+                                    <th style="width: 180px; min-width: 180px;">Assignee</th>
+                                    <th style="width: 80px; min-width: 80px; text-align: center;">Media</th>
+                                    <th style="width: 90px; min-width: 90px; text-align: center;">Comments</th>
+                                    <th style="width: 145px; min-width: 145px;">Status</th>
+                                    <th style="width: 105px; min-width: 105px; text-align: right;">Action</th>
                                 </tr>
                             </thead>
                             <tbody id="qaIssuesTableBody">

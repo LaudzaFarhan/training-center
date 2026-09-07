@@ -196,6 +196,17 @@ async function runTests() {
             password: 'trainer12345'
         });
     }
+    if (!trainerLoginRes.cookies || !trainerLoginRes.cookies.length) {
+        trainerLoginRes = await request({
+            hostname: 'localhost',
+            port: PORT,
+            path: '/api/auth/login',
+            method: 'POST'
+        }, {
+            email: 'tommy.trainer@thelab.id',
+            password: 'TrainerSecret2026!'
+        });
+    }
     const trainerCookie = trainerLoginRes.cookies[0].split(';')[0];
 
     // Trainer can evaluate students
