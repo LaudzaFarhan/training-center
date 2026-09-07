@@ -247,6 +247,74 @@ document.addEventListener('DOMContentLoaded', () => {
     setInterval(updateClock, 1000);
     updateClock();
 
+    // =========================================================================
+    // Sidebar Minimize / Collapse Controller
+    // =========================================================================
+    const appSidebar = document.getElementById('appSidebar');
+    const btnToggleSidebar = document.getElementById('btnToggleSidebar');
+    const btnTopbarSidebarToggle = document.getElementById('btnTopbarSidebarToggle');
+
+    function setSidebarCollapsed(isCollapsed, persist = true) {
+        if (!appSidebar) return;
+        if (isCollapsed) {
+            appSidebar.classList.add('collapsed');
+            if (persist) localStorage.setItem('thelab_sidebar_collapsed', 'true');
+            if (btnToggleSidebar) btnToggleSidebar.setAttribute('title', 'Expand Sidebar (Ctrl+B)');
+            if (btnTopbarSidebarToggle) {
+                btnTopbarSidebarToggle.setAttribute('title', 'Expand Sidebar (Ctrl+B)');
+                btnTopbarSidebarToggle.classList.add('active');
+            }
+        } else {
+            appSidebar.classList.remove('collapsed');
+            if (persist) localStorage.setItem('thelab_sidebar_collapsed', 'false');
+            if (btnToggleSidebar) btnToggleSidebar.setAttribute('title', 'Collapse Sidebar (Ctrl+B)');
+            if (btnTopbarSidebarToggle) {
+                btnTopbarSidebarToggle.setAttribute('title', 'Collapse Sidebar (Ctrl+B)');
+                btnTopbarSidebarToggle.classList.remove('active');
+            }
+        }
+    }
+
+    function toggleSidebar() {
+        if (!appSidebar) return;
+        const willCollapse = !appSidebar.classList.contains('collapsed');
+        setSidebarCollapsed(willCollapse);
+    }
+
+    if (btnToggleSidebar) {
+        btnToggleSidebar.addEventListener('click', (e) => {
+            e.preventDefault();
+            toggleSidebar();
+        });
+    }
+
+    if (btnTopbarSidebarToggle) {
+        btnTopbarSidebarToggle.addEventListener('click', (e) => {
+            e.preventDefault();
+            toggleSidebar();
+        });
+    }
+
+    // Keyboard shortcut: Ctrl + B or Cmd + B
+    document.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
+            const tag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
+            if (tag === 'input' || tag === 'textarea' || document.activeElement?.isContentEditable) {
+                return;
+            }
+            e.preventDefault();
+            toggleSidebar();
+        }
+    });
+
+    // Restore saved state
+    try {
+        const savedState = localStorage.getItem('thelab_sidebar_collapsed');
+        if (savedState === 'true') {
+            setSidebarCollapsed(true, false);
+        }
+    } catch (e) {}
+
     // 2. Navigation Tabs
     navItems.forEach(button => {
         button.addEventListener('click', () => {

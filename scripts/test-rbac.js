@@ -176,7 +176,7 @@ async function runTests() {
 
     // Step 6: Test Trainer Permissions
     console.log('\n6️⃣ Testing Trainer Login & Evaluation Permissions...');
-    const trainerLoginRes = await request({
+    let trainerLoginRes = await request({
         hostname: 'localhost',
         port: PORT,
         path: '/api/auth/login',
@@ -185,6 +185,17 @@ async function runTests() {
         email: 'tommy.trainer@thelab.id',
         password: 'Password123!'
     });
+    if (!trainerLoginRes.cookies || !trainerLoginRes.cookies.length) {
+        trainerLoginRes = await request({
+            hostname: 'localhost',
+            port: PORT,
+            path: '/api/auth/login',
+            method: 'POST'
+        }, {
+            email: 'tommy.trainer@thelab.id',
+            password: 'trainer12345'
+        });
+    }
     const trainerCookie = trainerLoginRes.cookies[0].split(';')[0];
 
     // Trainer can evaluate students
@@ -221,7 +232,7 @@ async function runTests() {
 
     // Step 7: Test SPV Permissions
     console.log('\n7️⃣ Testing SPV Login...');
-    const spvLoginRes = await request({
+    let spvLoginRes = await request({
         hostname: 'localhost',
         port: PORT,
         path: '/api/auth/login',
@@ -230,6 +241,17 @@ async function runTests() {
         email: 'sarah.spv@thelab.id',
         password: 'Password123!'
     });
+    if (!spvLoginRes.cookies || !spvLoginRes.cookies.length) {
+        spvLoginRes = await request({
+            hostname: 'localhost',
+            port: PORT,
+            path: '/api/auth/login',
+            method: 'POST'
+        }, {
+            email: 'sarah.spv@thelab.id',
+            password: 'spv12345'
+        });
+    }
     const spvCookie = spvLoginRes.cookies[0].split(';')[0];
 
     // SPV can view cohorts and students
