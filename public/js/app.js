@@ -80,6 +80,35 @@ document.addEventListener('DOMContentLoaded', () => {
                     initialsEl.textContent = initials;
                 }
 
+                // Populate Dropdown Menu User Info
+                const dropName = document.getElementById('dropdownUserName');
+                const dropEmail = document.getElementById('dropdownUserEmail');
+                const dropRole = document.getElementById('dropdownUserRole');
+                const dropInitials = document.getElementById('dropdownUserInitials');
+
+                if (dropName) dropName.textContent = data.user.name;
+                if (dropEmail) dropEmail.textContent = data.user.email || 'user@thelabindonesia.my.id';
+                if (dropRole) {
+                    dropRole.textContent = data.user.role || 'Trainer';
+                    if (data.user.role === 'Admin') {
+                        dropRole.style.background = 'rgba(245, 158, 11, 0.14)';
+                        dropRole.style.color = '#8C5E00';
+                    } else if (data.user.role === 'SPV') {
+                        dropRole.style.background = 'rgba(14, 27, 77, 0.1)';
+                        dropRole.style.color = 'var(--brand-navy)';
+                    } else if (data.user.role === 'Trainee') {
+                        dropRole.style.background = 'rgba(16, 185, 129, 0.12)';
+                        dropRole.style.color = 'var(--color-emerald)';
+                    } else {
+                        dropRole.style.background = 'rgba(69, 183, 205, 0.15)';
+                        dropRole.style.color = 'var(--brand-teal-hover)';
+                    }
+                }
+                if (dropInitials && data.user.name) {
+                    const initials = data.user.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+                    dropInitials.textContent = initials;
+                }
+
                 applyRolePermissions(data.user.role || 'Trainer');
 
                 // Enforce first login password reset if flagged
@@ -217,7 +246,52 @@ document.addEventListener('DOMContentLoaded', () => {
 
     checkAuth();
 
-    // Logout Handler
+    // Combined User Profile & Account Dropdown Interactions
+    const btnUserProfile = document.getElementById('btnUserProfile');
+    const userProfileDropdown = document.getElementById('userProfileDropdown');
+    const userProfileWrapper = document.getElementById('userProfileWrapper');
+    const btnOpenChangePassword = document.getElementById('btnOpenChangePassword');
+
+    if (btnUserProfile && userProfileDropdown) {
+        btnUserProfile.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isOpen = userProfileDropdown.classList.contains('show');
+            userProfileDropdown.classList.toggle('show', !isOpen);
+            btnUserProfile.setAttribute('aria-expanded', String(!isOpen));
+        });
+
+        // Close on clicking outside
+        document.addEventListener('click', (e) => {
+            if (userProfileWrapper && !userProfileWrapper.contains(e.target)) {
+                userProfileDropdown.classList.remove('show');
+                btnUserProfile.setAttribute('aria-expanded', 'false');
+            }
+        });
+
+        // Close on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && userProfileDropdown.classList.contains('show')) {
+                userProfileDropdown.classList.remove('show');
+                btnUserProfile.setAttribute('aria-expanded', 'false');
+                btnUserProfile.focus();
+            }
+        });
+    }
+
+    if (btnOpenChangePassword) {
+        btnOpenChangePassword.addEventListener('click', () => {
+            if (userProfileDropdown) {
+                userProfileDropdown.classList.remove('show');
+                if (btnUserProfile) btnUserProfile.setAttribute('aria-expanded', 'false');
+            }
+            const firstLoginModal = document.getElementById('firstLoginModal');
+            if (firstLoginModal) {
+                firstLoginModal.classList.add('active');
+            }
+        });
+    }
+
+    // Logout Handler (Triggered from Account Dropdown)
     const btnLogout = document.getElementById('btnLogout');
     if (btnLogout) {
         btnLogout.addEventListener('click', async () => {
