@@ -46,6 +46,11 @@
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
                     <span class="nav-item-text">Curriculum & Labs</span>
                 </button>
+                <button class="nav-item" data-tab="training-area" data-roles="Admin,Trainer,SPV,Trainee" data-tooltip="Training Area">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>
+                    <span class="nav-item-text">Training Area</span>
+                    <span class="pill-indicator" style="background: var(--brand-teal-light); color: var(--brand-teal-hover); font-weight: 800;">NEW</span>
+                </button>
 
                 <!-- Dedicated Trainee Nav Item -->
                 <button class="nav-item" data-tab="trainee" id="navItemTrainee" data-roles="Trainee" data-tooltip="My Learning Portal" style="display: none;">
@@ -1138,6 +1143,1069 @@ pm2 restart thelab-training</code></pre>
                     </div>
                 </div>
             </section>
+
+            <!-- Tab: Training Area (Kinder, Junior, Coder) -->
+            <section id="tab-training-area" class="tab-pane">
+    <!-- Top Hero Banner with Gamified Telemetry & Track Selection -->
+    <div class="section-hero" style="background: linear-gradient(135deg, #FFFFFF, #F8FAFC); border: 1px solid rgba(14, 27, 77, 0.08); border-radius: var(--radius-lg); padding: 24px; margin-bottom: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 20px;">
+            <div>
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                    <span class="badge" style="background: var(--brand-teal-light); color: var(--brand-teal-hover); font-weight: 800; font-size: 11px;">TRAINING OPS</span>
+                    <span style="font-size: 11px; color: var(--text-muted);">•</span>
+                    <span style="font-size: 11px; font-weight: 700; color: var(--text-secondary);">The Lab Indonesia Operational Core</span>
+                </div>
+                <h1 style="font-size: 26px; font-weight: 900; color: var(--brand-navy); margin: 0; letter-spacing: -0.02em;">
+                    Training Area <span style="color: var(--brand-teal);">Workspace</span>
+                </h1>
+                <p style="font-size: 13px; color: var(--text-secondary); margin-top: 4px; max-width: 600px;">
+                    Dedicated instructor onboarding, gamified mission certifications, pedagogical progression, and curriculum mastery.
+                </p>
+            </div>
+
+            <!-- Gamified Instructor Stats & Coin Tracker -->
+            <div class="training-telemetry-cluster" style="display: flex; align-items: center; gap: 16px; background: #FFFFFF; border: 1px solid rgba(14, 27, 77, 0.1); padding: 12px 18px; border-radius: var(--radius-md); box-shadow: 0 2px 6px rgba(0,0,0,0.03);">
+                <div style="display: flex; align-items: center; gap: 12px; padding-right: 16px; border-right: 1px solid rgba(14, 27, 77, 0.1);">
+                    <div style="width: 42px; height: 42px; border-radius: 10px; background: linear-gradient(135deg, var(--brand-teal), var(--brand-navy)); color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 16px;">
+                        L<span id="trainerLevelNum">1</span>
+                    </div>
+                    <div>
+                        <div style="font-size: 10.5px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Rookie Instructor</div>
+                        <div style="font-size: 13px; font-weight: 900; color: var(--brand-navy);"><span id="trainerExpNum">320</span> / 500 EXP</div>
+                        <div style="width: 100px; height: 6px; background: #E2E8F0; border-radius: 999px; margin-top: 4px; overflow: hidden;">
+                            <div id="trainerExpBar" style="height: 100%; width: 64%; background: linear-gradient(90deg, var(--brand-teal), var(--brand-yellow)); transition: width 0.4s ease;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 26px;">🪙</span>
+                    <div>
+                        <div style="font-size: 10.5px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Reward Coins</div>
+                        <div style="font-size: 17px; font-weight: 900; color: #D97706;" id="trainingCoinDisplay">450</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Track Selection Screen: [Kinder] | [Junior] | [Coder] -->
+        <div style="margin-top: 24px; padding-top: 18px; border-top: 1px solid rgba(14, 27, 77, 0.08);">
+            <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 12px;">
+                Select Active Pedagogy Track
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px;">
+                <!-- Kinder Track (ACTIVE) -->
+                <div class="track-select-card active" id="trackCardKinder" style="background: linear-gradient(135deg, #FFFDF8, #FEF8E7); border: 2px solid #F59E0B; border-radius: var(--radius-md); padding: 14px 18px; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.15);">
+                    <div style="display: flex; align-items: center; justify-content: space-between;">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div style="width: 38px; height: 38px; border-radius: 8px; background: #FEF3C7; color: #B45309; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+                                🧸
+                            </div>
+                            <div>
+                                <div style="display: flex; align-items: center; gap: 6px;">
+                                    <span style="font-size: 14.5px; font-weight: 900; color: var(--brand-navy);">Kinder Track</span>
+                                    <span class="badge" style="background: #FEF3C7; color: #B45309; font-size: 10px; font-weight: 800; padding: 2px 6px;">Ages 4–6</span>
+                                </div>
+                                <div style="font-size: 11.5px; color: var(--text-secondary); margin-top: 2px;">Sensory Play &amp; Screen-Free Blocks</div>
+                            </div>
+                        </div>
+                        <span class="badge" style="background: #FEF3C7; color: #B45309; font-size: 10px; font-weight: 900; padding: 3px 8px;">ACTIVE</span>
+                    </div>
+                </div>
+
+                <!-- Junior Track -->
+                <div class="track-select-card" id="trackCardJunior" style="background: #FFFFFF; border: 1px solid rgba(14, 27, 77, 0.12); border-radius: var(--radius-md); padding: 14px 18px; cursor: pointer; transition: all 0.2s ease; opacity: 0.7;">
+                    <div style="display: flex; align-items: center; justify-content: space-between;">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div style="width: 38px; height: 38px; border-radius: 8px; background: #EDF9FB; color: #35A3B8; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+                                ⚙️
+                            </div>
+                            <div>
+                                <div style="display: flex; align-items: center; gap: 6px;">
+                                    <span style="font-size: 14.5px; font-weight: 800; color: var(--brand-navy);">Junior Track</span>
+                                    <span class="badge" style="background: #F1F5F9; color: #475569; font-size: 10px; font-weight: 700; padding: 2px 6px;">Ages 7–12</span>
+                                </div>
+                                <div style="font-size: 11.5px; color: var(--text-secondary); margin-top: 2px;">Gears, Algorithms &amp; LEGO Spike</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Coder Track -->
+                <div class="track-select-card" id="trackCardCoder" style="background: #FFFFFF; border: 1px solid rgba(14, 27, 77, 0.12); border-radius: var(--radius-md); padding: 14px 18px; cursor: pointer; transition: all 0.2s ease; opacity: 0.7;">
+                    <div style="display: flex; align-items: center; justify-content: space-between;">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div style="width: 38px; height: 38px; border-radius: 8px; background: #EDE9FE; color: #6D28D9; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+                                💻
+                            </div>
+                            <div>
+                                <div style="display: flex; align-items: center; gap: 6px;">
+                                    <span style="font-size: 14.5px; font-weight: 800; color: var(--brand-navy);">Coder Track</span>
+                                    <span class="badge" style="background: #F1F5F9; color: #475569; font-size: 10px; font-weight: 700; padding: 2px 6px;">Ages 13+</span>
+                                </div>
+                                <div style="font-size: 11.5px; color: var(--text-secondary); margin-top: 2px;">MicroPython, Micro:bit &amp; Vision AI</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Kinder Sub-Navigation Bar -->
+    <div class="training-subnav-bar" style="display: flex; gap: 8px; margin-bottom: 22px; border-bottom: 1px solid rgba(14, 27, 77, 0.08); padding-bottom: 14px; overflow-x: auto;">
+        <button class="training-subnav-btn active" data-training-tab="first-day" style="display: flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: var(--radius-md); font-weight: 800; font-size: 13px; border: none; cursor: pointer;">
+            <span>🚀</span>
+            <span>First Day Mission</span>
+            <span class="pill-indicator" id="kinderMissionPill" style="background: #F59E0B; color: #FFFFFF; font-weight: 900; font-size: 10.5px;">1/3 Done</span>
+        </button>
+
+        <button class="training-subnav-btn" data-training-tab="priority-path" style="display: flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: var(--radius-md); font-weight: 800; font-size: 13px; border: none; cursor: pointer;">
+            <span>🗺️</span>
+            <span>Priority Training Path</span>
+        </button>
+
+        <button class="training-subnav-btn" data-training-tab="curriculum" style="display: flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: var(--radius-md); font-weight: 800; font-size: 13px; border: none; cursor: pointer;">
+            <span>📚</span>
+            <span>Interactive Curriculum &amp; Quiz</span>
+            <span class="pill-indicator" id="kinderCurriculumPill" style="background: var(--brand-teal-light); color: var(--brand-teal-hover); font-weight: 900; font-size: 10.5px;">Progression Active</span>
+        </button>
+    </div>
+
+    <!-- SUBPANEL 1: GAMIFIED FIRST DAY MISSION (KINDER) -->
+    <div id="training-subpanel-first-day" class="training-subpanel active">
+        <!-- Day 1 Launchpad / First Day Onboarding Banner -->
+        <div style="background: linear-gradient(135deg, #0E1B4D, #1E293B); border-radius: var(--radius-lg); padding: 26px; color: #FFFFFF; margin-bottom: 24px; box-shadow: var(--shadow-card); position: relative; overflow: hidden;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 20px;">
+                <div style="flex: 1; min-width: 290px;">
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                        <span class="badge" style="background: rgba(245, 158, 11, 0.25); color: #F6C551; border: 1px solid rgba(245, 158, 11, 0.4); font-weight: 900; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">
+                            🚀 Day 1 Launchpad
+                        </span>
+                        <span style="font-size: 11.5px; color: #94A3B8; font-weight: 700;">Day 1 Launchpad / First Day Onboarding</span>
+                    </div>
+                    <h2 style="font-size: 24px; font-weight: 900; color: #FFFFFF; margin: 4px 0 8px 0; letter-spacing: -0.3px;">
+                        Welcome to The Lab Family! 🚀
+                    </h2>
+                    <p style="font-size: 13.5px; color: #E2E8F0; margin: 0 0 6px 0; max-width: 680px; font-weight: 500; line-height: 1.5;">
+                        "We're excited to have you join our mission of inspiring the next generation of creators!"
+                    </p>
+                    <p style="font-size: 12px; color: #94A3B8; margin: 0; max-width: 620px;">
+                        Kinder First Day Mission Hub • Complete foundational onboarding across the 3 core pillars below to earn trainer EXP and unlock independent teaching certification.
+                    </p>
+                </div>
+
+                <!-- Milestone Badges Shelf -->
+                <div style="background: rgba(255, 255, 255, 0.08); backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: var(--radius-md); padding: 12px 16px;">
+                    <div style="font-size: 10px; font-weight: 800; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Kinder Milestone Badges</div>
+                    <div style="display: flex; gap: 10px;">
+                        <div style="text-align: center;" title="Kinder Empathy Star: Unlocked">
+                            <div style="width: 36px; height: 36px; border-radius: 50%; background: rgba(16, 185, 129, 0.25); border: 1px solid #10B981; display: flex; align-items: center; justify-content: center; font-size: 16px;">🏆</div>
+                            <div style="font-size: 9.5px; color: #6EE7B7; font-weight: 700; margin-top: 2px;">Empathy</div>
+                        </div>
+                        <div style="text-align: center;" title="Tactile Master: Unlocked">
+                            <div style="width: 36px; height: 36px; border-radius: 50%; background: rgba(245, 158, 11, 0.25); border: 1px solid #F59E0B; display: flex; align-items: center; justify-content: center; font-size: 16px;">🧩</div>
+                            <div style="font-size: 9.5px; color: #FCD34D; font-weight: 700; margin-top: 2px;">Tactile</div>
+                        </div>
+                        <div style="text-align: center;" id="badgeSpaContainer" title="SPA Master">
+                            <div id="badgeSpaIcon" style="width: 36px; height: 36px; border-radius: 50%; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.2); display: flex; align-items: center; justify-content: center; font-size: 16px; filter: grayscale(1); opacity: 0.4;">🛡️</div>
+                            <div style="font-size: 9.5px; color: #94A3B8; font-weight: 700; margin-top: 2px;">SPA Ready</div>
+                        </div>
+                        <div style="text-align: center;" id="badgeEcContainer" title="EC Partner">
+                            <div id="badgeEcIcon" style="width: 36px; height: 36px; border-radius: 50%; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.2); display: flex; align-items: center; justify-content: center; font-size: 16px; filter: grayscale(1); opacity: 0.4;">🎖️</div>
+                            <div style="font-size: 9.5px; color: #94A3B8; font-weight: 700; margin-top: 2px;">EC Handoff</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Overall Onboarding Progress Bar -->
+            <div style="margin-top: 22px; padding-top: 16px; border-top: 1px solid rgba(255, 255, 255, 0.12);">
+                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: 800; margin-bottom: 7px;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="color: #CBD5E1;">Day 1 Onboarding Progress</span>
+                        <span id="onboardingTaskCountBadge" style="background: rgba(255,255,255,0.1); padding: 2px 8px; border-radius: 10px; font-size: 11px; color: #67E8F9;">3 / 9 Tasks</span>
+                    </div>
+                    <span style="color: #F6C551; font-weight: 900;" id="kinderOverallPercent">33% Completed</span>
+                </div>
+                <div style="width: 100%; height: 9px; background: rgba(255, 255, 255, 0.12); border-radius: 999px; overflow: hidden;">
+                    <div id="kinderOverallBar" style="height: 100%; width: 33%; background: linear-gradient(90deg, var(--brand-teal), #F59E0B, #10B981); transition: width 0.4s ease;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================================================================= -->
+        <!-- DAY 1 ONBOARDING: 3 CORE PILLARS WORKFLOW                         -->
+        <!-- ================================================================= -->
+        <div style="margin-bottom: 24px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+                <div>
+                    <h3 style="font-size: 16.5px; font-weight: 900; color: var(--brand-navy); margin: 0 0 3px 0;">
+                        3 Core Onboarding Pillars
+                    </h3>
+                    <p style="font-size: 12px; color: var(--text-secondary); margin: 0;">
+                        Verify work identity, cloud curriculum access, and team connections to complete Day 1.
+                    </p>
+                </div>
+                <span class="badge" style="background: var(--brand-teal-light); color: var(--brand-teal-hover); font-weight: 800; font-size: 11px;">
+                    Day 1 Checklist
+                </span>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 18px;">
+                
+                <!-- PILLAR 1: Work Identity & Account Setup -->
+                <div class="panel-card" id="cardPillar1" style="background: #FFFFFF; border: 1.5px solid #E2E8F0; border-radius: var(--radius-lg); padding: 20px; box-shadow: var(--shadow-card); display: flex; flex-direction: column; justify-content: space-between;">
+                    <div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="font-size: 20px;">🪪</span>
+                                <span style="font-size: 11px; font-weight: 900; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;">Pillar 1</span>
+                            </div>
+                            <span class="badge" id="pillar1Badge" style="background: #FEF3C7; color: #92400E; font-weight: 800; font-size: 11px;">
+                                In Progress
+                            </span>
+                        </div>
+                        <h4 style="font-size: 15.5px; font-weight: 900; color: var(--brand-navy); margin: 0 0 6px 0;">
+                            Work Identity &amp; Account Setup
+                        </h4>
+                        <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 14px;">
+                            Setup your official email identity and verify access to the instructor web portal.
+                        </p>
+
+                        <div style="display: flex; flex-direction: column; gap: 10px;">
+                            <!-- Task 1.1: Official Work Email Creation -->
+                            <label class="onboarding-task-row" style="display: flex; align-items: flex-start; gap: 10px; padding: 10px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: var(--radius-md); cursor: pointer; transition: all 0.2s ease;">
+                                <input type="checkbox" id="chkEmailCreation" checked class="onboarding-checkbox" style="width: 17px; height: 17px; margin-top: 2px; accent-color: var(--brand-teal); cursor: pointer;">
+                                <div style="flex: 1;">
+                                    <div style="font-size: 12.5px; font-weight: 800; color: var(--brand-navy);">1. Official Work Email Creation</div>
+                                    <div style="font-size: 11.5px; color: #475569; margin-top: 2px;">
+                                        Create official work email with format: <code style="background: #E2E8F0; padding: 1px 5px; border-radius: 4px; font-weight: 700; color: #0E1B4D;">[Nama].thelab@gmail.com</code>
+                                    </div>
+                                    <div style="font-size: 11px; color: var(--brand-teal); font-weight: 700; margin-top: 2px;">✓ Verified: farhan.thelab@gmail.com</div>
+                                </div>
+                            </label>
+
+                            <!-- Task 1.2: Master Sheet Registration -->
+                            <label class="onboarding-task-row" style="display: flex; align-items: flex-start; gap: 10px; padding: 10px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: var(--radius-md); cursor: pointer; transition: all 0.2s ease;">
+                                <input type="checkbox" id="chkMasterSheet" checked class="onboarding-checkbox" style="width: 17px; height: 17px; margin-top: 2px; accent-color: var(--brand-teal); cursor: pointer;">
+                                <div style="flex: 1;">
+                                    <div style="font-size: 12.5px; font-weight: 800; color: var(--brand-navy);">2. Master Sheet Registration</div>
+                                    <div style="font-size: 11.5px; color: #475569; margin-top: 2px;">
+                                        Register account into <strong style="color: #0E1B4D;">Email Kerja All Karyawan.xlsx</strong> to activate services.
+                                    </div>
+                                    <span style="font-size: 11px; color: #059669; font-weight: 700;">✓ Synced to HR Master Roster</span>
+                                </div>
+                            </label>
+
+                            <!-- Task 1.3: Instructor Portal Login -->
+                            <label class="onboarding-task-row" style="display: flex; align-items: flex-start; gap: 10px; padding: 10px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: var(--radius-md); cursor: pointer; transition: all 0.2s ease;">
+                                <input type="checkbox" id="chkPortalLogin" checked class="onboarding-checkbox" style="width: 17px; height: 17px; margin-top: 2px; accent-color: var(--brand-teal); cursor: pointer;">
+                                <div style="flex: 1;">
+                                    <div style="display: flex; align-items: center; justify-content: space-between;">
+                                        <div style="font-size: 12.5px; font-weight: 800; color: var(--brand-navy);">3. Instructor Portal Login</div>
+                                        <a href="https://web.thelab.id/login" target="_blank" rel="noreferrer" style="font-size: 11px; font-weight: 800; color: var(--brand-teal); text-decoration: none;" onclick="event.stopPropagation();">
+                                            web.thelab.id/login ↗
+                                        </a>
+                                    </div>
+                                    <div style="font-size: 11.5px; color: #475569; margin-top: 2px;">
+                                        Action / URL link: <code style="background: #E2E8F0; padding: 1px 5px; border-radius: 4px; font-weight: 700; color: #0E1B4D;">web.thelab.id/login</code>
+                                    </div>
+                                    <span style="font-size: 11px; color: #059669; font-weight: 700;">✓ Authenticated session active</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div style="border-top: 1px solid #F1F5F9; padding-top: 12px; margin-top: 14px; display: flex; align-items: center; justify-content: space-between;">
+                        <span style="font-size: 11px; font-weight: 800; color: #64748B;">Pillar Status:</span>
+                        <span id="pillar1StatusLabel" style="font-size: 12px; font-weight: 900; color: #059669;">
+                            Account &amp; Portal Ready ✓
+                        </span>
+                    </div>
+                </div>
+
+                <!-- PILLAR 2: Knowledge Hub & Cloud Drive Setup -->
+                <div class="panel-card" id="cardPillar2" style="background: #FFFFFF; border: 1.5px solid #E2E8F0; border-radius: var(--radius-lg); padding: 20px; box-shadow: var(--shadow-card); display: flex; flex-direction: column; justify-content: space-between;">
+                    <div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="font-size: 20px;">☁️</span>
+                                <span style="font-size: 11px; font-weight: 900; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;">Pillar 2</span>
+                            </div>
+                            <span class="badge" id="pillar2Badge" style="background: #EDF9FB; color: #35A3B8; font-weight: 800; font-size: 11px;">
+                                Access Checking
+                            </span>
+                        </div>
+                        <h4 style="font-size: 15.5px; font-weight: 900; color: var(--brand-navy); margin: 0 0 6px 0;">
+                            Knowledge Hub &amp; Cloud Drive Setup
+                        </h4>
+                        
+                        <!-- Master Access Account Callout -->
+                        <div style="background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: var(--radius-md); padding: 8px 12px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 14px;">🔑</span>
+                            <div style="font-size: 11.5px; color: #166534; font-weight: 700;">
+                                Master Access Account: <code style="font-weight: 900; color: #0E1B4D; background: #DCFCE7; padding: 1px 5px; border-radius: 4px;">instructors@thelab.id</code>
+                            </div>
+                        </div>
+
+                        <div style="font-size: 11.5px; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 8px;">
+                            Required Folder Access Checklist:
+                        </div>
+
+                        <div style="display: flex; flex-direction: column; gap: 9px;">
+                            <!-- Task 2.1: Kinder & Junior Curriculum Library -->
+                            <label class="onboarding-task-row" style="display: flex; align-items: flex-start; gap: 10px; padding: 10px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: var(--radius-md); cursor: pointer; transition: all 0.2s ease;">
+                                <input type="checkbox" id="chkFolderCurriculum" checked class="onboarding-checkbox" style="width: 17px; height: 17px; margin-top: 2px; accent-color: var(--brand-teal); cursor: pointer;">
+                                <div style="flex: 1;">
+                                    <div style="font-size: 12px; font-weight: 800; color: var(--brand-navy);">1. Kinder &amp; Junior Curriculum Library</div>
+                                    <div style="font-size: 11px; color: #64748B; margin-top: 1px;">Slides, teacher guides, robotics printable mats</div>
+                                </div>
+                            </label>
+
+                            <!-- Task 2.2: Branch Schedules & Class Folders -->
+                            <label class="onboarding-task-row" style="display: flex; align-items: flex-start; gap: 10px; padding: 10px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: var(--radius-md); cursor: pointer; transition: all 0.2s ease;">
+                                <input type="checkbox" id="chkFolderSchedules" class="onboarding-checkbox" style="width: 17px; height: 17px; margin-top: 2px; accent-color: var(--brand-teal); cursor: pointer;">
+                                <div style="flex: 1;">
+                                    <div style="font-size: 12px; font-weight: 800; color: var(--brand-navy);">2. Branch Schedules &amp; Class Folders</div>
+                                    <div style="font-size: 11px; color: #64748B; margin-top: 1px;">Weekly student rosters and parent logsheets</div>
+                                </div>
+                            </label>
+
+                            <!-- Task 2.3: Personal Trainer Folder -->
+                            <label class="onboarding-task-row" style="display: flex; align-items: flex-start; gap: 10px; padding: 10px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: var(--radius-md); cursor: pointer; transition: all 0.2s ease;">
+                                <input type="checkbox" id="chkFolderPersonal" class="onboarding-checkbox" style="width: 17px; height: 17px; margin-top: 2px; accent-color: var(--brand-teal); cursor: pointer;">
+                                <div style="flex: 1;">
+                                    <div style="font-size: 12px; font-weight: 800; color: var(--brand-navy);">3. Your Folder: "The Lab Training"</div>
+                                    <div style="font-size: 11px; color: #64748B; margin-top: 1px;">Personal instructor evaluations and trial recordings</div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div style="border-top: 1px solid #F1F5F9; padding-top: 12px; margin-top: 14px; display: flex; align-items: center; justify-content: space-between;">
+                        <span style="font-size: 11px; font-weight: 800; color: #64748B;">Pillar Status:</span>
+                        <span id="pillar2StatusLabel" style="font-size: 12px; font-weight: 900; color: #D97706;">
+                            Drive Storage Setup Complete (Pending 2 folders)
+                        </span>
+                    </div>
+                </div>
+
+                <!-- PILLAR 3: Wingman, Team & Culture -->
+                <div class="panel-card" id="cardPillar3" style="background: #FFFFFF; border: 1.5px solid #E2E8F0; border-radius: var(--radius-lg); padding: 20px; box-shadow: var(--shadow-card); display: flex; flex-direction: column; justify-content: space-between;">
+                    <div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="font-size: 20px;">🤝</span>
+                                <span style="font-size: 11px; font-weight: 900; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;">Pillar 3</span>
+                            </div>
+                            <span class="badge" id="pillar3Badge" style="background: #EDE9FE; color: #6D28D9; font-weight: 800; font-size: 11px;">
+                                Team Connection
+                            </span>
+                        </div>
+                        <h4 style="font-size: 15.5px; font-weight: 900; color: var(--brand-navy); margin: 0 0 6px 0;">
+                            Wingman, Team &amp; Culture
+                        </h4>
+                        <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 14px;">
+                            Connect with your branch wingman mentor and internal operational allies.
+                        </p>
+
+                        <div style="display: flex; flex-direction: column; gap: 10px;">
+                            <!-- Task 3.1: Buddy System -->
+                            <label class="onboarding-task-row" style="display: flex; align-items: flex-start; gap: 10px; padding: 10px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: var(--radius-md); cursor: pointer; transition: all 0.2s ease;">
+                                <input type="checkbox" id="chkBuddySystem" checked class="onboarding-checkbox" style="width: 17px; height: 17px; margin-top: 2px; accent-color: var(--brand-teal); cursor: pointer;">
+                                <div style="flex: 1;">
+                                    <div style="font-size: 12.5px; font-weight: 800; color: var(--brand-navy);">1. Buddy System</div>
+                                    <div style="font-size: 11.5px; color: #475569; margin-top: 2px;">
+                                        Pair new instructor with their assigned Senior Mentor / Wingman to guide them and answer questions.
+                                    </div>
+                                    <div style="font-size: 11px; color: #6D28D9; font-weight: 700; margin-top: 2px;">Assigned Wingman: Dian Pratama (Senior Trainer)</div>
+                                </div>
+                            </label>
+
+                            <!-- Task 3.2: Branch Allies Introduction -->
+                            <label class="onboarding-task-row" style="display: flex; align-items: flex-start; gap: 10px; padding: 10px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: var(--radius-md); cursor: pointer; transition: all 0.2s ease;">
+                                <input type="checkbox" id="chkBranchAllies" class="onboarding-checkbox" style="width: 17px; height: 17px; margin-top: 2px; accent-color: var(--brand-teal); cursor: pointer;">
+                                <div style="flex: 1;">
+                                    <div style="font-size: 12.5px; font-weight: 800; color: var(--brand-navy);">2. Branch Allies Introduction</div>
+                                    <div style="font-size: 11.5px; color: #475569; margin-top: 2px;">
+                                        Meet your branch partners: <strong style="color: #0E1B4D;">SPA</strong> (Student Progress Advisor) &amp; <strong style="color: #0E1B4D;">EC</strong> (Education Consultant).
+                                    </div>
+                                    <div style="font-size: 11px; color: var(--brand-teal); font-weight: 700; margin-top: 2px;">Review mission briefings below for detailed protocols</div>
+                                </div>
+                            </label>
+
+                            <!-- Task 3.3: Core Cultural Mindset Note -->
+                            <div style="background: #FEF3C7; border: 1px solid #FCD34D; border-radius: var(--radius-md); padding: 10px 12px;">
+                                <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 3px;">
+                                    <span style="font-size: 14px;">💡</span>
+                                    <strong style="font-size: 11.5px; color: #92400E; text-transform: uppercase;">Core Cultural Mindset:</strong>
+                                </div>
+                                <p style="font-size: 12px; color: #78350F; font-style: italic; margin: 0; line-height: 1.45; font-weight: 600;">
+                                    "Curious Explorer Mindset — Test tools with your hands first; playful curiosity is the best teacher!"
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="border-top: 1px solid #F1F5F9; padding-top: 12px; margin-top: 14px; display: flex; align-items: center; justify-content: space-between;">
+                        <span style="font-size: 11px; font-weight: 800; color: #64748B;">Pillar Status:</span>
+                        <span id="pillar3StatusLabel" style="font-size: 12px; font-weight: 900; color: #6D28D9;">
+                            Wingman &amp; Culture Active
+                        </span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- SUBPANEL 2: DETAILED PRIORITY TRAINING PATH (KINDER) -->
+    <div id="training-subpanel-priority-path" class="training-subpanel">
+        <div class="panel-card" style="margin-bottom: 24px; padding: 24px; border-radius: var(--radius-lg);">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; align-items: center;">
+                <div>
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                        <span style="font-size: 20px;">🗺️</span>
+                        <h2 style="font-size: 18px; font-weight: 900; color: var(--brand-navy); margin: 0;">Kinder Roadmap Jump-To Selector</h2>
+                    </div>
+                    <p style="font-size: 12.5px; color: var(--text-secondary); margin-bottom: 16px;">
+                        Jump between pedagogical terms to view session competencies.
+                    </p>
+
+                    <div style="max-width: 320px;">
+                        <label style="display: block; font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px;">Curriculum Term</label>
+                        <select id="selectKinderTerm" style="width: 100%; padding: 10px; border-radius: var(--radius-md); border: 1px solid rgba(14, 27, 77, 0.15); font-weight: 700; font-size: 13px; color: var(--brand-navy);">
+                            <option value="term-1">Term 1</option>
+                            <option value="term-2">Term 2</option>
+                            <option value="term-3">Term 3</option>
+                            <option value="term-4">Term 4</option>
+                        </select>
+                    </div>
+
+                    <div style="margin-top: 14px; display: flex; align-items: center; gap: 10px;">
+                        <button id="btnToggleInstructorReady" class="btn" style="background: #FEE2E2; color: #991B1B; border: 1px solid #FCA5A5; font-size: 11.5px; font-weight: 800; padding: 6px 12px; border-radius: var(--radius-sm); cursor: pointer;">
+                            Simulate instructor_ready: FALSE
+                        </button>
+                        <span style="font-size: 11px; color: var(--text-muted);">Toggle delegation warning state</span>
+                    </div>
+                </div>
+
+                <!-- Circular Progress Ring: Weekly Target Tracker -->
+                <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: var(--radius-md); padding: 18px; display: flex; align-items: center; justify-content: center; gap: 20px;">
+                    <div style="position: relative; width: 90px; height: 90px; display: flex; align-items: center; justify-content: center;">
+                        <svg viewBox="0 0 36 36" style="width: 100%; height: 100%; transform: rotate(-90deg);">
+                            <path stroke="#E2E8F0" stroke-width="3.8" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                            <path stroke="var(--brand-teal)" stroke-dasharray="40, 100" stroke-linecap="round" stroke-width="3.8" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                        </svg>
+                        <div style="position: absolute; text-align: center;">
+                            <div style="font-size: 16px; font-weight: 900; color: var(--brand-navy);">2/5</div>
+                            <div style="font-size: 9px; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">Sessions</div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div style="font-size: 11px; font-weight: 800; color: var(--brand-teal); text-transform: uppercase;">Weekly Target Tracker</div>
+                        <div style="font-size: 15px; font-weight: 900; color: var(--brand-navy); margin: 2px 0;">40% Completed</div>
+                        <div style="font-size: 11.5px; color: var(--text-secondary);">2 out of 5 required Kinder practice sessions logged</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Kinder Practical Build Matrix & Video Submission Tracker Top Banner -->
+        <div class="panel-card" id="kinderBuildMatrixBanner" style="margin-bottom: 20px; padding: 22px 26px; border-radius: var(--radius-lg); background: linear-gradient(135deg, #0E1B4D 0%, #162C7F 50%, #1E3A8A 100%); color: #FFFFFF; box-shadow: 0 10px 25px rgba(14, 27, 77, 0.2); position: relative; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.1);">
+            <div style="position: absolute; right: -20px; top: -30px; font-size: 140px; opacity: 0.05; pointer-events: none;">🛠️</div>
+            <div style="position: relative; z-index: 1; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
+                <div style="max-width: 520px;">
+                    <div style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 20px; background: rgba(69, 183, 205, 0.25); border: 1px solid rgba(69, 183, 205, 0.4); font-size: 11px; font-weight: 800; color: #EDF9FB; margin-bottom: 8px;">
+                        <span>⚙️</span>
+                        <span>INTERACTIVE BUILD MATRIX &amp; VIDEO SUBMISSION</span>
+                    </div>
+                    <h3 style="font-size: 19px; font-weight: 900; color: #FFFFFF; margin: 0 0 6px 0; letter-spacing: -0.2px;">
+                        Kinder Practical Build Matrix &amp; Video Tracker
+                    </h3>
+                    <p style="font-size: 13px; color: #CBD5E1; line-height: 1.5; margin: 0;">
+                        Preschool pedagogical validation: Verify physical assembly and upload video proof for each lesson. Real-time checklist syncs progress and awards instructor EXP &amp; Coins!
+                    </p>
+                </div>
+
+                <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+                    <!-- Real-time Counter 1: BUILDS DONE -->
+                    <div style="background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 12px; padding: 12px 18px; min-width: 135px;">
+                        <div style="font-size: 11px; font-weight: 800; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
+                            BUILDS DONE
+                        </div>
+                        <div style="font-size: 22px; font-weight: 900; color: #FFFFFF; display: flex; align-items: baseline; gap: 4px;">
+                            <span id="matrixBuildsCount" style="color: #34D399;">5</span>
+                            <span style="font-size: 14px; color: #94A3B8;">/ <span id="matrixBuildsTotal">10</span></span>
+                        </div>
+                        <div style="width: 100%; height: 5px; background: rgba(255, 255, 255, 0.15); border-radius: 3px; margin-top: 6px; overflow: hidden;">
+                            <div id="matrixBuildsBar" style="width: 50%; height: 100%; background: #34D399; border-radius: 3px; transition: width 0.3s ease;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Real-time Counter 2: VIDEOS UPLOADED -->
+                    <div style="background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 12px; padding: 12px 18px; min-width: 135px;">
+                        <div style="font-size: 11px; font-weight: 800; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
+                            VIDEOS UPLOADED
+                        </div>
+                        <div style="font-size: 22px; font-weight: 900; color: #FFFFFF; display: flex; align-items: baseline; gap: 4px;">
+                            <span id="matrixVideosCount" style="color: #60A5FA;">3</span>
+                            <span style="font-size: 14px; color: #94A3B8;">/ <span id="matrixVideosTotal">10</span></span>
+                        </div>
+                        <div style="width: 100%; height: 5px; background: rgba(255, 255, 255, 0.15); border-radius: 3px; margin-top: 6px; overflow: hidden;">
+                            <div id="matrixVideosBar" style="width: 30%; height: 100%; background: #60A5FA; border-radius: 3px; transition: width 0.3s ease;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Action Button: Copy Task Submission Sheet -->
+                    <button type="button" id="btnCopyTaskSubmissionSheet" style="padding: 12px 18px; border-radius: 12px; background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); color: #FFFFFF; font-size: 12.5px; font-weight: 900; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.35); transition: all 0.2s;">
+                        <span>📋</span>
+                        <span>Copy Task Submission Sheet</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Toast notification when copied -->
+            <div id="matrixCopySheetToast" style="display: none; margin-top: 14px; padding: 10px 14px; border-radius: 8px; background: rgba(16, 185, 129, 0.25); border: 1px solid rgba(52, 211, 153, 0.4); color: #A7F3D0; font-size: 12px; font-weight: 800; align-items: center; gap: 8px;">
+                <span>✓</span>
+                <span>Task Submission Sheet copied to clipboard! Ready to paste into Slack / Google Sheets.</span>
+            </div>
+        </div>
+
+        <!-- 4-Term Progress Overview & Sequential Unlock Cards Grid -->
+        <div id="kinderTermsProgressGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-bottom: 20px;">
+            <!-- Populated dynamically by app.js -->
+        </div>
+
+        <!-- Kinder Roadmap Jump-To Syllabus & 10 Lessons Schedule -->
+        <div class="panel-card" id="kinderRoadmapTermCard" style="margin-bottom: 24px; padding: 24px; border-radius: var(--radius-lg); background: #FFFFFF; border: 1px solid rgba(14, 27, 77, 0.08); box-shadow: var(--shadow-card);">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; margin-bottom: 18px; padding-bottom: 16px; border-bottom: 1px solid #F1F5F9;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div style="width: 44px; height: 44px; border-radius: var(--radius-md); background: #EDF9FB; color: var(--brand-teal); display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0; box-shadow: 0 2px 6px rgba(69, 183, 205, 0.15);">
+                        🗺️
+                    </div>
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <h3 id="kinderRoadmapTermHeading" style="font-size: 17px; font-weight: 900; color: var(--brand-navy); margin: 0;">
+                                Term 1 Syllabus &amp; Roadmap
+                            </h3>
+                            <span id="kinderRoadmapTermBadge" class="badge" style="background: var(--brand-teal-light); color: var(--brand-teal-hover); font-weight: 900; font-size: 11px;">
+                                10 LESSONS ACTIVE
+                            </span>
+                        </div>
+                        <p id="kinderRoadmapTermDesc" style="font-size: 12.5px; color: var(--text-secondary); margin: 2px 0 0 0;">
+                            Foundations of Robotics &amp; Electrical Exploration (Lessons K1.01 – K1.10)
+                        </p>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                    <div style="display: flex; gap: 6px;" id="kinderTermQuickBtns">
+                        <button type="button" class="btn-kinder-term-pill active" data-term="term-1" style="padding: 6px 14px; border-radius: 20px; font-size: 11.5px; font-weight: 800; border: 1.5px solid var(--brand-teal); background: var(--brand-teal); color: #FFF; cursor: pointer; transition: all 0.2s;">Term 1</button>
+                        <button type="button" class="btn-kinder-term-pill" data-term="term-2" style="padding: 6px 14px; border-radius: 20px; font-size: 11.5px; font-weight: 800; border: 1.5px solid #CBD5E1; background: #FFF; color: var(--brand-navy); cursor: pointer; transition: all 0.2s;">Term 2</button>
+                        <button type="button" class="btn-kinder-term-pill" data-term="term-3" style="padding: 6px 14px; border-radius: 20px; font-size: 11.5px; font-weight: 800; border: 1.5px solid #CBD5E1; background: #FFF; color: var(--brand-navy); cursor: pointer; transition: all 0.2s;">Term 3</button>
+                        <button type="button" class="btn-kinder-term-pill" data-term="term-4" style="padding: 6px 14px; border-radius: 20px; font-size: 11.5px; font-weight: 800; border: 1.5px solid #CBD5E1; background: #FFF; color: var(--brand-navy); cursor: pointer; transition: all 0.2s;">Term 4</button>
+                        <button type="button" class="btn-kinder-term-pill" data-term="all" style="padding: 6px 14px; border-radius: 20px; font-size: 11.5px; font-weight: 800; border: 1.5px solid #CBD5E1; background: #FFF; color: var(--brand-navy); cursor: pointer; transition: all 0.2s;">All</button>
+                    </div>
+                    <div style="position: relative;">
+                        <input type="text" id="inputFilterKinderLessons" placeholder="Search lesson or robot..." style="padding: 6px 12px 6px 30px; font-size: 12px; border-radius: var(--radius-md); border: 1px solid #CBD5E1; outline: none; width: 190px; font-weight: 600; color: var(--brand-navy);">
+                        <span style="position: absolute; left: 10px; top: 7px; font-size: 11px; color: #94A3B8;">🔍</span>
+                    </div>
+                    <button type="button" id="btnKinderMasterUnlock" style="padding: 6px 12px; border-radius: var(--radius-md); font-size: 11px; font-weight: 800; border: 1px solid #CBD5E1; background: #F8FAFC; color: var(--brand-navy); cursor: pointer; transition: all 0.2s;" title="Toggle progressive unlock restriction">
+                        🔒 Progressive Locks
+                    </button>
+                </div>
+            </div>
+
+            <!-- Locked Term Callout Banner (shown when a locked term is selected) -->
+            <div id="lockedTermCalloutBanner" style="display: none; background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%); border-left: 5px solid #F59E0B; border-radius: var(--radius-md); padding: 14px 18px; margin-bottom: 16px; box-shadow: 0 2px 6px rgba(245, 158, 11, 0.1);">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <span style="font-size: 26px;">🔒</span>
+                        <div>
+                            <div style="font-size: 13.5px; font-weight: 900; color: #92400E;" id="lockedTermCalloutTitle">Term 2 is Locked</div>
+                            <div style="font-size: 12px; color: #B45309;" id="lockedTermCalloutDesc">You must complete all 10 practical builds in Term 1 to unlock Term 2 lessons.</div>
+                        </div>
+                    </div>
+                    <button type="button" id="btnCalloutMasterUnlock" style="padding: 7px 14px; border-radius: 8px; background: #92400E; color: #FFFFFF; font-size: 11.5px; font-weight: 900; border: none; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                        <span>🔓</span>
+                        <span>Override Lock (Trainer Demo)</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Dynamic Lesson Cards & Accordion Container -->
+            <div id="kinderRoadmapLessonList" style="display: flex; flex-direction: column; gap: 10px;">
+                <!-- Populated by JavaScript -->
+            </div>
+        </div>
+
+        <!-- Conditional Manager Delegation Callout -->
+        <div id="delegationCalloutBox" style="background: linear-gradient(90deg, #FFFBEB, #FEF3C7); border-left: 5px solid #F59E0B; border-radius: var(--radius-md); padding: 18px 22px; margin-bottom: 24px; box-shadow: 0 2px 8px rgba(245, 158, 11, 0.1);">
+            <div style="display: flex; gap: 16px; align-items: flex-start;">
+                <span style="font-size: 30px;">⚠️</span>
+                <div style="flex: 1;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                        <h3 style="font-size: 14px; font-weight: 900; color: #92400E; margin: 0; text-transform: uppercase; letter-spacing: 0.5px;">
+                            Branch Manager Delegation Note (Supervised Training Protocol)
+                        </h3>
+                        <span class="badge" style="background: #F59E0B; color: #FFFFFF; font-weight: 900; font-size: 10px; padding: 2px 8px;">OVERSIGHT MANDATORY</span>
+                    </div>
+                    <p style="font-size: 12.5px; color: #78350F; line-height: 1.5; margin: 4px 0 10px 0;">
+                        This instructor has been assigned early to Kinder sessions to support branch roster needs prior to 100% solo certification completion. Under The Lab Indonesia Quality Framework, all classroom deliveries require co-teaching sign-off and weekly debriefs authorized by <strong>Sarah Wijaya (Branch Manager, Menteng Branch)</strong>.
+                    </p>
+                    <div style="display: flex; gap: 16px; font-size: 11.5px; font-weight: 800; color: #B45309;">
+                        <span>✓ Authorized by Sarah Wijaya</span>
+                        <span>•</span>
+                        <span>Delegation Ref: BM-MNT-2026-088</span>
+                        <span>•</span>
+                        <span>Solo Exam Status: 65% Completed</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Masterclass Video Card: "How to Teach The Lab Way" -->
+        <div class="panel-card" style="padding: 22px; border-radius: var(--radius-lg); margin-bottom: 24px; display: flex; flex-wrap: wrap; gap: 20px; align-items: center;">
+            <div id="btnPlayMasterclass" style="position: relative; width: 260px; height: 150px; border-radius: var(--radius-md); overflow: hidden; cursor: pointer; flex-shrink: 0; box-shadow: var(--shadow-card);">
+                <img src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=600&q=80" alt="Video Masterclass" style="width: 100%; height: 100%; object-fit: cover;">
+                <div style="position: absolute; inset: 0; background: rgba(14, 27, 77, 0.45); display: flex; align-items: center; justify-content: center;">
+                    <div style="width: 48px; height: 48px; border-radius: 50%; background: #F59E0B; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 18px; box-shadow: 0 4px 14px rgba(0,0,0,0.3);">
+                        ▶
+                    </div>
+                </div>
+                <span style="position: absolute; bottom: 8px; right: 8px; background: rgba(0,0,0,0.75); color: #FFFFFF; font-size: 10.5px; font-weight: 800; padding: 2px 6px; border-radius: 4px;">8:45 Min</span>
+            </div>
+
+            <div style="flex: 1;">
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                    <span class="badge" style="background: var(--brand-teal-light); color: var(--brand-teal-hover); font-weight: 800; font-size: 10.5px;">PEDAGOGY MASTERCLASS</span>
+                    <span style="font-size: 11px; color: var(--text-muted);">Kinder Screen-Free Methodology</span>
+                </div>
+                <h3 style="font-size: 17px; font-weight: 900; color: var(--brand-navy); margin: 0 0 6px 0;">How to Teach The Lab Way (Kinder Edition)</h3>
+                <p style="font-size: 12.5px; color: var(--text-secondary); margin-bottom: 14px; line-height: 1.5;">
+                    Master the 3 Golden Rules: <em>"Discovery Before Theory"</em>, <em>"Never Touch the Student's Blocks"</em>, and <em>"Celebrate the Tumble"</em>.
+                </p>
+                <button class="btn btn-primary" id="btnLaunchMasterclassModal" style="background: var(--brand-navy); color: #FFFFFF; font-weight: 800; font-size: 12px; padding: 8px 16px; border-radius: var(--radius-md); border: none; cursor: pointer;">
+                    Watch Masterclass Video ▶
+                </button>
+            </div>
+        </div>
+
+        <!-- Sequential Timeline Nodes -->
+        <div class="panel-card" style="padding: 24px; border-radius: var(--radius-lg);">
+            <h3 style="font-size: 14px; font-weight: 900; color: var(--brand-navy); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 20px;">
+                Kinder Sequential Milestone Roadmap
+            </h3>
+
+            <div style="position: relative; padding-left: 28px; border-left: 3px solid rgba(69, 183, 205, 0.3);">
+                <!-- Node 1 -->
+                <div style="position: relative; margin-bottom: 28px;">
+                    <div style="position: absolute; left: -42px; top: 0; width: 26px; height: 26px; border-radius: 50%; background: #10B981; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 900; box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);">
+                        ✓
+                    </div>
+                    <div>
+                        <span style="font-size: 11px; font-weight: 800; color: #059669;">PHASE 1 • COMPLETED</span>
+                        <h4 style="font-size: 14.5px; font-weight: 900; color: var(--brand-navy); margin: 2px 0;">Kinder Classroom Setup &amp; Safety Protocol</h4>
+                        <p style="font-size: 12px; color: var(--text-secondary); margin: 0;">Choking hazard screening, fine-motor block sanitation, emergency contact protocol.</p>
+                    </div>
+                </div>
+
+                <!-- Node 2 -->
+                <div style="position: relative; margin-bottom: 28px;">
+                    <div style="position: absolute; left: -42px; top: 0; width: 26px; height: 26px; border-radius: 50%; background: var(--brand-teal); color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 900; box-shadow: 0 2px 6px rgba(69, 183, 205, 0.4);">
+                        ⚡
+                    </div>
+                    <div>
+                        <span style="font-size: 11px; font-weight: 800; color: var(--brand-teal);">PHASE 2 • CURRENT ACTIVE</span>
+                        <h4 style="font-size: 14.5px; font-weight: 900; color: var(--brand-navy); margin: 2px 0;">Tactile Coding Foundations &amp; Storytelling</h4>
+                        <p style="font-size: 12px; color: var(--text-secondary); margin: 0;">Mastering tangible sequence tiles, motor speed switches, and animal mimicry scripts.</p>
+                    </div>
+                </div>
+
+                <!-- Node 3 -->
+                <div style="position: relative; margin-bottom: 28px;">
+                    <div style="position: absolute; left: -42px; top: 0; width: 26px; height: 26px; border-radius: 50%; background: #E2E8F0; color: #64748B; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 900;">
+                        3
+                    </div>
+                    <div>
+                        <span style="font-size: 11px; font-weight: 800; color: #94A3B8;">PHASE 3 • UPCOMING</span>
+                        <h4 style="font-size: 14.5px; font-weight: 900; color: #64748B; margin: 2px 0;">Kinder Trial Class Co-Delivery Shadowing</h4>
+                        <p style="font-size: 12px; color: #94A3B8; margin: 0;">Shadowing 2 trial classes + executing the 5-minute parent showcase with EC.</p>
+                    </div>
+                </div>
+
+                <!-- Node 4 -->
+                <div style="position: relative;">
+                    <div style="position: absolute; left: -42px; top: 0; width: 26px; height: 26px; border-radius: 50%; background: #E2E8F0; color: #64748B; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 900;">
+                        🔒
+                    </div>
+                    <div>
+                        <span style="font-size: 11px; font-weight: 800; color: #94A3B8;">PHASE 4 • CERTIFICATION GATE</span>
+                        <h4 style="font-size: 14.5px; font-weight: 900; color: #64748B; margin: 2px 0;">Solo Teaching Practical Evaluation</h4>
+                        <p style="font-size: 12px; color: #94A3B8; margin: 0;">Evaluated live by Sarah Wijaya on student engagement, joy, and class management.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SUBPANEL 3: INTERACTIVE TRAINING CURRICULUM & QUIZ (KINDER) -->
+    <div id="training-subpanel-curriculum" class="training-subpanel">
+        
+        <!-- Progression Lock Header & Lesson Tabs -->
+        <div class="panel-card" style="padding: 22px; border-radius: var(--radius-lg); margin-bottom: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; margin-bottom: 16px;">
+                <div>
+                    <h2 style="font-size: 18px; font-weight: 900; color: var(--brand-navy); margin: 0;">
+                        Kinder Level 1: Curriculum Progression
+                    </h2>
+                    <p style="font-size: 12.5px; color: var(--text-secondary); margin-top: 2px;">
+                        Strict progression: Complete at least 3 components of Lesson 1 to unlock Lesson 2.
+                    </p>
+                </div>
+                <div>
+                    <span class="badge" style="background: var(--brand-teal-light); color: var(--brand-teal-hover); font-weight: 900; font-size: 12px;" id="kinderLessonProgressBadge">
+                        1 / 5 Steps Done
+                    </span>
+                </div>
+            </div>
+
+            <!-- Lesson Progression Tabs -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px;">
+                <!-- Lesson 1 (Unlocked) -->
+                <div class="lesson-tab-box active" id="lessonBox1" style="border: 2px solid var(--brand-teal); background: #EDF9FB; border-radius: var(--radius-md); padding: 14px; cursor: pointer;">
+                    <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: 800; color: var(--brand-teal); margin-bottom: 4px;">
+                        <span>LESSON 1</span>
+                        <span>🔓 ACTIVE</span>
+                    </div>
+                    <div style="font-size: 14px; font-weight: 900; color: var(--brand-navy);">Animal Robot Adventure</div>
+                    <div style="font-size: 11.5px; color: var(--text-secondary); margin-top: 2px;">Tactile bricks &amp; animal rescue</div>
+                </div>
+
+                <!-- Lesson 2 (Dynamic Unlock) -->
+                <div class="lesson-tab-box locked" id="lessonBox2" style="border: 1px solid #E2E8F0; background: #F8FAFC; border-radius: var(--radius-md); padding: 14px; cursor: not-allowed; opacity: 0.65;">
+                    <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: 800; color: #64748B; margin-bottom: 4px;">
+                        <span id="lesson2Label">LESSON 2</span>
+                        <span id="lesson2LockIcon">🔒 LOCKED</span>
+                    </div>
+                    <div style="font-size: 14px; font-weight: 900; color: #64748B;" id="lesson2Title">Motor Wonder Train</div>
+                    <div style="font-size: 11.5px; color: #94A3B8; margin-top: 2px;" id="lesson2Sub">Requires 3 steps of Lesson 1</div>
+                </div>
+
+                <!-- Lesson 3 (Locked) -->
+                <div class="lesson-tab-box locked" style="border: 1px solid #E2E8F0; background: #F8FAFC; border-radius: var(--radius-md); padding: 14px; cursor: not-allowed; opacity: 0.5;">
+                    <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: 800; color: #94A3B8; margin-bottom: 4px;">
+                        <span>LESSON 3</span>
+                        <span>🔒 LOCKED</span>
+                    </div>
+                    <div style="font-size: 14px; font-weight: 900; color: #94A3B8;">Sound Sensing Puppy</div>
+                    <div style="font-size: 11.5px; color: #94A3B8; margin-top: 2px;">Requires Lesson 2 completion</div>
+                </div>
+            </div>
+
+            <!-- Dynamic Lesson 2 Unlock Banner -->
+            <div id="lessonUnlockBanner" style="display: none; margin-top: 14px; padding: 12px 16px; border-radius: var(--radius-md); background: linear-gradient(90deg, #ECFDF5, #F0FDF4); border: 1px solid #A7F3D0;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="font-size: 12px; font-weight: 800; color: #065F46;">
+                        🎉 <strong>Progression Unlocked:</strong> You completed 3+ steps in Lesson 1! Lesson 2 (Motor Wonder Train) is now unlocked.
+                    </div>
+                    <span class="badge" style="background: #10B981; color: #FFFFFF; font-weight: 900; font-size: 10.5px;">+50 EXP BONUS</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5-Step Lesson Stepper Accordion -->
+        <div class="panel-card" style="padding: 24px; border-radius: var(--radius-lg); margin-bottom: 24px;">
+            <h3 style="font-size: 15px; font-weight: 900; color: var(--brand-navy); margin: 0 0 16px 0;">
+                Lesson 1 Plan Stepper: Animal Robot Adventure
+            </h3>
+
+            <!-- Step 1: What to do -->
+            <div class="accordion-step-box" style="border: 1px solid #E2E8F0; border-radius: var(--radius-md); margin-bottom: 12px; overflow: hidden;">
+                <div class="accordion-step-header" data-step="1" style="background: #F8FAFC; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <span style="width: 26px; height: 26px; border-radius: 50%; background: var(--brand-navy); color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 900;">1</span>
+                        <div>
+                            <div style="font-size: 10px; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">Step 1</div>
+                            <div style="font-size: 13.5px; font-weight: 900; color: var(--brand-navy);">What to Do (Kickoff &amp; Story Warmup)</div>
+                        </div>
+                    </div>
+                    <span class="step-status-badge" id="stepBadge1" style="background: #ECFDF5; color: #065F46; font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 999px;">✓ Done</span>
+                </div>
+                <div class="accordion-step-content" id="stepContent1" style="padding: 16px 18px; background: #FFFFFF; border-top: 1px solid #E2E8F0;">
+                    <p style="font-size: 12.5px; color: var(--text-secondary); line-height: 1.5; margin: 0 0 10px 0;">
+                        Begin with the 5-minute <strong>"Zoo Safari Rescue"</strong> story hook. Ask students: <em>"The baby giraffe is trapped across the river! Can our robot build a bridge and drive safely across?"</em>
+                    </p>
+                    <button class="btn btn-sm btn-step-toggle" data-step="1" style="background: var(--brand-navy); color: #FFFFFF; font-size: 11px; font-weight: 800; padding: 6px 14px; border-radius: var(--radius-sm); border: none; cursor: pointer;">
+                        Toggle Step 1 Completed
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 2: Tools & Dropzone -->
+            <div class="accordion-step-box" style="border: 1px solid #E2E8F0; border-radius: var(--radius-md); margin-bottom: 12px; overflow: hidden;">
+                <div class="accordion-step-header" data-step="2" style="background: #F8FAFC; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <span style="width: 26px; height: 26px; border-radius: 50%; background: var(--brand-navy); color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 900;">2</span>
+                        <div>
+                            <div style="font-size: 10px; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">Step 2</div>
+                            <div style="font-size: 13.5px; font-weight: 900; color: var(--brand-navy);">Tools &amp; Robot Photo Dropzone</div>
+                        </div>
+                    </div>
+                    <span class="step-status-badge" id="stepBadge2" style="background: #F1F5F9; color: #64748B; font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 999px;">Pending</span>
+                </div>
+                <div class="accordion-step-content" id="stepContent2" style="padding: 16px 18px; background: #FFFFFF; border-top: 1px solid #E2E8F0; display: none;">
+                    <p style="font-size: 12.5px; color: var(--text-secondary); margin: 0 0 12px 0;">
+                        Required Equipment: Kinder Tactile Bricks Set, Motor Core Hub, 2 Large Yellow Wheels, Green Start Tile, Yellow Sound Tile.
+                    </p>
+
+                    <!-- Drag & Drop Dropzone UI -->
+                    <div id="dropzoneBox" style="border: 2px dashed rgba(69, 183, 205, 0.4); background: #EDF9FB; border-radius: var(--radius-md); padding: 24px; text-align: center; cursor: pointer; position: relative; margin-bottom: 14px;">
+                        <input type="file" id="dropzoneFileInput" accept="image/*" style="position: absolute; inset: 0; opacity: 0; cursor: pointer;">
+                        <div style="font-size: 28px; margin-bottom: 4px;">📸</div>
+                        <div style="font-size: 13px; font-weight: 900; color: var(--brand-navy);">Drag &amp; Drop Robot / Tools Photos Here or <span style="color: var(--brand-teal); text-decoration: underline;">Browse</span></div>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">Earns +15 Coins per uploaded build verification photo</div>
+                    </div>
+
+                    <!-- Photo Thumbnails Gallery -->
+                    <div id="photoGalleryContainer" style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px;">
+                        <img src="https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=300&q=80" style="width: 70px; height: 70px; object-fit: cover; border-radius: 8px; border: 1px solid #E2E8F0;">
+                        <img src="https://images.unsplash.com/photo-1563770660941-20978e870e26?auto=format&fit=crop&w=300&q=80" style="width: 70px; height: 70px; object-fit: cover; border-radius: 8px; border: 1px solid #E2E8F0;">
+                    </div>
+
+                    <button class="btn btn-sm btn-step-toggle" data-step="2" style="background: var(--brand-navy); color: #FFFFFF; font-size: 11px; font-weight: 800; padding: 6px 14px; border-radius: var(--radius-sm); border: none; cursor: pointer;">
+                        Toggle Step 2 Completed
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 3: Concept & Challenge -->
+            <div class="accordion-step-box" style="border: 1px solid #E2E8F0; border-radius: var(--radius-md); margin-bottom: 12px; overflow: hidden;">
+                <div class="accordion-step-header" data-step="3" style="background: #F8FAFC; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <span style="width: 26px; height: 26px; border-radius: 50%; background: var(--brand-navy); color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 900;">3</span>
+                        <div>
+                            <div style="font-size: 10px; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">Step 3</div>
+                            <div style="font-size: 13.5px; font-weight: 900; color: var(--brand-navy);">Concept &amp; Challenge (Linear Sequencing)</div>
+                        </div>
+                    </div>
+                    <span class="step-status-badge" id="stepBadge3" style="background: #F1F5F9; color: #64748B; font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 999px;">Pending</span>
+                </div>
+                <div class="accordion-step-content" id="stepContent3" style="padding: 16px 18px; background: #FFFFFF; border-top: 1px solid #E2E8F0; display: none;">
+                    <p style="font-size: 12.5px; color: var(--text-secondary); line-height: 1.5; margin: 0 0 10px 0;">
+                        <strong>Concept:</strong> Cause &amp; Effect + Linear Sequencing. A robot only moves in the order we arrange physical blocks. Program the robot to move forward 2 steps, play an animal roar, and stop before the edge.
+                    </p>
+                    <button class="btn btn-sm btn-step-toggle" data-step="3" style="background: var(--brand-navy); color: #FFFFFF; font-size: 11px; font-weight: 800; padding: 6px 14px; border-radius: var(--radius-sm); border: none; cursor: pointer;">
+                        Toggle Step 3 Completed
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 4: Activity & Games -->
+            <div class="accordion-step-box" style="border: 1px solid #E2E8F0; border-radius: var(--radius-md); margin-bottom: 12px; overflow: hidden;">
+                <div class="accordion-step-header" data-step="4" style="background: #F8FAFC; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <span style="width: 26px; height: 26px; border-radius: 50%; background: var(--brand-navy); color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 900;">4</span>
+                        <div>
+                            <div style="font-size: 10px; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">Step 4</div>
+                            <div style="font-size: 13.5px; font-weight: 900; color: var(--brand-navy);">Activity &amp; Games (Robot Freeze Dance)</div>
+                        </div>
+                    </div>
+                    <span class="step-status-badge" id="stepBadge4" style="background: #F1F5F9; color: #64748B; font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 999px;">Pending</span>
+                </div>
+                <div class="accordion-step-content" id="stepContent4" style="padding: 16px 18px; background: #FFFFFF; border-top: 1px solid #E2E8F0; display: none;">
+                    <p style="font-size: 12.5px; color: var(--text-secondary); line-height: 1.5; margin: 0 0 10px 0;">
+                        <strong>Classroom Game:</strong> <em>"Robot Freeze Dance"</em>. When music plays, students press their Green Start Block to drive. When music pauses, they tap the Red Stop Block. Teaches reaction speed, auditory listening, and motor control.
+                    </p>
+                    <button class="btn btn-sm btn-step-toggle" data-step="4" style="background: var(--brand-navy); color: #FFFFFF; font-size: 11px; font-weight: 800; padding: 6px 14px; border-radius: var(--radius-sm); border: none; cursor: pointer;">
+                        Toggle Step 4 Completed
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 5: Video Finder Tutorial Link -->
+            <div class="accordion-step-box" style="border: 1px solid #E2E8F0; border-radius: var(--radius-md); overflow: hidden;">
+                <div class="accordion-step-header" data-step="5" style="background: #F8FAFC; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <span style="width: 26px; height: 26px; border-radius: 50%; background: var(--brand-navy); color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 900;">5</span>
+                        <div>
+                            <div style="font-size: 10px; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">Step 5</div>
+                            <div style="font-size: 13.5px; font-weight: 900; color: var(--brand-navy);">Video Finder Tutorial Link</div>
+                        </div>
+                    </div>
+                    <span class="step-status-badge" id="stepBadge5" style="background: #F1F5F9; color: #64748B; font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 999px;">Pending</span>
+                </div>
+                <div class="accordion-step-content" id="stepContent5" style="padding: 16px 18px; background: #FFFFFF; border-top: 1px solid #E2E8F0; display: none;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: var(--radius-md); padding: 12px 16px; margin-bottom: 12px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="font-size: 24px;">📺</span>
+                            <div>
+                                <div style="font-size: 13px; font-weight: 900; color: var(--brand-navy);">Tutorial #KD-101: Animal Robot Assembly</div>
+                                <div style="font-size: 11px; color: var(--text-muted);">Duration: 4:30 Min • High Definition Step-by-Step</div>
+                            </div>
+                        </div>
+                        <button class="btn" id="btnLaunchTutorialVideo" style="background: var(--brand-teal); color: #FFFFFF; font-size: 11.5px; font-weight: 800; padding: 6px 12px; border-radius: var(--radius-sm); border: none; cursor: pointer;">
+                            Watch Video ▶
+                        </button>
+                    </div>
+                    <button class="btn btn-sm btn-step-toggle" data-step="5" style="background: var(--brand-navy); color: #FFFFFF; font-size: 11px; font-weight: 800; padding: 6px 14px; border-radius: var(--radius-sm); border: none; cursor: pointer;">
+                        Toggle Step 5 Completed
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Drag & Drop Question Matching Game Skeleton/UI -->
+        <div class="panel-card" style="padding: 24px; border-radius: var(--radius-lg); margin-bottom: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <div>
+                    <span class="badge" style="background: #FEF3C7; color: #B45309; font-weight: 800; font-size: 10.5px; margin-bottom: 4px;">🧩 INTERACTIVE MATCHING GAME</span>
+                    <h3 style="font-size: 16px; font-weight: 900; color: var(--brand-navy); margin: 0;">Match the Tactile Block to its Robot Action</h3>
+                    <p style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">
+                        Click a coding block on the left, then click its corresponding action target on the right.
+                    </p>
+                </div>
+                <button class="btn btn-sm" id="btnResetMatchGame" style="background: #F1F5F9; color: var(--brand-navy); font-size: 11px; font-weight: 800; padding: 6px 12px; border-radius: var(--radius-sm); border: none; cursor: pointer;">
+                    Reset Game ↺
+                </button>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+                <!-- Left: Available Blocks -->
+                <div style="space-y: 10px;" id="matchItemsCol">
+                    <div style="font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; margin-bottom: 8px;">Available Coding Tiles</div>
+                    
+                    <div class="match-token" data-token-id="token-green" style="padding: 12px 14px; border-radius: var(--radius-md); border: 1px solid #E2E8F0; background: #FFFFFF; display: flex; justify-content: space-between; align-items: center; cursor: pointer; margin-bottom: 10px; transition: all 0.2s;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="font-size: 18px;">🟢</span>
+                            <div>
+                                <div style="font-size: 13px; font-weight: 900; color: var(--brand-navy);">Green Start Block</div>
+                                <div style="font-size: 11px; color: var(--text-secondary);">Initiates motor movement</div>
+                            </div>
+                        </div>
+                        <span class="match-select-indicator" style="font-size: 11px; font-weight: 800; color: var(--brand-teal);">Select</span>
+                    </div>
+
+                    <div class="match-token" data-token-id="token-yellow" style="padding: 12px 14px; border-radius: var(--radius-md); border: 1px solid #E2E8F0; background: #FFFFFF; display: flex; justify-content: space-between; align-items: center; cursor: pointer; margin-bottom: 10px; transition: all 0.2s;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="font-size: 18px;">🟡</span>
+                            <div>
+                                <div style="font-size: 13px; font-weight: 900; color: var(--brand-navy);">Yellow Sound Block</div>
+                                <div style="font-size: 11px; color: var(--text-secondary);">Triggers animal audio roar</div>
+                            </div>
+                        </div>
+                        <span class="match-select-indicator" style="font-size: 11px; font-weight: 800; color: var(--brand-teal);">Select</span>
+                    </div>
+
+                    <div class="match-token" data-token-id="token-red" style="padding: 12px 14px; border-radius: var(--radius-md); border: 1px solid #E2E8F0; background: #FFFFFF; display: flex; justify-content: space-between; align-items: center; cursor: pointer; margin-bottom: 10px; transition: all 0.2s;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="font-size: 18px;">🔴</span>
+                            <div>
+                                <div style="font-size: 13px; font-weight: 900; color: var(--brand-navy);">Red Stop Block</div>
+                                <div style="font-size: 11px; color: var(--text-secondary);">Cuts motor power &amp; brakes</div>
+                            </div>
+                        </div>
+                        <span class="match-select-indicator" style="font-size: 11px; font-weight: 800; color: var(--brand-teal);">Select</span>
+                    </div>
+                </div>
+
+                <!-- Right: Target Slots -->
+                <div style="space-y: 10px;" id="matchSlotsCol">
+                    <div style="font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; margin-bottom: 8px;">Target Robot Action Slots</div>
+
+                    <div class="match-slot" data-slot-id="slot-start" data-expected="token-green" style="padding: 14px; border-radius: var(--radius-md); border: 2px dashed #CBD5E1; background: #F8FAFC; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; cursor: pointer;">
+                        <div style="font-size: 12.5px; font-weight: 800; color: #334155;">Drive forward 2 steps into the zoo</div>
+                        <span class="slot-status-label" style="font-size: 11px; color: var(--text-muted); font-weight: 700;">Empty Slot</span>
+                    </div>
+
+                    <div class="match-slot" data-slot-id="slot-sound" data-expected="token-yellow" style="padding: 14px; border-radius: var(--radius-md); border: 2px dashed #CBD5E1; background: #F8FAFC; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; cursor: pointer;">
+                        <div style="font-size: 12.5px; font-weight: 800; color: #334155;">Make a roar sound when seeing the tiger</div>
+                        <span class="slot-status-label" style="font-size: 11px; color: var(--text-muted); font-weight: 700;">Empty Slot</span>
+                    </div>
+
+                    <div class="match-slot" data-slot-id="slot-stop" data-expected="token-red" style="padding: 14px; border-radius: var(--radius-md); border: 2px dashed #CBD5E1; background: #F8FAFC; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; cursor: pointer;">
+                        <div style="font-size: 12.5px; font-weight: 800; color: #334155;">Halt the motor before touching the river edge</div>
+                        <span class="slot-status-label" style="font-size: 11px; color: var(--text-muted); font-weight: 700;">Empty Slot</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Student Quiz Mockup & Teacher's Guide (ELI4) -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px;">
+            <!-- Student Gamified View Mockup -->
+            <div class="panel-card" style="padding: 22px; border-radius: var(--radius-lg); background: linear-gradient(135deg, #EDF9FB, #FFFFFF); border: 1px solid rgba(69, 183, 205, 0.3);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 24px;">🤖</span>
+                        <div>
+                            <div style="font-size: 10.5px; font-weight: 800; color: var(--brand-teal); text-transform: uppercase;">Student View Mockup</div>
+                            <h4 style="font-size: 14px; font-weight: 900; color: var(--brand-navy); margin: 0;">Kiko the Robot Quiz</h4>
+                        </div>
+                    </div>
+                    <span class="badge" style="background: #FEF3C7; color: #B45309; font-weight: 800; font-size: 11px;">⭐ 3 Stars</span>
+                </div>
+
+                <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: var(--radius-md); padding: 16px; margin-bottom: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
+                    <div style="font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px;">Question 1:</div>
+                    <div style="font-size: 13.5px; font-weight: 900; color: var(--brand-navy); margin-bottom: 12px;">
+                        "Which block should Kiko tap to start walking into the jungle?"
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <button style="padding: 10px; border-radius: var(--radius-md); border: 2px solid #10B981; background: #ECFDF5; color: #065F46; font-weight: 800; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                            <span>🟢</span> Green Start
+                        </button>
+                        <button style="padding: 10px; border-radius: var(--radius-md); border: 1px solid #E2E8F0; background: #F8FAFC; color: #64748B; font-weight: 800; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                            <span>🔴</span> Red Stop
+                        </button>
+                    </div>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; font-size: 11.5px; color: var(--text-secondary);">
+                    <span>🔊 Read aloud active</span>
+                    <span style="color: #059669; font-weight: 800;">Answer Verified ✓</span>
+                </div>
+            </div>
+
+            <!-- Teacher's Guide to Simplify Concepts (ELI4) -->
+            <div class="panel-card" style="padding: 22px; border-radius: var(--radius-lg);">
+                <span class="badge" style="background: #FEF3C7; color: #B45309; font-weight: 800; font-size: 10.5px; margin-bottom: 6px;">PEDAGOGICAL REFERENCE</span>
+                <h4 style="font-size: 15px; font-weight: 900; color: var(--brand-navy); margin: 0 0 10px 0;">Teacher's Guide to Simplify Concepts (ELI4)</h4>
+                <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px;">
+                    Verbal analogies crafted specifically for 4-year-olds:
+                </p>
+
+                <div style="space-y: 10px;">
+                    <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: var(--radius-md); padding: 12px; margin-bottom: 8px;">
+                        <div style="font-size: 12px; font-weight: 900; color: var(--brand-navy); margin-bottom: 2px;">1. Explaining an "Algorithm"</div>
+                        <div style="font-size: 11.5px; color: #475569; font-style: italic;">
+                            "Just like bedtime: 1. Put on pajamas, 2. Brush teeth, 3. Read story! If we put pajamas on after the story, we fall asleep in dirty clothes!"
+                        </div>
+                    </div>
+
+                    <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: var(--radius-md); padding: 12px; margin-bottom: 8px;">
+                        <div style="font-size: 12px; font-weight: 900; color: var(--brand-navy); margin-bottom: 2px;">2. Explaining "Sensors"</div>
+                        <div style="font-size: 11.5px; color: #475569; font-style: italic;">
+                            "Sensors are the robot's eyes and ears. When it feels our hand tap its nose, it knows it's time to wake up and play!"
+                        </div>
+                    </div>
+
+                    <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: var(--radius-md); padding: 12px;">
+                        <div style="font-size: 12px; font-weight: 900; color: var(--brand-navy); margin-bottom: 2px;">3. Handling Frustration When Blocks Tumble</div>
+                        <div style="font-size: 11.5px; color: #475569; font-style: italic;">
+                            "High five! When the tower falls, our brain just discovered a new puzzle to solve. Let's make the base twice as wide!"
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</section>
         </main>
     </div>
 
@@ -1682,6 +2750,203 @@ pm2 restart thelab-training</code></pre>
         <div style="position: relative; max-width: 90vw; max-height: 90vh; display: flex; flex-direction: column; align-items: center;">
             <button class="btn-close" id="btnCloseLightbox" style="position: absolute; top: -40px; right: 0; color: #FFFFFF; font-size: 28px; background: none; border: none; cursor: pointer;">&times;</button>
             <img id="qaLightboxImg" src="" alt="Enlarged screenshot" style="max-width: 100%; max-height: 85vh; border-radius: 8px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); object-fit: contain;">
+        </div>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- TRAINING AREA MODALS                                       -->
+    <!-- ======================================================== -->
+
+    <!-- 1. Role Explainer Modal (Who is SPA? Who is EC?) -->
+    <div class="modal-overlay" id="trainingRoleModal">
+        <div class="modal-box" style="max-width: 580px; width: 95vw;">
+            <div class="modal-header">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 20px;">🤝</span>
+                    <h3 style="font-size: 17px; margin: 0; color: var(--brand-navy);">Key Role Calibration Guide</h3>
+                </div>
+                <button class="btn-close" id="btnCloseRoleModal">&times;</button>
+            </div>
+            <div class="modal-body" style="padding: 18px 22px;">
+                <div class="training-track-toggle" style="margin-bottom: 16px; display: flex; width: 100%;">
+                    <button class="track-btn active" id="btnRoleTabSpa" style="flex: 1; text-align: center;">SPA (Student Progress Advisor)</button>
+                    <button class="track-btn" id="btnRoleTabEc" style="flex: 1; text-align: center;">EC (Education Consultant)</button>
+                </div>
+
+                <div id="roleContentSpa" style="font-size: 13px; color: var(--text-body); line-height: 1.5;">
+                    <p><strong>Who is SPA?</strong> The Student Progress Advisor oversees long-term student milestone attainment, attendance integrity, and parent engagement.</p>
+                    <div style="background: var(--brand-teal-light); border: 1px solid rgba(69, 183, 205, 0.3); border-radius: 12px; padding: 12px; margin-top: 10px;">
+                        <strong style="color: var(--brand-navy); display: block; margin-bottom: 4px;">Daily Instructor Handshake with SPA:</strong>
+                        <ul style="padding-left: 18px; margin: 0; font-size: 12px; color: #155E75;">
+                            <li>File weekly progress log flags on students needing extra encouragement.</li>
+                            <li>Flag sudden attendance dips (2 consecutive absences).</li>
+                            <li>Submit milestone evaluations before end-of-term certification.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div id="roleContentEc" style="font-size: 13px; color: var(--text-body); line-height: 1.5; display: none;">
+                    <p><strong>Who is EC?</strong> The Education Consultant leads student discovery, trial class scheduling, admissions, and course enrollment conversion.</p>
+                    <div style="background: var(--brand-yellow-light); border: 1px solid rgba(246, 197, 81, 0.4); border-radius: 12px; padding: 12px; margin-top: 10px;">
+                        <strong style="color: #8C5E00; display: block; margin-bottom: 4px;">Daily Instructor Handshake with EC:</strong>
+                        <ul style="padding-left: 18px; margin: 0; font-size: 12px; color: #78350F;">
+                            <li>Receive pre-class student dossier (age, interest, parent expectations).</li>
+                            <li>Deliver high-energy 45-minute trial class experience.</li>
+                            <li>Debrief EC directly within 5 minutes of class finish with diagnostic recommendation.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="padding: 12px 22px;">
+                <button type="button" class="btn btn-primary" id="btnConfirmRoleModal" style="width: 100%;">
+                    <span>Understood &amp; Close</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. "The Lab Way" Video Player Modal -->
+    <div class="modal-overlay" id="trainingVideoModal" style="background: rgba(14, 27, 77, 0.85); backdrop-filter: blur(8px);">
+        <div class="modal-box" style="max-width: 780px; width: 95vw; background: #0E1B4D; color: #FFFFFF; border: 1px solid rgba(255, 255, 255, 0.12); padding: 0; overflow: hidden;">
+            <div class="modal-header" style="padding: 14px 20px; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+                <div>
+                    <span class="badge" style="background: var(--brand-yellow); color: var(--brand-navy); font-weight: 800; font-size: 10px;">PEDAGOGY MASTERCLASS</span>
+                    <h4 style="font-size: 15px; margin: 4px 0 0 0; color: #FFFFFF;">How to Teach &quot;The Lab Way&quot; (Inquiry-Led Learning)</h4>
+                </div>
+                <button class="btn-close" id="btnCloseVideoModal" style="color: #FFFFFF;">&times;</button>
+            </div>
+            <div style="aspect-ratio: 16/9; background: #000000; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative;">
+                <div style="width: 64px; height: 64px; border-radius: 50%; background: var(--brand-yellow); color: var(--brand-navy); display: flex; align-items: center; justify-content: center; font-size: 26px; cursor: pointer; box-shadow: 0 0 30px rgba(246, 197, 81, 0.5);">
+                    ▶
+                </div>
+                <p style="font-size: 12px; color: rgba(255, 255, 255, 0.7); margin-top: 14px;">
+                    Streaming Masterclass: <strong style="color: #FFFFFF;">The 3 Golden Rules of Interactive Classroom Coaching</strong> (1080p 60fps)
+                </p>
+            </div>
+            <div class="modal-footer" style="padding: 14px 20px; background: rgba(0, 0, 0, 0.3); border-top: 1px solid rgba(255, 255, 255, 0.08); display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 12px; color: rgba(255, 255, 255, 0.75);">Complete video playback to claim <strong>+50 Lab Coins</strong>.</span>
+                <button type="button" class="btn btn-primary" id="btnClaimVideoCoins" style="background: var(--color-emerald); border: none; font-weight: 800;">
+                    <span>Mark Video Watched ✓ (+50 Coins)</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. Rewards Store Modal -->
+    <div class="modal-overlay" id="trainingStoreModal">
+        <div class="modal-box" style="max-width: 680px; width: 95vw;">
+            <div class="modal-header">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 24px;">🪙</span>
+                    <div>
+                        <h3 style="font-size: 18px; margin: 0; color: var(--brand-navy);">The Lab Instructor Perks Store</h3>
+                        <p style="font-size: 12px; color: var(--text-secondary); margin: 2px 0 0 0;">
+                            Your Balance: <strong style="color: var(--brand-navy);" id="storeModalBalance">450 Coins</strong>
+                        </p>
+                    </div>
+                </div>
+                <button class="btn-close" id="btnCloseStoreModal">&times;</button>
+            </div>
+            <div class="modal-body" style="padding: 18px 22px;">
+                <div class="training-store-grid">
+                    <div class="store-perk-card">
+                        <div class="perk-header">
+                            <span class="perk-icon">☕</span>
+                            <span class="perk-price">150 Coins</span>
+                        </div>
+                        <h5 class="perk-title">Specialty Coffee Voucher</h5>
+                        <p class="perk-desc">IDR 50k voucher valid at partner cafes near all branch centers.</p>
+                        <button type="button" class="btn btn-sm btn-primary btn-redeem-perk" data-cost="150" data-name="Coffee Voucher">Redeem Perk</button>
+                    </div>
+
+                    <div class="store-perk-card">
+                        <div class="perk-header">
+                            <span class="perk-icon">👕</span>
+                            <span class="perk-price">500 Coins</span>
+                        </div>
+                        <h5 class="perk-title">The Lab Official Hoodie</h5>
+                        <p class="perk-desc">Custom premium royal navy instructor hoodie with embroidered logo badge.</p>
+                        <button type="button" class="btn btn-sm btn-primary btn-redeem-perk" data-cost="500" data-name="Official Hoodie">Redeem Perk</button>
+                    </div>
+
+                    <div class="store-perk-card">
+                        <div class="perk-header">
+                            <span class="perk-icon">📅</span>
+                            <span class="perk-price">300 Coins</span>
+                        </div>
+                        <h5 class="perk-title">Priority Shift Bidding</h5>
+                        <p class="perk-desc">First-choice slot selection for prime weekend cohort scheduling.</p>
+                        <button type="button" class="btn btn-sm btn-primary btn-redeem-perk" data-cost="300" data-name="Priority Shift">Redeem Perk</button>
+                    </div>
+
+                    <div class="store-perk-card">
+                        <div class="perk-header">
+                            <span class="perk-icon">🤖</span>
+                            <span class="perk-price">400 Coins</span>
+                        </div>
+                        <h5 class="perk-title">Hardware Sandbox Kit</h5>
+                        <p class="perk-desc">Take-home sensor &amp; hub kit to prototype and test new curriculum modules.</p>
+                        <button type="button" class="btn btn-sm btn-primary btn-redeem-perk" data-cost="400" data-name="Hardware Sandbox Kit">Redeem Perk</button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="padding: 12px 22px;">
+                <button type="button" class="btn btn-subtle" id="btnCancelStoreModal">Close Store</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. Kinder Lesson Details Modal -->
+    <div class="modal-overlay" id="kinderLessonDetailsModal" style="background: rgba(14, 27, 77, 0.75); backdrop-filter: blur(6px);">
+        <div class="modal-box" style="max-width: 640px; width: 95vw; background: #FFFFFF; border-radius: var(--radius-lg); box-shadow: 0 20px 40px rgba(0,0,0,0.25); overflow: hidden;">
+            <div class="modal-header" style="background: linear-gradient(135deg, var(--brand-navy), #1e293b); color: #FFFFFF; padding: 18px 24px; display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <span id="modalLessonIcon" style="font-size: 26px;">🤖</span>
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span id="modalLessonCodeBadge" class="badge" style="background: var(--brand-teal); color: #FFFFFF; font-weight: 900; font-size: 11px; padding: 3px 8px;">K1.01</span>
+                            <span id="modalLessonTermBadge" class="badge" style="background: rgba(255,255,255,0.2); color: #FFFFFF; font-size: 10.5px; font-weight: 800;">Term 1</span>
+                        </div>
+                        <h4 id="modalLessonTopic" style="font-size: 16px; margin: 4px 0 0 0; color: #FFFFFF; font-weight: 800; line-height: 1.3;">
+                            Introduction to Robots and Coding
+                        </h4>
+                    </div>
+                </div>
+                <button class="btn-close" id="btnCloseLessonModal" style="color: #FFFFFF; font-size: 24px; background: transparent; border: none; cursor: pointer;">&times;</button>
+            </div>
+            <div class="modal-body" style="padding: 22px 24px; max-height: 70vh; overflow-y: auto;">
+                <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: var(--radius-md); padding: 16px; margin-bottom: 18px;">
+                    <div style="font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; margin-bottom: 6px;">Hardware &amp; Equipment Required</div>
+                    <div id="modalLessonKit" style="font-size: 15px; font-weight: 800; color: var(--brand-navy); display: flex; align-items: center; gap: 8px;">
+                        Spike Tank
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 18px;">
+                    <h5 style="font-size: 13px; font-weight: 900; color: var(--brand-navy); text-transform: uppercase; margin-bottom: 8px;">
+                        Kinder Pedagogical Objectives (Ages 4–6)
+                    </h5>
+                    <ul id="modalLessonObjectives" style="padding-left: 20px; font-size: 12.5px; color: var(--text-secondary); line-height: 1.6; margin: 0;">
+                        <li>Tangible discovery through physical mechanical models.</li>
+                        <li>Cultivate pattern recognition, directionality (left/right), and cause-and-effect thinking.</li>
+                        <li>Fine-motor coordination using safe, large tactile components and sensory triggers.</li>
+                    </ul>
+                </div>
+
+                <div style="background: #EFF6FF; border-left: 4px solid #3B82F6; border-radius: 4px; padding: 12px 16px; margin-bottom: 18px;">
+                    <div style="font-size: 11.5px; font-weight: 900; color: #1E40AF; text-transform: uppercase;">
+                        The Lab 3 Golden Rules Check
+                    </div>
+                    <div style="font-size: 12px; color: #1E3A8A; margin-top: 4px; line-height: 1.4;">
+                        1. Discovery Before Theory • 2. Never Touch the Student's Blocks • 3. Celebrate the Tumble
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="padding: 14px 24px; background: #F8FAFC; border-top: 1px solid #E2E8F0; display: flex; justify-content: flex-end;">
+                <button type="button" class="btn btn-primary" id="btnDismissLessonModal" style="background: var(--brand-navy); color: #FFFFFF; font-weight: 800; padding: 8px 18px; border-radius: var(--radius-md); border: none; cursor: pointer;">
+                    Got It &amp; Close
+                </button>
+            </div>
         </div>
     </div>
 

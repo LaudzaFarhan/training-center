@@ -12,6 +12,8 @@
     "test:sidebar": "node scripts/test-sidebar-minimize.js",
     "test:autoreload": "node scripts/test-auto-reload.js",
     "test:drafts": "node scripts/test-qa-drafts.js",
+    "test:training": "node scripts/test-training-area.js",
+    "test:onboarding": "node scripts/test-day1-onboarding.js",
     "db:migrate": "node -e \"require('./db').initDatabase()\""
   },
   "keywords": [

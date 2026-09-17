@@ -402,6 +402,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (targetTab === 'qa' && typeof loadQaData === 'function') {
                 loadQaData();
             }
+            if (targetTab === 'training-area' && typeof initTrainingArea === 'function') {
+                initTrainingArea();
+            }
         });
     });
 
@@ -2986,11 +2989,15 @@ document.addEventListener('DOMContentLoaded', () => {
     loadUsers();
     checkDbStatus();
     loadQaData();
+    initTrainingArea();
     setInterval(checkDbStatus, 20000);
     setInterval(pollQaNotifications, 15000);
 
-    // Deep link check for /new/qa-tracker or #tab-qa
-    if (window.location.pathname === '/new/qa-tracker' || window.location.pathname === '/qa-tracker' || window.location.hash === '#tab-qa') {
+    // Deep link check for /new/qa-tracker or #tab-qa or #tab-training-area
+    if (window.location.hash === '#tab-training-area') {
+        const trainingNavBtn = document.querySelector('.nav-item[data-tab="training-area"]');
+        if (trainingNavBtn) setTimeout(() => trainingNavBtn.click(), 150);
+    } else if (window.location.pathname === '/new/qa-tracker' || window.location.pathname === '/qa-tracker' || window.location.hash === '#tab-qa') {
         const qaNavBtn = document.getElementById('navItemQa');
         if (qaNavBtn) {
             setTimeout(() => qaNavBtn.click(), 150);
@@ -3019,3 +3026,2068 @@ window.copySnippet = function(button) {
     });
 };
 
+// ============================================================================
+// TRAINING AREA CONTROLLER (KINDER TRACK EMPHASIS)
+// ============================================================================
+let trainingAreaInitialized = false;
+
+function initTrainingArea() {
+    // 1. Gamification State (EXP, Level, Coins)
+    let coinBalance = parseInt(localStorage.getItem('thelab_training_coins') || '450', 10);
+    let trainerExp = parseInt(localStorage.getItem('thelab_trainer_exp') || '320', 10);
+
+    const coinDisplay = document.getElementById('trainingCoinDisplay');
+    const trainerExpNum = document.getElementById('trainerExpNum');
+    const trainerExpBar = document.getElementById('trainerExpBar');
+    const trainerLevelNum = document.getElementById('trainerLevelNum');
+
+    function updateGamificationUI() {
+        if (coinDisplay) coinDisplay.textContent = coinBalance.toLocaleString();
+        if (trainerExpNum) trainerExpNum.textContent = trainerExp;
+        if (trainerExpBar) {
+            const pct = Math.min(100, Math.round((trainerExp / 500) * 100));
+            trainerExpBar.style.width = pct + '%';
+        }
+        if (trainerLevelNum) {
+            trainerLevelNum.textContent = trainerExp >= 500 ? '2' : '1';
+        }
+        localStorage.setItem('thelab_training_coins', String(coinBalance));
+        localStorage.setItem('thelab_trainer_exp', String(trainerExp));
+    }
+
+    function awardReward(exp, coins, reason) {
+        trainerExp += exp;
+        coinBalance += coins;
+        updateGamificationUI();
+
+        // Toast notice
+        const toast = document.createElement('div');
+        toast.style.cssText = 'position: fixed; bottom: 24px; right: 24px; z-index: 9999; background: #0E1B4D; color: #FFFFFF; padding: 12px 20px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); border: 1px solid #45B7CD; font-weight: 800; font-size: 13px; display: flex; align-items: center; gap: 8px; animation: bounce 0.5s ease;';
+        toast.innerHTML = '<span>🎉</span><span style="color: #F6C551;">+' + coins + ' Coins & +' + exp + ' EXP!</span> <span style="color: #CBD5E1; font-size: 11px;">(' + reason + ')</span>';
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    }
+
+    updateGamificationUI();
+
+    if (trainingAreaInitialized) return;
+    trainingAreaInitialized = true;
+
+    // 2. Track Selection Controls: [Kinder] | [Junior] | [Coder]
+    const trackCardKinder = document.getElementById('trackCardKinder');
+    const trackCardJunior = document.getElementById('trackCardJunior');
+    const trackCardCoder = document.getElementById('trackCardCoder');
+
+    function setTrackActive(card, name) {
+        [trackCardKinder, trackCardJunior, trackCardCoder].forEach(c => {
+            if (c) {
+                c.style.borderColor = 'rgba(14, 27, 77, 0.12)';
+                c.style.opacity = '0.65';
+                c.style.boxShadow = 'none';
+            }
+        });
+        if (card) {
+            card.style.borderColor = name === 'Kinder' ? '#F59E0B' : name === 'Junior' ? '#45B7CD' : '#8B5CF6';
+            card.style.opacity = '1';
+            card.style.boxShadow = '0 4px 14px rgba(0,0,0,0.08)';
+        }
+    }
+
+    if (trackCardKinder) trackCardKinder.addEventListener('click', () => setTrackActive(trackCardKinder, 'Kinder'));
+    if (trackCardJunior) trackCardJunior.addEventListener('click', () => {
+        setTrackActive(trackCardJunior, 'Junior');
+        alert('Junior Track (Ages 7–12) selected. The current view is optimized for the Kinder Track.');
+    });
+    if (trackCardCoder) trackCardCoder.addEventListener('click', () => {
+        setTrackActive(trackCardCoder, 'Coder');
+        alert('Coder Track (Ages 13+) selected. The current view is optimized for the Kinder Track.');
+    });
+
+    // 3. Sub-Navigation Tabs
+    const subnavBtns = document.querySelectorAll('.training-subnav-btn');
+    const subpanels = document.querySelectorAll('.training-subpanel');
+
+    subnavBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const targetTab = btn.getAttribute('data-training-tab');
+            subnavBtns.forEach(b => b.classList.remove('active'));
+            subpanels.forEach(p => p.classList.remove('active'));
+
+            btn.classList.add('active');
+            const targetPanel = document.getElementById('training-subpanel-' + targetTab);
+            if (targetPanel) targetPanel.classList.add('active');
+        });
+    });
+
+    // 4. First Day Mission Controller (Kinder)
+    const missionCardProgram = document.getElementById('missionCardProgram');
+    const missionCardSpa = document.getElementById('missionCardSpa');
+    const missionCardEc = document.getElementById('missionCardEc');
+
+    const btnToggleMissionProgram = document.getElementById('btnToggleMissionProgram');
+    const btnToggleMissionSpa = document.getElementById('btnToggleMissionSpa');
+    const btnToggleMissionEc = document.getElementById('btnToggleMissionEc');
+
+    const badgeSpaIcon = document.getElementById('badgeSpaIcon');
+    const badgeEcIcon = document.getElementById('badgeEcIcon');
+    const kinderOverallPercent = document.getElementById('kinderOverallPercent');
+    const kinderOverallBar = document.getElementById('kinderOverallBar');
+    const kinderMissionPill = document.getElementById('kinderMissionPill');
+
+    let missionState = {
+        program: true,
+        spa: false,
+        ec: false
+    };
+
+    function updateMissionUI() {
+        const completedCount = Object.values(missionState).filter(Boolean).length;
+        const pct = Math.round((completedCount / 3) * 100);
+
+        if (kinderOverallPercent) kinderOverallPercent.textContent = pct + '% Completed';
+        if (kinderOverallBar) kinderOverallBar.style.width = pct + '%';
+        if (kinderMissionPill) kinderMissionPill.textContent = completedCount + '/3 Done';
+
+        // Program Button
+        if (btnToggleMissionProgram) {
+            if (missionState.program) {
+                btnToggleMissionProgram.textContent = '✓ Mission Completed (Click to Toggle)';
+                btnToggleMissionProgram.style.background = '#ECFDF5';
+                btnToggleMissionProgram.style.color = '#065F46';
+                if (missionCardProgram) missionCardProgram.style.borderColor = '#10B981';
+            } else {
+                btnToggleMissionProgram.textContent = 'Mark Mission Completed ⚡';
+                btnToggleMissionProgram.style.background = '#0E1B4D';
+                btnToggleMissionProgram.style.color = '#FFFFFF';
+                if (missionCardProgram) missionCardProgram.style.borderColor = 'rgba(14, 27, 77, 0.12)';
+            }
+        }
+
+        // SPA Button & Badge
+        if (btnToggleMissionSpa) {
+            if (missionState.spa) {
+                btnToggleMissionSpa.textContent = '✓ Mission Completed (Click to Toggle)';
+                btnToggleMissionSpa.style.background = '#ECFDF5';
+                btnToggleMissionSpa.style.color = '#065F46';
+                if (missionCardSpa) missionCardSpa.style.borderColor = '#10B981';
+                if (badgeSpaIcon) {
+                    badgeSpaIcon.style.filter = 'none';
+                    badgeSpaIcon.style.opacity = '1';
+                    badgeSpaIcon.style.background = 'rgba(69, 183, 205, 0.3)';
+                    badgeSpaIcon.style.borderColor = '#45B7CD';
+                }
+            } else {
+                btnToggleMissionSpa.textContent = 'Mark Mission Completed ⚡';
+                btnToggleMissionSpa.style.background = '#0E1B4D';
+                btnToggleMissionSpa.style.color = '#FFFFFF';
+                if (missionCardSpa) missionCardSpa.style.borderColor = 'rgba(14, 27, 77, 0.12)';
+                if (badgeSpaIcon) {
+                    badgeSpaIcon.style.filter = 'grayscale(1)';
+                    badgeSpaIcon.style.opacity = '0.4';
+                }
+            }
+        }
+
+        // EC Button & Badge
+        if (btnToggleMissionEc) {
+            if (missionState.ec) {
+                btnToggleMissionEc.textContent = '✓ Mission Completed (Click to Toggle)';
+                btnToggleMissionEc.style.background = '#ECFDF5';
+                btnToggleMissionEc.style.color = '#065F46';
+                if (missionCardEc) missionCardEc.style.borderColor = '#10B981';
+                if (badgeEcIcon) {
+                    badgeEcIcon.style.filter = 'none';
+                    badgeEcIcon.style.opacity = '1';
+                    badgeEcIcon.style.background = 'rgba(139, 92, 246, 0.3)';
+                    badgeEcIcon.style.borderColor = '#8B5CF6';
+                }
+            } else {
+                btnToggleMissionEc.textContent = 'Mark Mission Completed ⚡';
+                btnToggleMissionEc.style.background = '#0E1B4D';
+                btnToggleMissionEc.style.color = '#FFFFFF';
+                if (missionCardEc) missionCardEc.style.borderColor = 'rgba(14, 27, 77, 0.12)';
+                if (badgeEcIcon) {
+                    badgeEcIcon.style.filter = 'grayscale(1)';
+                    badgeEcIcon.style.opacity = '0.4';
+                }
+            }
+        }
+        // Update combined progress
+        if (typeof updateOnboardingUI === 'function') {
+            updateOnboardingUI();
+        }
+    }
+
+    // 4b. Day 1 Launchpad / First Day Onboarding (3 Core Pillars)
+    const chkEmailCreation = document.getElementById('chkEmailCreation');
+    const chkMasterSheet = document.getElementById('chkMasterSheet');
+    const chkPortalLogin = document.getElementById('chkPortalLogin');
+    const chkFolderCurriculum = document.getElementById('chkFolderCurriculum');
+    const chkFolderSchedules = document.getElementById('chkFolderSchedules');
+    const chkFolderPersonal = document.getElementById('chkFolderPersonal');
+    const chkBuddySystem = document.getElementById('chkBuddySystem');
+    const chkBranchAllies = document.getElementById('chkBranchAllies');
+
+    const pillar1Badge = document.getElementById('pillar1Badge');
+    const pillar1StatusLabel = document.getElementById('pillar1StatusLabel');
+    const pillar2Badge = document.getElementById('pillar2Badge');
+    const pillar2StatusLabel = document.getElementById('pillar2StatusLabel');
+    const pillar3Badge = document.getElementById('pillar3Badge');
+    const pillar3StatusLabel = document.getElementById('pillar3StatusLabel');
+    const onboardingTaskCountBadge = document.getElementById('onboardingTaskCountBadge');
+
+    let onboardingState = {
+        email: true,
+        sheet: true,
+        portal: true,
+        curriculum: true,
+        schedules: false,
+        personal: false,
+        buddy: true,
+        allies: false
+    };
+
+    try {
+        const savedOnboarding = localStorage.getItem('thelab_day1_onboarding');
+        if (savedOnboarding) {
+            onboardingState = Object.assign(onboardingState, JSON.parse(savedOnboarding));
+        }
+    } catch (e) {}
+
+    function updateOnboardingUI(awardExpNotice) {
+        if (chkEmailCreation) chkEmailCreation.checked = Boolean(onboardingState.email);
+        if (chkMasterSheet) chkMasterSheet.checked = Boolean(onboardingState.sheet);
+        if (chkPortalLogin) chkPortalLogin.checked = Boolean(onboardingState.portal);
+        if (chkFolderCurriculum) chkFolderCurriculum.checked = Boolean(onboardingState.curriculum);
+        if (chkFolderSchedules) chkFolderSchedules.checked = Boolean(onboardingState.schedules);
+        if (chkFolderPersonal) chkFolderPersonal.checked = Boolean(onboardingState.personal);
+        if (chkBuddySystem) chkBuddySystem.checked = Boolean(onboardingState.buddy);
+        if (chkBranchAllies) chkBranchAllies.checked = Boolean(onboardingState.allies);
+
+        // Pillar 1 status
+        const p1Done = onboardingState.email && onboardingState.sheet && onboardingState.portal;
+        if (pillar1Badge) {
+            pillar1Badge.textContent = p1Done ? 'Account & Portal Ready ✓' : 'In Progress';
+            pillar1Badge.style.background = p1Done ? '#ECFDF5' : '#FEF3C7';
+            pillar1Badge.style.color = p1Done ? '#065F46' : '#92400E';
+        }
+        if (pillar1StatusLabel) {
+            pillar1StatusLabel.textContent = p1Done ? 'Account & Portal Ready ✓' : 'Setup Incomplete';
+            pillar1StatusLabel.style.color = p1Done ? '#059669' : '#D97706';
+        }
+
+        // Pillar 2 status
+        const p2Done = onboardingState.curriculum && onboardingState.schedules && onboardingState.personal;
+        const p2Count = [onboardingState.curriculum, onboardingState.schedules, onboardingState.personal].filter(Boolean).length;
+        if (pillar2Badge) {
+            pillar2Badge.textContent = p2Done ? 'Drive Setup Complete ✓' : 'Access Checking (' + p2Count + '/3)';
+            pillar2Badge.style.background = p2Done ? '#ECFDF5' : '#EDF9FB';
+            pillar2Badge.style.color = p2Done ? '#065F46' : '#35A3B8';
+        }
+        if (pillar2StatusLabel) {
+            pillar2StatusLabel.textContent = p2Done ? 'Drive Storage Setup Complete' : 'Drive Storage Setup Incomplete (' + p2Count + '/3)';
+            pillar2StatusLabel.style.color = p2Done ? '#059669' : '#D97706';
+        }
+
+        // Pillar 3 status
+        const p3Done = onboardingState.buddy && onboardingState.allies;
+        if (pillar3Badge) {
+            pillar3Badge.textContent = p3Done ? 'Team & Culture Ready ✓' : 'Team Connection';
+            pillar3Badge.style.background = p3Done ? '#ECFDF5' : '#EDE9FE';
+            pillar3Badge.style.color = p3Done ? '#065F46' : '#6D28D9';
+        }
+        if (pillar3StatusLabel) {
+            pillar3StatusLabel.textContent = p3Done ? 'Wingman & Culture Complete ✓' : 'Wingman & Culture Active';
+            pillar3StatusLabel.style.color = p3Done ? '#059669' : '#6D28D9';
+        }
+
+        // Overall Day 1 Onboarding progress computation (8 tasks)
+        const totalItemsDone = Object.values(onboardingState).filter(Boolean).length;
+        const totalItemsCount = 8;
+        const pct = Math.round((totalItemsDone / totalItemsCount) * 100);
+
+        if (onboardingTaskCountBadge) {
+            onboardingTaskCountBadge.textContent = totalItemsDone + ' / ' + totalItemsCount + ' Tasks';
+        }
+        if (kinderOverallPercent) {
+            kinderOverallPercent.textContent = pct + '% Completed';
+        }
+        if (kinderOverallBar) {
+            kinderOverallBar.style.width = pct + '%';
+        }
+        if (kinderMissionPill) {
+            kinderMissionPill.textContent = totalItemsDone + '/8 Done';
+        }
+
+        // Branch Allies (SPA & EC) badges illumination from Pillar 3
+        if (badgeSpaIcon) {
+            badgeSpaIcon.style.filter = onboardingState.allies ? 'none' : 'grayscale(1)';
+            badgeSpaIcon.style.opacity = onboardingState.allies ? '1' : '0.4';
+            badgeSpaIcon.style.background = onboardingState.allies ? 'rgba(69, 183, 205, 0.3)' : 'rgba(255, 255, 255, 0.05)';
+            badgeSpaIcon.style.borderColor = onboardingState.allies ? '#45B7CD' : 'rgba(255, 255, 255, 0.2)';
+        }
+        if (badgeEcIcon) {
+            badgeEcIcon.style.filter = onboardingState.allies ? 'none' : 'grayscale(1)';
+            badgeEcIcon.style.opacity = onboardingState.allies ? '1' : '0.4';
+            badgeEcIcon.style.background = onboardingState.allies ? 'rgba(139, 92, 246, 0.3)' : 'rgba(255, 255, 255, 0.05)';
+            badgeEcIcon.style.borderColor = onboardingState.allies ? '#8B5CF6' : 'rgba(255, 255, 255, 0.2)';
+        }
+
+        try {
+            localStorage.setItem('thelab_day1_onboarding', JSON.stringify(onboardingState));
+        } catch (e) {}
+
+        if (awardExpNotice) {
+            awardReward(20, 15, awardExpNotice);
+        }
+    }
+
+    // Attach checkbox event listeners
+    const onboardingCheckboxes = [
+        { el: chkEmailCreation, key: 'email', name: 'Work Email Setup' },
+        { el: chkMasterSheet, key: 'sheet', name: 'Master Sheet Registration' },
+        { el: chkPortalLogin, key: 'portal', name: 'Instructor Portal Login' },
+        { el: chkFolderCurriculum, key: 'curriculum', name: 'Curriculum Library Access' },
+        { el: chkFolderSchedules, key: 'schedules', name: 'Class Schedules Folder' },
+        { el: chkFolderPersonal, key: 'personal', name: 'Personal Training Folder' },
+        { el: chkBuddySystem, key: 'buddy', name: 'Buddy Wingman Connected' },
+        { el: chkBranchAllies, key: 'allies', name: 'Branch Allies Briefing' }
+    ];
+
+    onboardingCheckboxes.forEach(item => {
+        if (item.el) {
+            item.el.addEventListener('change', (e) => {
+                onboardingState[item.key] = e.target.checked;
+                updateOnboardingUI(e.target.checked ? item.name + ' Verified' : null);
+            });
+        }
+    });
+
+    if (btnToggleMissionProgram) {
+        btnToggleMissionProgram.addEventListener('click', () => {
+            missionState.program = !missionState.program;
+            if (missionState.program) awardReward(60, 35, 'Detail Program Completed');
+            updateMissionUI();
+            updateOnboardingUI();
+        });
+    }
+
+    if (btnToggleMissionSpa) {
+        btnToggleMissionSpa.addEventListener('click', () => {
+            missionState.spa = !missionState.spa;
+            if (missionState.spa) awardReward(50, 25, 'Who is SPA Completed');
+            updateMissionUI();
+            updateOnboardingUI();
+        });
+    }
+
+    if (btnToggleMissionEc) {
+        btnToggleMissionEc.addEventListener('click', () => {
+            missionState.ec = !missionState.ec;
+            if (missionState.ec) awardReward(50, 25, 'Who is EC Completed');
+            updateMissionUI();
+            updateOnboardingUI();
+        });
+    }
+
+    updateOnboardingUI();
+
+    // Role Modals Trigger
+    const roleModal = document.getElementById('trainingRoleModal');
+    const btnOpenSpaDetails = document.getElementById('btnOpenSpaDetails');
+    const btnOpenEcDetails = document.getElementById('btnOpenEcDetails');
+    const btnRoleTabSpa = document.getElementById('btnRoleTabSpa');
+    const btnRoleTabEc = document.getElementById('btnRoleTabEc');
+    const roleContentSpa = document.getElementById('roleContentSpa');
+    const roleContentEc = document.getElementById('roleContentEc');
+
+    if (btnOpenSpaDetails && roleModal) {
+        btnOpenSpaDetails.addEventListener('click', () => {
+            roleModal.classList.add('active');
+            if (btnRoleTabSpa) btnRoleTabSpa.click();
+        });
+    }
+    if (btnOpenEcDetails && roleModal) {
+        btnOpenEcDetails.addEventListener('click', () => {
+            roleModal.classList.add('active');
+            if (btnRoleTabEc) btnRoleTabEc.click();
+        });
+    }
+
+    // 5. Priority Training Path Controller
+    const btnToggleInstructorReady = document.getElementById('btnToggleInstructorReady');
+    const delegationCalloutBox = document.getElementById('delegationCalloutBox');
+    let instructorReady = false;
+
+    if (btnToggleInstructorReady && delegationCalloutBox) {
+        btnToggleInstructorReady.addEventListener('click', () => {
+            instructorReady = !instructorReady;
+            if (instructorReady) {
+                btnToggleInstructorReady.textContent = 'Simulate instructor_ready: TRUE';
+                btnToggleInstructorReady.style.background = '#ECFDF5';
+                btnToggleInstructorReady.style.color = '#065F46';
+                btnToggleInstructorReady.style.borderColor = '#A7F3D0';
+                delegationCalloutBox.style.background = '#ECFDF5';
+                delegationCalloutBox.style.borderLeftColor = '#10B981';
+                delegationCalloutBox.innerHTML = `
+                    <div style="display: flex; gap: 16px; align-items: center;">
+                        <span style="font-size: 26px;">🛡️</span>
+                        <div>
+                            <div style="font-size: 13.5px; font-weight: 900; color: #065F46;">FULL SOLO CERTIFICATION ACTIVE</div>
+                            <div style="font-size: 12px; color: #047857; margin-top: 2px;">Instructor has passed all assessments and is fully authorized for independent Kinder delivery.</div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                btnToggleInstructorReady.textContent = 'Simulate instructor_ready: FALSE';
+                btnToggleInstructorReady.style.background = '#FEE2E2';
+                btnToggleInstructorReady.style.color = '#991B1B';
+                btnToggleInstructorReady.style.borderColor = '#FCA5A5';
+                delegationCalloutBox.style.background = 'linear-gradient(90deg, #FFFBEB, #FEF3C7)';
+                delegationCalloutBox.style.borderLeftColor = '#F59E0B';
+                delegationCalloutBox.innerHTML = `
+                    <div style="display: flex; gap: 16px; align-items: flex-start;">
+                        <span style="font-size: 30px;">⚠️</span>
+                        <div style="flex: 1;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                                <h3 style="font-size: 14px; font-weight: 900; color: #92400E; margin: 0; text-transform: uppercase;">
+                                    Branch Manager Delegation Note (Supervised Training Protocol)
+                                </h3>
+                                <span class="badge" style="background: #F59E0B; color: #FFFFFF; font-weight: 900; font-size: 10px; padding: 2px 8px;">OVERSIGHT MANDATORY</span>
+                            </div>
+                            <p style="font-size: 12.5px; color: #78350F; line-height: 1.5; margin: 4px 0 10px 0;">
+                                Assigned early to Kinder classes under supervised training protocol with <strong>Sarah Wijaya (Branch Manager, Menteng Branch)</strong>.
+                            </p>
+                            <div style="display: flex; gap: 16px; font-size: 11.5px; font-weight: 800; color: #B45309;">
+                                <span>✓ Authorized by Sarah Wijaya</span>
+                                <span>•</span>
+                                <span>Delegation Ref: BM-MNT-2026-088</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        });
+    }
+
+    // Kinder Roadmap Jump-To Syllabus & 10 Lessons Controller
+    const selectKinderTerm = document.getElementById('selectKinderTerm');
+    const kinderRoadmapTermHeading = document.getElementById('kinderRoadmapTermHeading');
+    const kinderRoadmapTermBadge = document.getElementById('kinderRoadmapTermBadge');
+    const kinderRoadmapTermDesc = document.getElementById('kinderRoadmapTermDesc');
+    const kinderRoadmapLessonList = document.getElementById('kinderRoadmapLessonList');
+    const kinderTermQuickBtns = document.querySelectorAll('.btn-kinder-term-pill');
+    const inputFilterKinderLessons = document.getElementById('inputFilterKinderLessons');
+
+    // 4-Term Progress Overview Grid & Locked Banner Elements
+    const kinderTermsProgressGrid = document.getElementById('kinderTermsProgressGrid');
+    const lockedTermCalloutBanner = document.getElementById('lockedTermCalloutBanner');
+    const lockedTermCalloutTitle = document.getElementById('lockedTermCalloutTitle');
+    const lockedTermCalloutDesc = document.getElementById('lockedTermCalloutDesc');
+    const btnCalloutMasterUnlock = document.getElementById('btnCalloutMasterUnlock');
+
+    // Kinder Lesson Details Modal elements
+    const kinderLessonDetailsModal = document.getElementById('kinderLessonDetailsModal');
+    const modalLessonIcon = document.getElementById('modalLessonIcon');
+    const modalLessonCodeBadge = document.getElementById('modalLessonCodeBadge');
+    const modalLessonTermBadge = document.getElementById('modalLessonTermBadge');
+    const modalLessonTopic = document.getElementById('modalLessonTopic');
+    const modalLessonKit = document.getElementById('modalLessonKit');
+    const btnCloseLessonModal = document.getElementById('btnCloseLessonModal');
+    const btnDismissLessonModal = document.getElementById('btnDismissLessonModal');
+
+    // Build Matrix Elements
+    const matrixBuildsCount = document.getElementById('matrixBuildsCount');
+    const matrixBuildsTotal = document.getElementById('matrixBuildsTotal');
+    const matrixBuildsBar = document.getElementById('matrixBuildsBar');
+    const matrixVideosCount = document.getElementById('matrixVideosCount');
+    const matrixVideosTotal = document.getElementById('matrixVideosTotal');
+    const matrixVideosBar = document.getElementById('matrixVideosBar');
+    const btnCopyTaskSubmissionSheet = document.getElementById('btnCopyTaskSubmissionSheet');
+    const matrixCopySheetToast = document.getElementById('matrixCopySheetToast');
+    const btnKinderMasterUnlock = document.getElementById('btnKinderMasterUnlock');
+
+    const kinderTermSyllabus = {
+        'term-1': {
+            name: 'Term 1',
+            desc: 'Foundations of Robotics & Electrical Exploration (Lessons K1.01 – K1.10)',
+            lessons: [
+                {
+                    code: 'K1.01',
+                    topic: 'Introduction to Robots and Coding',
+                    kit: 'Spike Tank',
+                    type: 'spike',
+                    icon: '🤖',
+                    term: 'term-1',
+                    engineeringFocus: 'Motorized tank chassis, differential steering geometry, hub connection, and directional motor blocks.',
+                    lessonPlan: {
+                        whatToDo: 'Assemble Spike Tank base, attach two medium motors, and connect to smart hub via Bluetooth.',
+                        concept: 'A robot is an obedient machine with a brain (Hub), muscles (Motors), and senses (Sensors).',
+                        activityGame: 'Red Light, Green Light robot mimicry game with auditory stop cues.',
+                        challenge: 'Add protective front bumper bricks to shield the smart hub from wall impacts.'
+                    }
+                },
+                {
+                    code: 'K1.02',
+                    topic: 'Electric Circuits and Electrical Conductivity',
+                    kit: '<Electric circuit using Snap Circuits>',
+                    type: 'circuits',
+                    icon: '⚡',
+                    term: 'term-1',
+                    engineeringFocus: 'Closed circuit loop, battery power flow, conductive vs insulative materials.',
+                    lessonPlan: {
+                        whatToDo: 'Snap blue battery block to slide switch and lamp; test open vs closed loop.',
+                        concept: 'Electricity flows like water in a pipe; if there is a gap, the lamp stays asleep.',
+                        activityGame: 'Human Circuit circle game — hold hands to complete the imaginary circuit.',
+                        challenge: 'Insert motor fan spinner into the closed loop and observe rotation.'
+                    }
+                },
+                {
+                    code: 'K1.03',
+                    topic: 'Numbers to 10, Left and Right, Identification and uses of sensors, & Events and Sequence',
+                    kit: '<Using Codey Rocky>',
+                    type: 'codey',
+                    icon: '🐱',
+                    term: 'term-1',
+                    engineeringFocus: 'Directional navigation, wheel orientation, and sensor event triggers.',
+                    lessonPlan: {
+                        whatToDo: 'Drive Codey Rocky across the 1-10 number mat using directional arrow buttons.',
+                        concept: 'Left and right are relative to the robot\'s nose, not the student\'s eyes.',
+                        activityGame: 'Robot Simon Says — Turn 90° right on chime, flash LED eyes on left.',
+                        challenge: 'Trigger a playful roar sound when obstacle sensor detects an object within 10cm.'
+                    }
+                },
+                {
+                    code: 'K1.04',
+                    topic: 'Pattern Recognition through Grouping & Sequence with Time and Speed',
+                    kit: 'Spike Kinder Tricycle',
+                    type: 'spike',
+                    icon: '🤖',
+                    term: 'term-1',
+                    engineeringFocus: 'Steering linkage, tricycle stability geometry, and variable motor speed durations.',
+                    lessonPlan: {
+                        whatToDo: 'Build 3-wheeled tricycle frame; adjust front fork angle and program motor duration.',
+                        concept: 'Speed = how fast; Time = how long. Fast speed for short time reaches the same spot as slow for long time.',
+                        activityGame: 'Turtle vs Cheetah movement race with clapping rhythm.',
+                        challenge: 'Create an alternating color pattern track (Red-Blue-Red-Blue) for the tricycle.'
+                    }
+                },
+                {
+                    code: 'K1.05',
+                    topic: 'Math Operators with Codey Rocky & Events and Sequence with Loudness',
+                    kit: '<Using Codey Rocky>',
+                    type: 'codey',
+                    icon: '🐱',
+                    term: 'term-1',
+                    engineeringFocus: 'Acoustic loudness sensor threshold, sound triggers, and basic addition/subtraction.',
+                    lessonPlan: {
+                        whatToDo: 'Calibrate Codey Rocky\'s mic sensor to respond to child claps.',
+                        concept: 'The robot listens to sound volume; louder claps equal bigger numbers.',
+                        activityGame: 'Volume Whisper & Shout Game — whispering makes Codey crawl, shouting makes Codey stop.',
+                        challenge: 'Add 2 claps + 3 claps and display 5 dots on Codey\'s LED matrix face.'
+                    }
+                },
+                {
+                    code: 'K1.06',
+                    topic: 'Motor Manipulation with Moments',
+                    kit: 'Spike Egg Spinner, Spike Fishing Rod',
+                    type: 'spike',
+                    icon: '🤖',
+                    term: 'term-1',
+                    engineeringFocus: 'Rotational momentum, centrifugal force, spool winding, and gear leverage.',
+                    lessonPlan: {
+                        whatToDo: 'Construct high-speed egg spinner followed by manual reel fishing rod mechanism.',
+                        concept: 'Turning a big gear slowly turns a small gear very fast (spinning momentum).',
+                        activityGame: 'Spinning Top challenge — whose egg model spins longest without tumbling.',
+                        challenge: 'Add a ratchet lock to the fishing rod to stop the line from unwinding.'
+                    }
+                },
+                {
+                    code: 'K1.07',
+                    topic: 'Motor Manipulation with Angles and Power and Sequencing',
+                    kit: '<Using Codey Rocky>',
+                    type: 'codey',
+                    icon: '🐱',
+                    term: 'term-1',
+                    engineeringFocus: 'Precise rotation angles (45°, 90°, 180°), motor power limits, and turn sequencing.',
+                    lessonPlan: {
+                        whatToDo: 'Program Codey Rocky to trace an equilateral triangle and square on paper.',
+                        concept: 'An angle is how sharp we turn our robot before moving forward again.',
+                        activityGame: 'Floor Maze Navigation — turning through taped cardboard walls without bumping.',
+                        challenge: 'Program a victory spin of exactly 360 degrees when reaching the finish star.'
+                    }
+                },
+                {
+                    code: 'K1.08',
+                    topic: 'Positive and Negative Numbers, & Motor Manipulation with Numbers',
+                    kit: 'Spike Crocodile',
+                    type: 'spike',
+                    icon: '🤖',
+                    term: 'term-1',
+                    engineeringFocus: 'Bidirectional motor rotation (positive/clockwise, negative/counter-clockwise), gear teeth engagement.',
+                    lessonPlan: {
+                        whatToDo: 'Build crocodile jaw with reciprocal gear lever; program open (+) and snap shut (-).',
+                        concept: 'Positive numbers move forward/open; negative numbers reverse/close.',
+                        activityGame: 'Feeding the Crocodile — count fish blocks into the jaw before snap shut.',
+                        challenge: 'Add a warning growl sound 2 seconds before the jaws snap shut.'
+                    }
+                },
+                {
+                    code: 'K1.09',
+                    topic: 'Additions to 10, & Motor Manipulation with Numbers',
+                    kit: 'Spike Terminator',
+                    type: 'spike',
+                    icon: '🤖',
+                    term: 'term-1',
+                    engineeringFocus: 'Stepper motor increments, numerical target matching, and physical counter pointer.',
+                    lessonPlan: {
+                        whatToDo: 'Build Terminator pointer mechanism that rotates dial to match sum of two dice.',
+                        concept: 'Adding numbers together advances the pointer forward by the combined count.',
+                        activityGame: 'Dice roll math battle — roll two tactile dice and program pointer to the sum.',
+                        challenge: 'Program buzzer to beep the exact number of times equal to the answer.'
+                    }
+                },
+                {
+                    code: 'K1.10',
+                    topic: 'Term 1 Project',
+                    kit: '<Choose one robot from Term 1 along with requirements>',
+                    type: 'project',
+                    icon: '🏆',
+                    term: 'term-1',
+                    engineeringFocus: 'Capstone integration, independent build troubleshooting, and student project presentation.',
+                    lessonPlan: {
+                        whatToDo: 'Select 1 favorite robot from Term 1; rebuild, customize, and demonstrate to peers.',
+                        concept: 'An engineer combines what they learned to invent their own improved machine.',
+                        activityGame: '5-Minute Parent Showcase rehearsal — explaining how the robot moves and thinks.',
+                        challenge: 'Introduce 1 custom mechanical or code modification not shown in the base guide.'
+                    }
+                }
+            ]
+        },
+        'term-2': {
+            name: 'Term 2',
+            desc: 'Kinematics, Fractions, Mechanisms & Balance (Lessons K2.01 – K2.10)',
+            lessons: [
+                {
+                    code: 'K2.01',
+                    topic: 'Animation and Axis',
+                    kit: 'Spike Andy Roid',
+                    type: 'spike',
+                    icon: '🤖',
+                    term: 'term-2',
+                    engineeringFocus: 'Dual-axis movement (X and Y), humanoid arm linkages, and screen animation sync.',
+                    lessonPlan: {
+                        whatToDo: 'Build Andy Roid with articulated waving arms; sync arm motor with smiling LED face.',
+                        concept: 'An axis is a line that our robot parts spin around or slide along.',
+                        activityGame: 'Mirror Game — students mimic Andy Roid\'s arm positions in time.',
+                        challenge: 'Program a dual-arm cheer celebration when light button is pressed.'
+                    }
+                },
+                {
+                    code: 'K2.02',
+                    topic: 'Concept of Fractions, & Events and Random',
+                    kit: 'Spike Wheel of Fortune',
+                    type: 'spike',
+                    icon: '🤖',
+                    term: 'term-2',
+                    engineeringFocus: 'Circular division (halves, quarters), random number generators, and friction stoppers.',
+                    lessonPlan: {
+                        whatToDo: 'Build segmented wheel with pointer needle; program random motor spin speed.',
+                        concept: 'A whole wheel cut into 4 equal slices gives each player 1 out of 4 chances.',
+                        activityGame: 'Classroom Reward Spinner — spin the wheel for sticker rewards and funny dances.',
+                        challenge: 'Color-code 4 equal quadrants and predict landing probability with tallies.'
+                    }
+                },
+                {
+                    code: 'K2.03',
+                    topic: 'Sequence - Movements',
+                    kit: 'Spike Mig Bot',
+                    type: 'spike',
+                    icon: '🤖',
+                    term: 'term-2',
+                    engineeringFocus: 'Walking gait geometry, center of gravity shift, and eccentric cam drives.',
+                    lessonPlan: {
+                        whatToDo: 'Assemble Mig Bot bipedal walker; calibrate leg offset to prevent falling over.',
+                        concept: 'Walking requires shifting weight from left to right before moving the feet.',
+                        activityGame: 'Giant Robot Steps — walk with wide stance mimicking Mig Bot\'s gait.',
+                        challenge: 'Attach rubber friction boots to the feet to walk up a slight incline.'
+                    }
+                },
+                {
+                    code: 'K2.04',
+                    topic: 'Subtraction Within 10, & Motors with positive and negative numbers',
+                    kit: 'Spike Penguin',
+                    type: 'spike',
+                    icon: '🤖',
+                    term: 'term-2',
+                    engineeringFocus: 'Waddle locomotion, subtraction countdown sequence, and reverse motor drive.',
+                    lessonPlan: {
+                        whatToDo: 'Build waddling penguin model; program steps forward and backward subtraction.',
+                        concept: 'Subtraction means taking steps backward or counting down to zero.',
+                        activityGame: 'Melting Iceberg Game — penguin steps back 2 ice blocks each round.',
+                        challenge: 'Program a shivering sound effect when countdown reaches 0.'
+                    }
+                },
+                {
+                    code: 'K2.05',
+                    topic: 'Additions and Subtraction within 10, & Symmetry and Mechanism of a Balancing Beam',
+                    kit: '<Play with Monkey Business Game>',
+                    type: 'game',
+                    icon: '🐒',
+                    term: 'term-2',
+                    engineeringFocus: 'Mechanical equilibrium, lever arm distance (torque), and bilateral symmetry.',
+                    lessonPlan: {
+                        whatToDo: 'Hang weighted monkey counters on numbered beam pegs until perfectly level.',
+                        concept: '2 monkeys far from the center balance 4 monkeys close to the center!',
+                        activityGame: 'Teeter-Totter balancing game with math word problems.',
+                        challenge: 'Find 3 different combination pairs that balance a 10-peg load.'
+                    }
+                },
+                {
+                    code: 'K2.06',
+                    topic: 'Concept of Sound, & Sequence with Sound and Motor blocks',
+                    kit: 'Spike Gun',
+                    type: 'spike',
+                    icon: '🤖',
+                    term: 'term-2',
+                    engineeringFocus: 'Gear release triggers, kinetic energy launch, and synchronized sound effects.',
+                    lessonPlan: {
+                        whatToDo: 'Build safe foam dart launcher mechanism with motor trigger latch.',
+                        concept: 'Sounds have pitch (high/low) and rhythm; motors can fire on specific musical beats.',
+                        activityGame: 'Sound Orchestra — match drum beat sounds to launcher trigger actions.',
+                        challenge: 'Play a 3-note ascending fanfare before triggering the release pin.'
+                    }
+                },
+                {
+                    code: 'K2.07',
+                    topic: 'Map Reading, & Sequence – Movements and Turns',
+                    kit: '<Using Robot Mouse>',
+                    type: 'mouse',
+                    icon: '🐭',
+                    term: 'term-2',
+                    engineeringFocus: 'Grid coordinate mapping, spatial reasoning, and sequence memory buffer.',
+                    lessonPlan: {
+                        whatToDo: 'Lay maze tile path with cheese target; code sequence into mouse keypad.',
+                        concept: 'We plan the whole journey in our head before pressing the green GO button.',
+                        activityGame: 'Human Mouse Maze — blindfolded student guided by partner\'s verbal code commands.',
+                        challenge: 'Navigate around 3 mud obstacles using the fewest total commands.'
+                    }
+                },
+                {
+                    code: 'K2.08',
+                    topic: 'Introduction to Gears',
+                    kit: 'Spike Gear System',
+                    type: 'spike',
+                    icon: '⚙️',
+                    term: 'term-2',
+                    engineeringFocus: 'Spur gears, driver vs follower gears, gear ratio speed/torque trade-off.',
+                    lessonPlan: {
+                        whatToDo: 'Assemble 8-tooth, 24-tooth, and 40-tooth gear train; count revolutions.',
+                        concept: 'Meshing teeth: one turns clockwise, the neighbor turns counter-clockwise!',
+                        activityGame: 'Hand-Crank Power test — feel the difference in effort between high and low gears.',
+                        challenge: 'Build a gear train that makes a fan turn 5 times faster than your motor.'
+                    }
+                },
+                {
+                    code: 'K2.09',
+                    topic: 'Remote Controlled Devices and Drone',
+                    kit: '<Using drones>',
+                    type: 'drone',
+                    icon: '🛸',
+                    term: 'term-2',
+                    engineeringFocus: 'Aerodynamic lift, pitch/roll/yaw control, and remote controller pairing.',
+                    lessonPlan: {
+                        whatToDo: 'Pair controller to micro-drone; practice gentle takeoff, hover, and landing.',
+                        concept: 'Propellers push air downward so the drone can float up like a hummingbird.',
+                        activityGame: 'Safe Landing Pad — take off from base and land gently inside a hula hoop.',
+                        challenge: 'Perform a controlled 360-degree hover turn without losing altitude.'
+                    }
+                },
+                {
+                    code: 'K2.10',
+                    topic: 'Term 2 Presentation',
+                    kit: '<Choose one robot from Term 2 along with requirements>',
+                    type: 'project',
+                    icon: '🏆',
+                    term: 'term-2',
+                    engineeringFocus: 'Public speaking, mechanism explanation, and parent consultation demonstration.',
+                    lessonPlan: {
+                        whatToDo: 'Select 1 Term 2 build; prepare demonstration and explain gear/motion principles.',
+                        concept: 'Great inventors know how to explain their inventions so anyone can understand!',
+                        activityGame: 'Mock Parent Showcase — demo robot movements with confidence and joy.',
+                        challenge: 'Answer 2 live questions about what gear or code block was used.'
+                    }
+                }
+            ]
+        },
+        'term-3': {
+            name: 'Term 3',
+            desc: 'Sensory Logic, Coordinates & Structural Mechanics (Lessons K3.01 – K3.10)',
+            lessons: [
+                {
+                    code: 'K3.01',
+                    topic: 'Measuring Force with Touch Sensor & If-Then Logic Statement with Touch Sensor',
+                    kit: 'Spike Windmill',
+                    type: 'spike',
+                    icon: '🤖',
+                    term: 'term-3',
+                    engineeringFocus: 'Push-button contact sensor, force detection threshold, and conditional If-Then logic.',
+                    lessonPlan: {
+                        whatToDo: 'Build windmill blades with touch sensor base; turn blades when sensor pressed.',
+                        concept: 'IF button is pressed, THEN spin the blades; ELSE stop the motor.',
+                        activityGame: 'Wind Storm simulation — pressing sensor softly spins slow, pressing hard spins fast.',
+                        challenge: 'Count how many times the blade rotates before touch sensor is released.'
+                    }
+                },
+                {
+                    code: 'K3.02',
+                    topic: 'Sequence Programming with Spike Software',
+                    kit: 'Spike Racing Car',
+                    type: 'spike',
+                    icon: '🤖',
+                    term: 'term-3',
+                    engineeringFocus: 'Drag-and-drop icon blocks, motor duration in seconds vs rotations, acceleration.',
+                    lessonPlan: {
+                        whatToDo: 'Build aerodynamic racer with differential back wheels; program speed ramp-up.',
+                        concept: 'Code blocks execute in order from top to bottom like words in a bedtime story.',
+                        activityGame: 'Drag Race Shootout — whose car travels closest to the 2-meter finish tape.',
+                        challenge: 'Program an automatic reverse return after crossing the finish line.'
+                    }
+                },
+                {
+                    code: 'K3.03',
+                    topic: 'Coding with X- and Y in programming world',
+                    kit: '<Puzzle activity>',
+                    type: 'puzzle',
+                    icon: '🧩',
+                    term: 'term-3',
+                    engineeringFocus: '2D Cartesian plane, column/row grid references, and directional vector shifts.',
+                    lessonPlan: {
+                        whatToDo: 'Solve tactile tile puzzle by mapping X (horizontal) and Y (vertical) moves.',
+                        concept: 'X is side-to-side (walk); Y is up-and-down (jump). Together they find any treasure.',
+                        activityGame: 'Pirate Treasure Grid — call out coordinates (X:3, Y:2) to find hidden coins.',
+                        challenge: 'Find the shortest Manhattan-distance path avoiding monster tiles.'
+                    }
+                },
+                {
+                    code: 'K3.04',
+                    topic: 'Exploration of Touch Sensor with Spike',
+                    kit: 'Spike One Arm Robot',
+                    type: 'spike',
+                    icon: '🤖',
+                    term: 'term-3',
+                    engineeringFocus: 'Single-arm lever arm, counterweights, and tactile bumper safety shutoff.',
+                    lessonPlan: {
+                        whatToDo: 'Build industrial robotic arm; lift block payload when touch sensor is triggered.',
+                        concept: 'The touch sensor works like our fingertip nerves feeling when we touch something.',
+                        activityGame: 'Factory Assembly Line — pick up widget, rotate 90°, drop into sorting bin.',
+                        challenge: 'Program emergency stop if touch sensor is bumped while moving.'
+                    }
+                },
+                {
+                    code: 'K3.05',
+                    topic: 'Gearing and Sequence',
+                    kit: 'Spike Door',
+                    type: 'spike',
+                    icon: '⚙️',
+                    term: 'term-3',
+                    engineeringFocus: 'Worm gear locking mechanism, rack and pinion linear sliding, security sequencing.',
+                    lessonPlan: {
+                        whatToDo: 'Build motorized vault door; program opening sequence with passcode taps.',
+                        concept: 'A worm gear cannot be pushed open by hand; only the motor screw can turn it.',
+                        activityGame: 'Secret Agent Vault — tap the correct 3-beat rhythm on touch sensor to open door.',
+                        challenge: 'Automatically close and lock the door after 5 seconds of passage.'
+                    }
+                },
+                {
+                    code: 'K3.06',
+                    topic: 'Sequencing with Spike Programming using Time',
+                    kit: 'Spike Jet',
+                    type: 'spike',
+                    icon: '✈️',
+                    term: 'term-3',
+                    engineeringFocus: 'Timed state machines, LED beacon flashing sequences, and pitch angle tilt.',
+                    lessonPlan: {
+                        whatToDo: 'Assemble supersonic jet with twin wing turbines; program countdown & takeoff.',
+                        concept: 'Computers count seconds precisely to keep airplanes flying on schedule.',
+                        activityGame: 'Airport Runway Departure — taxi for 3 seconds, full thrust for 4 seconds, cruise.',
+                        challenge: 'Sync flashing wingtip LED lights to blink every 0.5 seconds during flight.'
+                    }
+                },
+                {
+                    code: 'K3.07',
+                    topic: 'Mechanism of a Robot Hand',
+                    kit: 'Spike Grabber [Kinder Term 3]',
+                    type: 'spike',
+                    icon: '🤖',
+                    term: 'term-3',
+                    engineeringFocus: 'Four-bar linkage, scissor mechanism, gripping claws, and mechanical advantage.',
+                    lessonPlan: {
+                        whatToDo: 'Build extendable scissor grabber; pick up foam blocks of different sizes.',
+                        concept: 'Mechanical links transfer push at our hand into a pinch at the claw tip.',
+                        activityGame: 'Clean Up Ocean Trash challenge — use robot hand to scoop plastic bottles from bin.',
+                        challenge: 'Add soft rubber pads to claw tips to grip fragile plastic cups without crushing.'
+                    }
+                },
+                {
+                    code: 'K3.08',
+                    topic: 'Infrared sensor',
+                    kit: '<Using Codey Rocky>',
+                    type: 'codey',
+                    icon: '🐱',
+                    term: 'term-3',
+                    engineeringFocus: 'Infrared emitter & receiver, black line detection, and ambient light reflection.',
+                    lessonPlan: {
+                        whatToDo: 'Calibrate IR sensor on bottom of Codey; follow thick black line loop on white mat.',
+                        concept: 'Dark colors absorb invisible infrared light; white colors bounce it back like a mirror.',
+                        activityGame: 'Train on Track — Codey Rocky follows looping track while passengers climb aboard.',
+                        challenge: 'Stop automatically when an obstacle is placed directly on the track.'
+                    }
+                },
+                {
+                    code: 'K3.09',
+                    topic: 'Ultrasonic Sensor with Spike, & Math Operators and Length',
+                    kit: 'Spike Robot Cat',
+                    type: 'spike',
+                    icon: '🤖',
+                    term: 'term-3',
+                    engineeringFocus: 'Ultrasonic echolocation (sound bounce), distance measurement in cm, pet behavior states.',
+                    lessonPlan: {
+                        whatToDo: 'Build cat with ultrasonic sensor eyes; program purring when hand is petted within 15cm.',
+                        concept: 'The sensor sends out sound we cannot hear; it times the echo to know how far things are.',
+                        activityGame: 'Prowling Cat Game — creep closer to the mouse; stop when within 10 centimeters.',
+                        challenge: 'Hiss and back up if hand approaches closer than 5 centimeters!'
+                    }
+                },
+                {
+                    code: 'K3.10',
+                    topic: 'Term 3 Presentation',
+                    kit: '<Choose one robot from Term 3 along with requirements>',
+                    type: 'project',
+                    icon: '🏆',
+                    term: 'term-3',
+                    engineeringFocus: 'Sensor-driven robotics demonstration, peer review, and parent progress showcase.',
+                    lessonPlan: {
+                        whatToDo: 'Select 1 Term 3 robot utilizing touch or ultrasonic sensors; showcase live.',
+                        concept: 'Showing how sensors give robots senses like seeing and feeling!',
+                        activityGame: 'Live Sensor Demonstration — explain the If-Then code block to visiting parents.',
+                        challenge: 'Demonstrate recovery behavior when an unexpected obstacle is encountered.'
+                    }
+                }
+            ]
+        },
+        'term-4': {
+            name: 'Term 4',
+            desc: 'Sensors, 3D Fabrication, AR/VR & Advanced Showcases (Lessons K4.01 – K4.10)',
+            lessons: [
+                {
+                    code: 'K4.01',
+                    topic: 'Sequencing with Spike Programming Using Speed and Colour Sensor',
+                    kit: 'Spike Mouse',
+                    type: 'spike',
+                    icon: '🤖',
+                    term: 'term-4',
+                    engineeringFocus: 'Color recognition (Red, Green, Yellow), condition-based speed switching, line following.',
+                    lessonPlan: {
+                        whatToDo: 'Build Spike Mouse with color sensor facing floor; speed up on green, stop on red.',
+                        concept: 'Colors are like traffic lights for robots: Green means fast, Yellow slow, Red stop.',
+                        activityGame: 'Traffic Light Maze — follow color tape intersections across classroom floor.',
+                        challenge: 'Squeak three times and spin when finding yellow cheese block.'
+                    }
+                },
+                {
+                    code: 'K4.02',
+                    topic: 'X, Y and Z Axis & 3D Printing',
+                    kit: '<Using the 3D printing machine>',
+                    type: 'maker',
+                    icon: '🖨️',
+                    term: 'term-4',
+                    engineeringFocus: '3D spatial axes (X: width, Y: length, Z: height), layer-by-layer additive manufacturing.',
+                    lessonPlan: {
+                        whatToDo: 'Load eco-PLA filament; watch 3D printer slice and fabricate custom robot charm.',
+                        concept: 'Building with 2D drawings is flat like paper; adding the Z-axis gives height and thickness!',
+                        activityGame: 'Clay Layer Building — mimic 3D printer by extruding clay coils into a bowl shape.',
+                        challenge: 'Design a custom Lego-compatible name badge in kid-friendly 3D modeling app.'
+                    }
+                },
+                {
+                    code: 'K4.03',
+                    topic: 'Touch Sensor with Spike & Aerodynamics',
+                    kit: 'Spike Bird',
+                    type: 'spike',
+                    icon: '🤖',
+                    term: 'term-4',
+                    engineeringFocus: 'Wing flapping mechanism, crank-rocker linkage, and touch-activated flight.',
+                    lessonPlan: {
+                        whatToDo: 'Build robotic bird with flapping wings; flap fast when touch sensor is clicked.',
+                        concept: 'Curved wings guide air faster over the top to create aerodynamic lift.',
+                        activityGame: 'Bird Migration Race — flap across classroom perching on designated tree branches.',
+                        challenge: 'Program wing flap frequency to decrease gradually as bird lands.'
+                    }
+                },
+                {
+                    code: 'K4.04',
+                    topic: 'Introduction to Augmented Reality & Story-Telling',
+                    kit: '<Do-It-Yourself Sunglasses>',
+                    type: 'maker',
+                    icon: '🕶️',
+                    term: 'term-4',
+                    engineeringFocus: 'Optical overlays, digital AR targets, storytelling narrative, and physical-digital merge.',
+                    lessonPlan: {
+                        whatToDo: 'Assemble safe DIY cardboard sunglasses with colored optical filters and AR target cards.',
+                        concept: 'Augmented Reality puts magical computer pictures right on top of real world toys!',
+                        activityGame: 'Dinosaur Safari — look through glasses at classroom walls to spot digital dinosaurs.',
+                        challenge: 'Tell a 1-minute story about your robot saving the digital creature.'
+                    }
+                },
+                {
+                    code: 'K4.05',
+                    topic: 'Colour Sensor',
+                    kit: 'Dancing Robot',
+                    type: 'spike',
+                    icon: '🤖',
+                    term: 'term-4',
+                    engineeringFocus: 'RGB color detection, dance choreography loops, and musical beat matching.',
+                    lessonPlan: {
+                        whatToDo: 'Build dual-motor dancing robot; show color flashcards to trigger dance moves.',
+                        concept: 'Different colors trigger different dance routines: Blue = waltz, Pink = hip-hop.',
+                        activityGame: 'Robot Dance Party — kids freeze dance alongside their customized robot partner.',
+                        challenge: 'Program a disco light show on the hub LED matrix while dancing.'
+                    }
+                },
+                {
+                    code: 'K4.06',
+                    topic: 'Concept of Light',
+                    kit: 'Spike Light Intensity Car',
+                    type: 'spike',
+                    icon: '💡',
+                    term: 'term-4',
+                    engineeringFocus: 'Ambient light intensity levels, lux measurement, automatic headlights.',
+                    lessonPlan: {
+                        whatToDo: 'Build explorer rover with light sensor; drive fast in dark and slow in daylight.',
+                        concept: 'Light is energy; our sensor measures brightness from 0 (midnight) to 100 (sunny noon).',
+                        activityGame: 'Flashlight Guide — guide the rover across dark room using flashlight beam.',
+                        challenge: 'Turn on LED headlights automatically when driving underneath table shadow.'
+                    }
+                },
+                {
+                    code: 'K4.07',
+                    topic: 'Touch Sensor and Loop with Codey Rocky & AND operator and If-Then Condition',
+                    kit: '<Use Codey Rocky>',
+                    type: 'codey',
+                    icon: '🐱',
+                    term: 'term-4',
+                    engineeringFocus: 'Repeat loops, boolean logic (AND operator requiring 2 simultaneous inputs), touch pins.',
+                    lessonPlan: {
+                        whatToDo: 'Wire fruit touch pads; program Codey to move ONLY when both touch pads pressed.',
+                        concept: 'AND means BOTH friends must agree before the robot starts dancing.',
+                        activityGame: 'Two-Player Cooperative steering — Player A holds left wire, Player B holds right.',
+                        challenge: 'Loop the victory dance 5 times before resting in sleep mode.'
+                    }
+                },
+                {
+                    code: 'K4.08',
+                    topic: 'Colour and Touch Sensor with Spike',
+                    kit: 'Spike Camera [Kinder Term 4]',
+                    type: 'spike',
+                    icon: '📷',
+                    term: 'term-4',
+                    engineeringFocus: 'Shutter release mechanism, photo flash simulation, dual-sensor composite logic.',
+                    lessonPlan: {
+                        whatToDo: 'Build retro camera replica; touch sensor acts as shutter button, color sensor detects subject.',
+                        concept: 'Cameras capture light and color the moment our finger presses the shutter trigger.',
+                        activityGame: 'Portrait Studio — kids take turns posing while partner presses camera shutter.',
+                        challenge: 'Play camera shutter click sound and flash white hub LEDs on every photo.'
+                    }
+                },
+                {
+                    code: 'K4.09',
+                    topic: 'Introduction to VR',
+                    kit: '<Do-It-Yourself Virtual Reality Glasses>',
+                    type: 'maker',
+                    icon: '🥽',
+                    term: 'term-4',
+                    engineeringFocus: 'Stereoscopic 3D vision, head tracking gyroscope, immersive simulation concepts.',
+                    lessonPlan: {
+                        whatToDo: 'Assemble DIY VR headset with biconvex lenses; view 360° space station exploration.',
+                        concept: 'Two lenses showing slightly different views trick our brain into seeing real 3D depth!',
+                        activityGame: 'Spacewalk Exploration — turn your head 360 degrees to spot planets and satellites.',
+                        challenge: 'Describe 3 mechanical details of the space rover observed in the VR simulator.'
+                    }
+                },
+                {
+                    code: 'K4.10',
+                    topic: 'Term 4 Presentation',
+                    kit: '<Choose one robot from Term 4 along with requirements>',
+                    type: 'project',
+                    icon: '🏆',
+                    term: 'term-4',
+                    engineeringFocus: 'Graduation showcase, comprehensive portfolio defense, and Kinder solo certification.',
+                    lessonPlan: {
+                        whatToDo: 'Select your best Term 4 build; demonstrate full autonomous code and mechanism.',
+                        concept: 'You are now an official Junior Roboticist and Creator!',
+                        activityGame: 'Grand Kinder Robotics Showcase — present project to branch manager and parents.',
+                        challenge: 'Receive official Kinder Solo Certification Certificate and graduation medal.'
+                    }
+                }
+            ]
+        }
+    };
+
+    // State Persistence
+    let kinderBuilds = {};
+    try {
+        const savedB = localStorage.getItem('thelab_kinder_builds');
+        kinderBuilds = savedB ? JSON.parse(savedB) : { 'K1.01': true, 'K1.02': true, 'K1.03': true, 'K1.04': true, 'K1.05': true };
+    } catch (e) {
+        kinderBuilds = { 'K1.01': true, 'K1.02': true, 'K1.03': true, 'K1.04': true, 'K1.05': true };
+    }
+
+    let kinderVideos = {};
+    try {
+        const savedV = localStorage.getItem('thelab_kinder_videos');
+        kinderVideos = savedV ? JSON.parse(savedV) : {
+            'K1.01': 'https://loom.com/share/demo-spike-tank-k101',
+            'K1.03': 'https://drive.google.com/file/d/thelab-codey-demo/view',
+            'K1.04': 'https://loom.com/share/tricycle-stability-demo'
+        };
+    } catch (e) {
+        kinderVideos = {
+            'K1.01': 'https://loom.com/share/demo-spike-tank-k101',
+            'K1.03': 'https://drive.google.com/file/d/thelab-codey-demo/view',
+            'K1.04': 'https://loom.com/share/tricycle-stability-demo'
+        };
+    }
+
+    let masterUnlockOverride = false;
+    let expandedLessonId = 'K1.01';
+    let editingVideoLessonId = null;
+    let currentTermKey = 'term-1';
+    let currentSearchQuery = '';
+
+    function getKinderKitBadgeStyle(type) {
+        switch (type) {
+            case 'spike':
+                return 'background: #EFF6FF; border: 1px solid #BFDBFE; color: #1E40AF;';
+            case 'codey':
+                return 'background: #ECFEFF; border: 1px solid #A5F3FC; color: #0E7490;';
+            case 'circuits':
+                return 'background: #FEF3C7; border: 1px solid #FDE68A; color: #92400E;';
+            case 'maker':
+                return 'background: #F5F3FF; border: 1px solid #DDD6FE; color: #6D28D9;';
+            case 'project':
+                return 'background: #ECFDF5; border: 1px solid #A7F3D0; color: #065F46;';
+            case 'game':
+                return 'background: #FFF7ED; border: 1px solid #FED7AA; color: #C2410C;';
+            case 'mouse':
+                return 'background: #FDF2F8; border: 1px solid #FBCFE8; color: #9D174D;';
+            case 'drone':
+                return 'background: #EEF2FF; border: 1px solid #C7D2FE; color: #3730A3;';
+            case 'puzzle':
+                return 'background: #F0FDF4; border: 1px solid #BBF7D0; color: #15803D;';
+            default:
+                return 'background: #F1F5F9; border: 1px solid #CBD5E1; color: #334155;';
+        }
+    }
+
+    function safeHtml(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function updateMatrixCounters() {
+        const allLessons = Object.values(kinderTermSyllabus).flatMap(t => t.lessons);
+        const scopedLessons = currentTermKey === 'all'
+            ? allLessons
+            : (kinderTermSyllabus[currentTermKey] ? kinderTermSyllabus[currentTermKey].lessons : allLessons);
+
+        const doneCount = scopedLessons.filter(l => !!kinderBuilds[l.code]).length;
+        const videoCount = scopedLessons.filter(l => kinderVideos[l.code] && kinderVideos[l.code].trim().length > 0).length;
+        const totalCount = scopedLessons.length;
+
+        if (matrixBuildsCount) matrixBuildsCount.textContent = doneCount;
+        if (matrixBuildsTotal) matrixBuildsTotal.textContent = totalCount;
+        if (matrixBuildsBar) {
+            const pct = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
+            matrixBuildsBar.style.width = pct + '%';
+        }
+
+        if (matrixVideosCount) matrixVideosCount.textContent = videoCount;
+        if (matrixVideosTotal) matrixVideosTotal.textContent = totalCount;
+        if (matrixVideosBar) {
+            const pct = totalCount > 0 ? Math.round((videoCount / totalCount) * 100) : 0;
+            matrixVideosBar.style.width = pct + '%';
+        }
+    }
+
+    function copyTaskSubmissionSheet() {
+        const allLessons = Object.values(kinderTermSyllabus).flatMap(t => t.lessons);
+        const doneCount = allLessons.filter(l => !!kinderBuilds[l.code]).length;
+        const videoCount = allLessons.filter(l => kinderVideos[l.code] && kinderVideos[l.code].trim().length > 0).length;
+
+        let md = `# THE LAB INDONESIA — KINDER PRACTICAL BUILD & VIDEO SUBMISSION SHEET\n`;
+        md += `Generated: ${new Date().toLocaleDateString('en-GB')} | Scope: 40 Lessons Kinder Curriculum\n`;
+        md += `Summary: ${doneCount}/40 Builds Completed | ${videoCount}/40 Video Proofs Recorded\n\n`;
+        md += `| Code | Term | Topic | Hardware / Kit | Build Status | Video Evidence URL |\n`;
+        md += `|---|---|---|---|---|---|\n`;
+
+        allLessons.forEach(l => {
+            const isDone = !!kinderBuilds[l.code];
+            const vUrl = kinderVideos[l.code] || 'Pending Submission';
+            const termName = l.term === 'term-1' ? 'Term 1' : l.term === 'term-2' ? 'Term 2' : l.term === 'term-3' ? 'Term 3' : 'Term 4';
+            md += `| ${l.code} | ${termName} | ${l.topic} | ${l.kit} | ${isDone ? '[x] Completed' : '[ ] Pending'} | ${vUrl} |\n`;
+        });
+
+        const notify = () => {
+            if (matrixCopySheetToast) {
+                matrixCopySheetToast.style.display = 'flex';
+                setTimeout(() => {
+                    matrixCopySheetToast.style.display = 'none';
+                }, 3500);
+            }
+            awardReward(10, 5, 'Submission Sheet Exported');
+        };
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(md).then(notify).catch(() => {
+                const ta = document.createElement('textarea');
+                ta.value = md;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                notify();
+            });
+        } else {
+            const ta = document.createElement('textarea');
+            ta.value = md;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            notify();
+        }
+    }
+
+    if (btnCopyTaskSubmissionSheet) {
+        btnCopyTaskSubmissionSheet.addEventListener('click', copyTaskSubmissionSheet);
+    }
+
+    if (btnKinderMasterUnlock) {
+        btnKinderMasterUnlock.addEventListener('click', () => {
+            masterUnlockOverride = !masterUnlockOverride;
+            btnKinderMasterUnlock.innerHTML = masterUnlockOverride ? '🔓 All Unlocked' : '🔒 Progressive Locks';
+            btnKinderMasterUnlock.style.background = masterUnlockOverride ? '#ECFDF5' : '#F8FAFC';
+            btnKinderMasterUnlock.style.borderColor = masterUnlockOverride ? '#A7F3D0' : '#CBD5E1';
+            btnKinderMasterUnlock.style.color = masterUnlockOverride ? '#065F46' : 'var(--brand-navy)';
+            renderKinderRoadmap(currentTermKey, currentSearchQuery);
+        });
+    }
+
+    function getTermsProgressData() {
+        const t1Lessons = kinderTermSyllabus['term-1'] ? kinderTermSyllabus['term-1'].lessons : [];
+        const t2Lessons = kinderTermSyllabus['term-2'] ? kinderTermSyllabus['term-2'].lessons : [];
+        const t3Lessons = kinderTermSyllabus['term-3'] ? kinderTermSyllabus['term-3'].lessons : [];
+        const t4Lessons = kinderTermSyllabus['term-4'] ? kinderTermSyllabus['term-4'].lessons : [];
+
+        const t1Builds = t1Lessons.filter(l => !!kinderBuilds[l.code]).length;
+        const t2Builds = t2Lessons.filter(l => !!kinderBuilds[l.code]).length;
+        const t3Builds = t3Lessons.filter(l => !!kinderBuilds[l.code]).length;
+        const t4Builds = t4Lessons.filter(l => !!kinderBuilds[l.code]).length;
+
+        const t1Videos = t1Lessons.filter(l => kinderVideos[l.code] && kinderVideos[l.code].trim().length > 0).length;
+        const t2Videos = t2Lessons.filter(l => kinderVideos[l.code] && kinderVideos[l.code].trim().length > 0).length;
+        const t3Videos = t3Lessons.filter(l => kinderVideos[l.code] && kinderVideos[l.code].trim().length > 0).length;
+        const t4Videos = t4Lessons.filter(l => kinderVideos[l.code] && kinderVideos[l.code].trim().length > 0).length;
+
+        const t1Unlocked = true;
+        const t2Unlocked = masterUnlockOverride || t1Builds >= 10;
+        const t3Unlocked = masterUnlockOverride || (t2Unlocked && t2Builds >= 10);
+        const t4Unlocked = masterUnlockOverride || (t3Unlocked && t3Builds >= 10);
+
+        return {
+            'term-1': {
+                key: 'term-1',
+                name: 'Term 1',
+                subtitle: 'Foundations & Circuits',
+                buildsDone: t1Builds,
+                totalBuilds: 10,
+                videosDone: t1Videos,
+                percent: Math.round((t1Builds / 10) * 100),
+                isUnlocked: t1Unlocked,
+                isCompleted: t1Builds >= 10,
+                lockMsg: ''
+            },
+            'term-2': {
+                key: 'term-2',
+                name: 'Term 2',
+                subtitle: 'Kinematics & Balance',
+                buildsDone: t2Builds,
+                totalBuilds: 10,
+                videosDone: t2Videos,
+                percent: Math.round((t2Builds / 10) * 100),
+                isUnlocked: t2Unlocked,
+                isCompleted: t2Builds >= 10,
+                lockMsg: 'Complete all 10 practical builds in Term 1 to unlock Term 2.'
+            },
+            'term-3': {
+                key: 'term-3',
+                name: 'Term 3',
+                subtitle: 'Sensors & Coordinates',
+                buildsDone: t3Builds,
+                totalBuilds: 10,
+                videosDone: t3Videos,
+                percent: Math.round((t3Builds / 10) * 100),
+                isUnlocked: t3Unlocked,
+                isCompleted: t3Builds >= 10,
+                lockMsg: 'Complete all 10 practical builds in Term 2 to unlock Term 3.'
+            },
+            'term-4': {
+                key: 'term-4',
+                name: 'Term 4',
+                subtitle: 'Sensors & 3D Maker',
+                buildsDone: t4Builds,
+                totalBuilds: 10,
+                videosDone: t4Videos,
+                percent: Math.round((t4Builds / 10) * 100),
+                isUnlocked: t4Unlocked,
+                isCompleted: t4Builds >= 10,
+                lockMsg: 'Complete all 10 practical builds in Term 3 to unlock Term 4.'
+            }
+        };
+    }
+
+    function renderTermsProgressCards() {
+        if (!kinderTermsProgressGrid) return;
+        const termsData = getTermsProgressData();
+        const termKeys = ['term-1', 'term-2', 'term-3', 'term-4'];
+
+        kinderTermsProgressGrid.innerHTML = termKeys.map(tKey => {
+            const prog = termsData[tKey];
+            const isSelected = currentTermKey === tKey;
+            const cardBg = isSelected
+                ? '#FFFFFF'
+                : (!prog.isUnlocked ? 'rgba(248, 250, 252, 0.85)' : '#FFFFFF');
+            const borderColor = isSelected
+                ? 'var(--brand-teal)'
+                : (!prog.isUnlocked ? '#E2E8F0' : 'rgba(14, 27, 77, 0.12)');
+            const shadow = isSelected ? '0 0 0 2px rgba(69, 183, 205, 0.25), var(--shadow-card)' : 'var(--shadow-card)';
+            const opacity = !prog.isUnlocked && !isSelected ? '0.82' : '1';
+
+            let badgeHtml = '';
+            if (!prog.isUnlocked) {
+                badgeHtml = `<span style="display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 20px; font-size: 10px; font-weight: 900; background: #FEF3C7; color: #92400E; border: 1px solid #FDE68A;">🔒 LOCKED</span>`;
+            } else if (prog.isCompleted) {
+                badgeHtml = `<span style="display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 20px; font-size: 10px; font-weight: 900; background: #ECFDF5; color: #065F46; border: 1px solid #A7F3D0;">✓ 10/10 DONE</span>`;
+            } else {
+                badgeHtml = `<span style="display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 20px; font-size: 10px; font-weight: 900; background: #E0F2FE; color: #0369A1; border: 1px solid #BAE6FD;">${prog.buildsDone}/10 BUILDS</span>`;
+            }
+
+            const barColor = prog.isCompleted ? '#10B981' : (prog.isUnlocked ? 'var(--brand-teal)' : '#CBD5E1');
+
+            return `
+                <div class="kinder-term-progress-card" data-term="${tKey}" style="background: ${cardBg}; border: 1.5px solid ${borderColor}; border-radius: var(--radius-md); padding: 14px 16px; box-shadow: ${shadow}; cursor: pointer; opacity: ${opacity}; transition: all 0.2s ease;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px;">
+                        <div>
+                            <div style="font-size: 12.5px; font-weight: 900; color: var(--brand-navy);">${prog.name}</div>
+                            <div style="font-size: 10.5px; font-weight: 600; color: var(--text-muted);">${prog.subtitle}</div>
+                        </div>
+                        <div>
+                            ${badgeHtml}
+                        </div>
+                    </div>
+
+                    <!-- Progress Bar -->
+                    <div style="width: 100%; height: 6px; background: #F1F5F9; border-radius: 4px; overflow: hidden; margin-bottom: 8px;">
+                        <div style="width: ${prog.percent}%; height: 100%; background: ${barColor}; border-radius: 4px; transition: width 0.3s ease;"></div>
+                    </div>
+
+                    <!-- Footer Stats -->
+                    <div style="display: flex; align-items: center; justify-content: space-between; font-size: 11px; font-weight: 800; color: #64748B;">
+                        <span>🛠️ ${prog.buildsDone} / 10 Builds</span>
+                        <span>🎬 ${prog.videosDone} / 10 Videos</span>
+                    </div>
+
+                    ${!prog.isUnlocked ? `
+                        <div style="margin-top: 8px; padding-top: 6px; border-top: 1px solid #F1F5F9; font-size: 10px; font-weight: 700; color: #B45309; line-height: 1.35;">
+                            🔒 ${prog.lockMsg}
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }).join('');
+
+        // Wire click handler on cards
+        kinderTermsProgressGrid.querySelectorAll('.kinder-term-progress-card').forEach(card => {
+            card.addEventListener('click', () => {
+                const termKey = card.getAttribute('data-term');
+                if (selectKinderTerm && termKey !== 'all') {
+                    selectKinderTerm.value = termKey;
+                }
+                const q = inputFilterKinderLessons ? inputFilterKinderLessons.value : '';
+                renderKinderRoadmap(termKey, q);
+            });
+        });
+    }
+
+    function isLessonUnlocked(lesson, idx, list) {
+        if (masterUnlockOverride) return true;
+        const termsData = getTermsProgressData();
+        const termProg = termsData[lesson.term];
+        if (termProg && !termProg.isUnlocked) {
+            return false;
+        }
+        if (idx === 0) return true;
+        const prev = list[idx - 1];
+        if (prev.term !== lesson.term) return true;
+        return !!kinderBuilds[prev.code];
+    }
+
+    function renderKinderRoadmap(termKey, filterQuery = '') {
+        currentTermKey = termKey;
+        currentSearchQuery = filterQuery;
+
+        const allLessons = Object.values(kinderTermSyllabus).flatMap(t => t.lessons);
+        let termData;
+        if (termKey === 'all') {
+            termData = {
+                name: 'All Terms',
+                desc: 'Complete 40-Lesson Kinder Curriculum (Terms 1–4)',
+                lessons: allLessons
+            };
+        } else {
+            termData = kinderTermSyllabus[termKey] || kinderTermSyllabus['term-1'];
+        }
+
+        if (kinderRoadmapTermHeading) {
+            kinderRoadmapTermHeading.textContent = `${termData.name} Syllabus & Roadmap`;
+        }
+        if (kinderRoadmapTermDesc) {
+            kinderRoadmapTermDesc.textContent = termData.desc;
+        }
+
+        const termsData = getTermsProgressData();
+        const totalBuildsDone = allLessons.filter(l => !!kinderBuilds[l.code]).length;
+
+        // Render 4-term progress cards overview
+        renderTermsProgressCards();
+
+        // Update Locked Term Callout Banner
+        if (lockedTermCalloutBanner) {
+            if (termKey !== 'all' && termsData[termKey] && !termsData[termKey].isUnlocked) {
+                lockedTermCalloutBanner.style.display = 'block';
+                if (lockedTermCalloutTitle) {
+                    lockedTermCalloutTitle.textContent = `${termsData[termKey].name} is Locked`;
+                }
+                if (lockedTermCalloutDesc) {
+                    lockedTermCalloutDesc.textContent = `${termsData[termKey].lockMsg} Complete all builds in the preceding term to unlock.`;
+                }
+            } else {
+                lockedTermCalloutBanner.style.display = 'none';
+            }
+        }
+
+        // Update pills
+        kinderTermQuickBtns.forEach(btn => {
+            const bTerm = btn.getAttribute('data-term');
+            const isMatch = bTerm === termKey;
+            btn.style.background = isMatch ? 'var(--brand-teal)' : '#FFF';
+            btn.style.color = isMatch ? '#FFF' : 'var(--brand-navy)';
+            btn.style.borderColor = isMatch ? 'var(--brand-teal)' : '#CBD5E1';
+
+            if (bTerm === 'all') {
+                btn.innerHTML = `All (${totalBuildsDone}/40)`;
+            } else if (termsData[bTerm]) {
+                const p = termsData[bTerm];
+                const lockPrefix = !p.isUnlocked ? '🔒 ' : '';
+                btn.innerHTML = `${lockPrefix}${p.name} (${p.buildsDone}/10)`;
+            }
+        });
+
+        // Sync dropdown if not 'all'
+        if (selectKinderTerm && termKey !== 'all' && selectKinderTerm.value !== termKey) {
+            selectKinderTerm.value = termKey;
+        }
+
+        updateMatrixCounters();
+
+        if (!kinderRoadmapLessonList) return;
+
+        const q = filterQuery.trim().toLowerCase();
+        const filtered = termData.lessons.filter(l => 
+            !q || 
+            l.code.toLowerCase().includes(q) || 
+            l.topic.toLowerCase().includes(q) || 
+            l.kit.toLowerCase().includes(q) ||
+            l.engineeringFocus.toLowerCase().includes(q) ||
+            l.lessonPlan.concept.toLowerCase().includes(q)
+        );
+
+        if (kinderRoadmapTermBadge) {
+            kinderRoadmapTermBadge.textContent = `${filtered.length} LESSONS ACTIVE`;
+        }
+
+        if (filtered.length === 0) {
+            kinderRoadmapLessonList.innerHTML = `
+                <div style="padding: 28px; text-align: center; color: var(--text-muted); background: #F8FAFC; border-radius: var(--radius-md); border: 1px dashed #CBD5E1;">
+                    <div style="font-size: 24px; margin-bottom: 6px;">🔍</div>
+                    <div style="font-size: 13px; font-weight: 700;">No lessons found matching "${safeHtml(filterQuery)}" in ${termData.name}.</div>
+                </div>
+            `;
+            return;
+        }
+
+        kinderRoadmapLessonList.innerHTML = filtered.map((lesson, idx) => {
+            const isDone = !!kinderBuilds[lesson.code];
+            const videoUrl = kinderVideos[lesson.code];
+            const hasVideo = !!(videoUrl && videoUrl.trim().length > 0);
+            const isLocked = !isLessonUnlocked(lesson, idx, filtered);
+            const isExpanded = expandedLessonId === lesson.code;
+            const isEditingVideo = editingVideoLessonId === lesson.code;
+
+            return `
+                <div class="kinder-lesson-card-wrapper" data-code="${lesson.code}" style="background: ${isDone ? '#F0FDF4' : isLocked ? '#F8FAFC' : '#FFFFFF'}; border: 1px solid ${isDone ? '#BBF7D0' : isLocked ? '#E2E8F0' : 'rgba(14, 27, 77, 0.12)'}; border-radius: var(--radius-md); overflow: hidden; transition: all 0.2s ease; opacity: ${isLocked ? '0.75' : '1'};">
+                    <!-- Main Row Summary -->
+                    <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; gap: 12px; flex-wrap: wrap;">
+                        <div style="display: flex; align-items: center; gap: 12px; flex: 1; min-width: 240px;">
+                            <!-- Build Checkbox -->
+                            <button type="button" class="btn-toggle-kinder-build" data-code="${lesson.code}" ${isLocked ? 'disabled' : ''} style="width: 26px; height: 26px; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: ${isLocked ? 'not-allowed' : 'pointer'}; border: 2px solid ${isDone ? '#10B981' : isLocked ? '#CBD5E1' : '#94A3B8'}; background: ${isDone ? '#10B981' : isLocked ? '#F1F5F9' : '#FFF'}; color: #FFF; font-weight: 900; font-size: 13px; flex-shrink: 0; transition: all 0.2s;" title="${isLocked ? 'Complete previous lesson to unlock' : isDone ? 'Mark build as incomplete' : 'Mark build as completed (+20 EXP, +15 Coins)'}">
+                                ${isLocked ? '<span style="font-size: 10px;">🔒</span>' : isDone ? '✓' : ''}
+                            </button>
+
+                            <!-- Code Badge -->
+                            <span style="display: inline-flex; align-items: center; justify-content: center; min-width: 58px; padding: 5px 8px; border-radius: 6px; background: ${isDone ? '#065F46' : 'var(--brand-navy)'}; color: #FFFFFF; font-weight: 900; font-size: 12px; letter-spacing: 0.5px; flex-shrink: 0;">
+                                ${lesson.code}
+                            </span>
+
+                            <!-- Lesson Topic Title -->
+                            <div style="flex: 1; min-width: 0;">
+                                <div style="font-size: 13.5px; font-weight: 800; color: var(--brand-navy); line-height: 1.35;">
+                                    ${safeHtml(lesson.topic)}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Actions & Badges -->
+                        <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0; flex-wrap: wrap;">
+                            <!-- Kit Badge -->
+                            <span style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 800; ${getKinderKitBadgeStyle(lesson.type)}">
+                                <span>${lesson.icon}</span>
+                                <span>${safeHtml(lesson.kit)}</span>
+                            </span>
+
+                            <!-- Video Proof Status -->
+                            ${hasVideo ? `
+                                <a href="${safeHtml(videoUrl)}" target="_blank" rel="noreferrer" class="badge-kinder-video-proof" style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 6px; background: #ECFDF5; border: 1px solid #A7F3D0; color: #065F46; font-size: 11px; font-weight: 900; text-decoration: none;" title="Open video demonstration link">
+                                    <span>🎬</span>
+                                    <span>Video Proof ✓</span>
+                                </a>
+                            ` : `
+                                <span class="badge-kinder-no-video" style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 6px; background: #F1F5F9; color: #64748B; font-size: 10.5px; font-weight: 700;">
+                                    <span>⚪</span>
+                                    <span>No Video</span>
+                                </span>
+                            `}
+
+                            <!-- Accordion Toggle Button -->
+                            <button type="button" class="btn btn-toggle-kinder-accordion" data-code="${lesson.code}" style="padding: 5px 12px; border-radius: 6px; background: ${isExpanded ? 'var(--brand-navy)' : '#FFFFFF'}; border: 1px solid ${isExpanded ? 'var(--brand-navy)' : '#CBD5E1'}; color: ${isExpanded ? '#FFFFFF' : 'var(--brand-navy)'}; font-size: 11.5px; font-weight: 800; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 4px;">
+                                <span>Details</span>
+                                <span style="font-size: 9px;">${isExpanded ? '▲' : '▼'}</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Expandable Accordion Drawer -->
+                    ${isExpanded ? `
+                        <div class="kinder-accordion-drawer" style="border-top: 1px solid #E2E8F0; background: #F8FAFC; padding: 18px 20px; display: flex; flex-direction: column; gap: 14px;">
+                            <!-- 1. Engineering Focus & Objectives -->
+                            <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: var(--radius-md); padding: 14px 16px;">
+                                <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
+                                    <span style="font-size: 14px;">⚙️</span>
+                                    <h4 style="font-size: 11.5px; font-weight: 900; color: var(--brand-navy); margin: 0; text-transform: uppercase; letter-spacing: 0.5px;">
+                                        Engineering Focus &amp; Objectives
+                                    </h4>
+                                </div>
+                                <p style="font-size: 12.5px; color: #334155; line-height: 1.5; margin: 0; padding-left: 20px;">
+                                    ${safeHtml(lesson.engineeringFocus)}
+                                </p>
+                            </div>
+
+                            <!-- 2. Lesson Plan 4 Checklist Items (2x2 Grid) -->
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px;">
+                                <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: var(--radius-md); padding: 12px 14px;">
+                                    <div style="font-size: 11px; font-weight: 900; color: var(--brand-navy); display: flex; align-items: center; gap: 6px; margin-bottom: 4px; text-transform: uppercase;">
+                                        <span>📋</span>
+                                        <span>What to do</span>
+                                    </div>
+                                    <p style="font-size: 12px; color: #475569; line-height: 1.45; margin: 0;">
+                                        ${safeHtml(lesson.lessonPlan.whatToDo)}
+                                    </p>
+                                </div>
+
+                                <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: var(--radius-md); padding: 12px 14px;">
+                                    <div style="font-size: 11px; font-weight: 900; color: #0E7490; display: flex; align-items: center; gap: 6px; margin-bottom: 4px; text-transform: uppercase;">
+                                        <span>💡</span>
+                                        <span>Concept (ELI4)</span>
+                                    </div>
+                                    <p style="font-size: 12px; color: #475569; line-height: 1.45; margin: 0;">
+                                        ${safeHtml(lesson.lessonPlan.concept)}
+                                    </p>
+                                </div>
+
+                                <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: var(--radius-md); padding: 12px 14px;">
+                                    <div style="font-size: 11px; font-weight: 900; color: #C2410C; display: flex; align-items: center; gap: 6px; margin-bottom: 4px; text-transform: uppercase;">
+                                        <span>🎮</span>
+                                        <span>Activity / Games</span>
+                                    </div>
+                                    <p style="font-size: 12px; color: #475569; line-height: 1.45; margin: 0;">
+                                        ${safeHtml(lesson.lessonPlan.activityGame)}
+                                    </p>
+                                </div>
+
+                                <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: var(--radius-md); padding: 12px 14px;">
+                                    <div style="font-size: 11px; font-weight: 900; color: #6D28D9; display: flex; align-items: center; gap: 6px; margin-bottom: 4px; text-transform: uppercase;">
+                                        <span>⚡</span>
+                                        <span>Building Challenge</span>
+                                    </div>
+                                    <p style="font-size: 12px; color: #475569; line-height: 1.45; margin: 0;">
+                                        ${safeHtml(lesson.lessonPlan.challenge)}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- 3. Video Evidence Submission Component -->
+                            <div style="background: #FFFFFF; border: 2px dashed #CBD5E1; border-radius: var(--radius-md); padding: 16px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 8px;">
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <span style="font-size: 20px;">🎬</span>
+                                        <div>
+                                            <h4 style="font-size: 12px; font-weight: 900; color: var(--brand-navy); margin: 0; text-transform: uppercase; letter-spacing: 0.5px;">
+                                                Video Evidence Submission
+                                            </h4>
+                                            <p style="font-size: 11.5px; color: var(--text-secondary); margin: 2px 0 0 0;">
+                                                Provide a 30–60 second video demonstration link of the physical build operating.
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    ${!isEditingVideo ? `
+                                        <button type="button" class="btn btn-action-edit-video" data-code="${lesson.code}" style="padding: 6px 12px; border-radius: var(--radius-sm); background: var(--brand-navy); color: #FFFFFF; font-size: 11.5px; font-weight: 800; border: none; cursor: pointer;">
+                                            <span>${hasVideo ? '✏️ Edit Video Link' : '➕ Add Video Link'}</span>
+                                        </button>
+                                    ` : ''}
+                                </div>
+
+                                ${isEditingVideo ? `
+                                    <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #E2E8F0; display: flex; gap: 8px; flex-wrap: wrap;">
+                                        <input type="url" class="input-kinder-video-url" data-code="${lesson.code}" value="${safeHtml(videoUrl || '')}" placeholder="Paste Google Drive / Loom video link (e.g. https://loom.com/share/...)" style="flex: 1; min-width: 260px; padding: 8px 12px; font-size: 12px; border-radius: var(--radius-sm); border: 1px solid #CBD5E1; outline: none; font-weight: 600; color: var(--brand-navy);">
+                                        <button type="button" class="btn btn-save-video-link" data-code="${lesson.code}" style="padding: 8px 14px; border-radius: var(--radius-sm); background: #10B981; color: #FFFFFF; font-size: 12px; font-weight: 900; border: none; cursor: pointer;">
+                                            Save
+                                        </button>
+                                        <button type="button" class="btn btn-cancel-video-link" data-code="${lesson.code}" style="padding: 8px 12px; border-radius: var(--radius-sm); background: #E2E8F0; color: #475569; font-size: 12px; font-weight: 800; border: none; cursor: pointer;">
+                                            Cancel
+                                        </button>
+                                    </div>
+                                ` : hasVideo ? `
+                                    <div style="margin-top: 8px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; background: #ECFDF5; border: 1px solid #A7F3D0; border-radius: var(--radius-sm); padding: 8px 12px;">
+                                        <div style="font-size: 12px; color: #065F46; font-weight: 800; display: flex; align-items: center; gap: 6px; min-width: 0;">
+                                            <span>Recorded Link:</span>
+                                            <a href="${safeHtml(videoUrl)}" target="_blank" rel="noreferrer" style="color: var(--brand-navy); text-decoration: underline; word-break: break-all;">
+                                                ${safeHtml(videoUrl)}
+                                            </a>
+                                        </div>
+                                        <button type="button" class="btn-delete-kinder-video" data-code="${lesson.code}" style="background: none; border: none; color: #DC2626; font-size: 11.5px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 4px;" title="Remove video link">
+                                            <span>🗑️</span>
+                                            <span>Remove</span>
+                                        </button>
+                                    </div>
+                                ` : `
+                                    <div style="margin-top: 6px; font-size: 12px; color: var(--text-muted); font-style: italic;">
+                                        No video proof link recorded yet. Click "Add Video Link" to submit Google Drive or Loom URL (+30 EXP, +25 Coins).
+                                    </div>
+                                `}
+                            </div>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }).join('');
+
+        // Wire event listeners
+        // 1. Checkbox Toggle
+        kinderRoadmapLessonList.querySelectorAll('.btn-toggle-kinder-build').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const code = btn.getAttribute('data-code');
+                const wasDone = !!kinderBuilds[code];
+                kinderBuilds[code] = !wasDone;
+                if (!wasDone) {
+                    awardReward(20, 15, `${code} Practical Build Done`);
+
+                    // Check if completing this build finishes the term
+                    const termPrefix = code.slice(0, 2);
+                    const termMap = { 'K1': 'term-1', 'K2': 'term-2', 'K3': 'term-3', 'K4': 'term-4' };
+                    const tKey = termMap[termPrefix];
+                    if (tKey && kinderTermSyllabus[tKey]) {
+                        const tLessons = kinderTermSyllabus[tKey].lessons;
+                        const otherDone = tLessons.filter(l => l.code !== code && kinderBuilds[l.code]).length;
+                        if (otherDone === tLessons.length - 1) {
+                            awardReward(50, 40, `🎉 ${kinderTermSyllabus[tKey].name} 100% Completed! Next Term Unlocked!`);
+                        }
+                    }
+                }
+                localStorage.setItem('thelab_kinder_builds', JSON.stringify(kinderBuilds));
+                renderKinderRoadmap(currentTermKey, currentSearchQuery);
+            });
+        });
+
+        // 2. Accordion Toggle
+        kinderRoadmapLessonList.querySelectorAll('.btn-toggle-kinder-accordion').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const code = btn.getAttribute('data-code');
+                expandedLessonId = expandedLessonId === code ? null : code;
+                editingVideoLessonId = null;
+                renderKinderRoadmap(currentTermKey, currentSearchQuery);
+            });
+        });
+
+        // 3. Edit / Add Video Button
+        kinderRoadmapLessonList.querySelectorAll('.btn-action-edit-video').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const code = btn.getAttribute('data-code');
+                editingVideoLessonId = code;
+                renderKinderRoadmap(currentTermKey, currentSearchQuery);
+                const input = kinderRoadmapLessonList.querySelector(`.input-kinder-video-url[data-code="${code}"]`);
+                if (input) input.focus();
+            });
+        });
+
+        // 4. Cancel Video Button
+        kinderRoadmapLessonList.querySelectorAll('.btn-cancel-video-link').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                editingVideoLessonId = null;
+                renderKinderRoadmap(currentTermKey, currentSearchQuery);
+            });
+        });
+
+        // 5. Save Video Button
+        kinderRoadmapLessonList.querySelectorAll('.btn-save-video-link').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const code = btn.getAttribute('data-code');
+                const input = kinderRoadmapLessonList.querySelector(`.input-kinder-video-url[data-code="${code}"]`);
+                const url = input ? input.value.trim() : '';
+                if (url) {
+                    kinderVideos[code] = url;
+                    awardReward(30, 25, `${code} Video Proof Saved`);
+                } else {
+                    delete kinderVideos[code];
+                }
+                localStorage.setItem('thelab_kinder_videos', JSON.stringify(kinderVideos));
+                editingVideoLessonId = null;
+                renderKinderRoadmap(currentTermKey, currentSearchQuery);
+            });
+        });
+
+        // 6. Delete Video Button
+        kinderRoadmapLessonList.querySelectorAll('.btn-delete-kinder-video').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const code = btn.getAttribute('data-code');
+                delete kinderVideos[code];
+                localStorage.setItem('thelab_kinder_videos', JSON.stringify(kinderVideos));
+                renderKinderRoadmap(currentTermKey, currentSearchQuery);
+            });
+        });
+    }
+
+    function openLessonDetailsModal(lesson, termName) {
+        if (!kinderLessonDetailsModal) return;
+        if (modalLessonIcon) modalLessonIcon.textContent = lesson.icon;
+        if (modalLessonCodeBadge) modalLessonCodeBadge.textContent = lesson.code;
+        if (modalLessonTermBadge) modalLessonTermBadge.textContent = termName;
+        if (modalLessonTopic) modalLessonTopic.textContent = lesson.topic;
+        if (modalLessonKit) modalLessonKit.innerHTML = `${lesson.icon} <span>${safeHtml(lesson.kit)}</span>`;
+        kinderLessonDetailsModal.classList.add('active');
+    }
+
+    const closeLessonModal = () => {
+        if (kinderLessonDetailsModal) kinderLessonDetailsModal.classList.remove('active');
+    };
+    if (btnCloseLessonModal) btnCloseLessonModal.addEventListener('click', closeLessonModal);
+    if (btnDismissLessonModal) btnDismissLessonModal.addEventListener('click', closeLessonModal);
+    if (kinderLessonDetailsModal) {
+        kinderLessonDetailsModal.addEventListener('click', (e) => {
+            if (e.target === kinderLessonDetailsModal) closeLessonModal();
+        });
+    }
+
+    if (btnCalloutMasterUnlock) {
+        btnCalloutMasterUnlock.addEventListener('click', () => {
+            masterUnlockOverride = true;
+            if (btnKinderMasterUnlock) {
+                btnKinderMasterUnlock.innerHTML = '🔓 All Unlocked';
+                btnKinderMasterUnlock.style.background = '#ECFDF5';
+                btnKinderMasterUnlock.style.borderColor = '#A7F3D0';
+                btnKinderMasterUnlock.style.color = '#065F46';
+            }
+            renderKinderRoadmap(currentTermKey, currentSearchQuery);
+        });
+    }
+
+    if (selectKinderTerm) {
+        selectKinderTerm.addEventListener('change', (e) => {
+            const termKey = e.target.value;
+            const q = inputFilterKinderLessons ? inputFilterKinderLessons.value : '';
+            renderKinderRoadmap(termKey, q);
+        });
+    }
+
+    kinderTermQuickBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const termKey = btn.getAttribute('data-term');
+            if (selectKinderTerm && termKey !== 'all') selectKinderTerm.value = termKey;
+            const q = inputFilterKinderLessons ? inputFilterKinderLessons.value : '';
+            renderKinderRoadmap(termKey, q);
+        });
+    });
+
+    if (inputFilterKinderLessons) {
+        inputFilterKinderLessons.addEventListener('input', (e) => {
+            const currentTerm = selectKinderTerm ? selectKinderTerm.value : 'term-1';
+            renderKinderRoadmap(currentTerm, e.target.value);
+        });
+    }
+
+    // Initial render
+    renderKinderRoadmap(selectKinderTerm ? selectKinderTerm.value : 'term-1');
+
+    // Masterclass Video Modals
+    const videoModal = document.getElementById('trainingVideoModal');
+    const btnPlayMasterclass = document.getElementById('btnPlayMasterclass');
+    const btnLaunchMasterclassModal = document.getElementById('btnLaunchMasterclassModal');
+    const btnLaunchTutorialVideo = document.getElementById('btnLaunchTutorialVideo');
+
+    const openVideoModal = () => {
+        if (videoModal) videoModal.classList.add('active');
+    };
+
+    if (btnPlayMasterclass) btnPlayMasterclass.addEventListener('click', openVideoModal);
+    if (btnLaunchMasterclassModal) btnLaunchMasterclassModal.addEventListener('click', openVideoModal);
+    if (btnLaunchTutorialVideo) btnLaunchTutorialVideo.addEventListener('click', openVideoModal);
+
+    // 6. Interactive Training Curriculum Controller (Kinder)
+    let completedSteps = [1]; // Step 1 is done by default
+
+    const stepHeaders = document.querySelectorAll('.accordion-step-header');
+    stepHeaders.forEach(hdr => {
+        hdr.addEventListener('click', () => {
+            const stepNum = hdr.getAttribute('data-step');
+            const content = document.getElementById('stepContent' + stepNum);
+            if (content) {
+                const isHidden = content.style.display === 'none';
+                content.style.display = isHidden ? 'block' : 'none';
+            }
+        });
+    });
+
+    const stepToggleBtns = document.querySelectorAll('.btn-step-toggle');
+    const kinderLessonProgressBadge = document.getElementById('kinderLessonProgressBadge');
+    const lessonBox2 = document.getElementById('lessonBox2');
+    const lessonUnlockBanner = document.getElementById('lessonUnlockBanner');
+    const lesson2Label = document.getElementById('lesson2Label');
+    const lesson2LockIcon = document.getElementById('lesson2LockIcon');
+    const lesson2Title = document.getElementById('lesson2Title');
+    const lesson2Sub = document.getElementById('lesson2Sub');
+
+    function checkCurriculumProgression() {
+        const count = completedSteps.length;
+        if (kinderLessonProgressBadge) {
+            kinderLessonProgressBadge.textContent = count + ' / 5 Steps Done';
+        }
+
+        // Strict Unlock Gate: 3 or more steps required for Lesson 2
+        if (count >= 3) {
+            if (lessonBox2) {
+                lessonBox2.style.opacity = '1';
+                lessonBox2.style.cursor = 'pointer';
+                lessonBox2.style.borderColor = '#10B981';
+                lessonBox2.style.background = '#ECFDF5';
+            }
+            if (lesson2LockIcon) lesson2LockIcon.textContent = '🔓 UNLOCKED';
+            if (lesson2Label) lesson2Label.style.color = '#047857';
+            if (lesson2Title) lesson2Title.style.color = '#065F46';
+            if (lesson2Sub) lesson2Sub.textContent = 'Pulleys, gears & speed switches';
+            if (lessonUnlockBanner) lessonUnlockBanner.style.display = 'block';
+        } else {
+            if (lessonBox2) {
+                lessonBox2.style.opacity = '0.65';
+                lessonBox2.style.cursor = 'not-allowed';
+                lessonBox2.style.borderColor = '#E2E8F0';
+                lessonBox2.style.background = '#F8FAFC';
+            }
+            if (lesson2LockIcon) lesson2LockIcon.textContent = '🔒 LOCKED';
+            if (lesson2Label) lesson2Label.style.color = '#64748B';
+            if (lesson2Title) lesson2Title.style.color = '#64748B';
+            if (lesson2Sub) lesson2Sub.textContent = 'Requires 3 steps of Lesson 1';
+            if (lessonUnlockBanner) lessonUnlockBanner.style.display = 'none';
+        }
+    }
+
+    stepToggleBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const stepNum = parseInt(btn.getAttribute('data-step'), 10);
+            const badge = document.getElementById('stepBadge' + stepNum);
+
+            if (completedSteps.includes(stepNum)) {
+                completedSteps = completedSteps.filter(s => s !== stepNum);
+                if (badge) {
+                    badge.textContent = 'Pending';
+                    badge.style.background = '#F1F5F9';
+                    badge.style.color = '#64748B';
+                }
+            } else {
+                completedSteps.push(stepNum);
+                if (badge) {
+                    badge.textContent = '✓ Done';
+                    badge.style.background = '#ECFDF5';
+                    badge.style.color = '#065F46';
+                }
+                awardReward(20, 15, 'Step ' + stepNum + ' Completed');
+            }
+
+            checkCurriculumProgression();
+        });
+    });
+
+    if (lessonBox2) {
+        lessonBox2.addEventListener('click', () => {
+            if (completedSteps.length < 3) {
+                alert('🔒 Lesson 2 is Locked! Complete at least 3 steps of Lesson 1 to unlock.');
+            } else {
+                alert('🔓 Lesson 2: Motor Wonder Train is unlocked! Welcome to intermediate Kinder robotics.');
+            }
+        });
+    }
+
+    // Photo Dropzone UI
+    const dropzoneFileInput = document.getElementById('dropzoneFileInput');
+    const photoGalleryContainer = document.getElementById('photoGalleryContainer');
+
+    if (dropzoneFileInput && photoGalleryContainer) {
+        dropzoneFileInput.addEventListener('change', (e) => {
+            const files = e.target.files;
+            if (files && files[0]) {
+                const reader = new FileReader();
+                reader.onload = (uploadEvt) => {
+                    const img = document.createElement('img');
+                    img.src = uploadEvt.target.result;
+                    img.style.cssText = 'width: 70px; height: 70px; object-fit: cover; border-radius: 8px; border: 2px solid #45B7CD;';
+                    photoGalleryContainer.prepend(img);
+                    awardReward(20, 15, 'Robot Build Photo Uploaded');
+                };
+                reader.readAsDataURL(files[0]);
+            }
+        });
+    }
+
+    // 7. Drag & Drop / Click-to-Match Question Game
+    let selectedToken = null;
+    const matchTokens = document.querySelectorAll('.match-token');
+    const matchSlots = document.querySelectorAll('.match-slot');
+    const btnResetMatchGame = document.getElementById('btnResetMatchGame');
+
+    matchTokens.forEach(tok => {
+        tok.addEventListener('click', () => {
+            const id = tok.getAttribute('data-token-id');
+            if (tok.style.opacity === '0.35') return; // already matched
+
+            matchTokens.forEach(t => {
+                t.style.borderColor = '#E2E8F0';
+                t.style.background = '#FFFFFF';
+                const ind = t.querySelector('.match-select-indicator');
+                if (ind) ind.textContent = 'Select';
+            });
+
+            if (selectedToken === id) {
+                selectedToken = null;
+            } else {
+                selectedToken = id;
+                tok.style.borderColor = '#F59E0B';
+                tok.style.background = '#FFFBEB';
+                const ind = tok.querySelector('.match-select-indicator');
+                if (ind) ind.textContent = 'Selected';
+            }
+        });
+    });
+
+    matchSlots.forEach(slot => {
+        slot.addEventListener('click', () => {
+            if (!selectedToken) {
+                alert('Please select a coding block on the left first!');
+                return;
+            }
+
+            const expected = slot.getAttribute('data-expected');
+            const statusLabel = slot.querySelector('.slot-status-label');
+
+            if (expected === selectedToken) {
+                // Correct Match!
+                slot.style.background = '#ECFDF5';
+                slot.style.border = '2px solid #10B981';
+                if (statusLabel) {
+                    const matchedTokenEl = document.querySelector('[data-token-id="' + selectedToken + '"]');
+                    const tokenTitle = matchedTokenEl ? matchedTokenEl.querySelector('div div:first-child').textContent : 'Matched Block';
+                    statusLabel.innerHTML = '✓ ' + tokenTitle;
+                    statusLabel.style.color = '#065F46';
+                    statusLabel.style.fontWeight = '900';
+                }
+
+                const matchedEl = document.querySelector('[data-token-id="' + selectedToken + '"]');
+                if (matchedEl) {
+                    matchedEl.style.opacity = '0.35';
+                    matchedEl.style.borderColor = '#CBD5E1';
+                    const ind = matchedEl.querySelector('.match-select-indicator');
+                    if (ind) ind.textContent = 'Matched ✓';
+                }
+
+                awardReward(15, 10, 'Block Correctly Matched');
+                selectedToken = null;
+            } else {
+                alert('Oops! That block has a different function. Try another block!');
+            }
+        });
+    });
+
+    if (btnResetMatchGame) {
+        btnResetMatchGame.addEventListener('click', () => {
+            selectedToken = null;
+            matchTokens.forEach(tok => {
+                tok.style.opacity = '1';
+                tok.style.borderColor = '#E2E8F0';
+                tok.style.background = '#FFFFFF';
+                const ind = tok.querySelector('.match-select-indicator');
+                if (ind) ind.textContent = 'Select';
+            });
+            matchSlots.forEach(slot => {
+                slot.style.background = '#F8FAFC';
+                slot.style.border = '2px dashed #CBD5E1';
+                const statusLabel = slot.querySelector('.slot-status-label');
+                if (statusLabel) {
+                    statusLabel.textContent = 'Empty Slot';
+                    statusLabel.style.color = '#64748B';
+                    statusLabel.style.fontWeight = '700';
+                }
+            });
+        });
+    }
+}
